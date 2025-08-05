@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL
+  postgres:
+    image: postgres:13
+    container_name: sistema_pos_db
+    environment:
+      POSTGRES_DB: sistema_pos
+      POSTGRES_USER: sistema_pos_user
+      POSTGRES_PASSWORD: sistema_pos_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - sistema_pos_network
+
+  # Aplicación Sistema POS
+  app:
+    build: .
+    container_name: sistema_pos_app
+    environment:
+      DATABASE_URL: postgresql://sistema_pos_user:sistema_pos_password@postgres:5432/sistema_pos
+      SECRET_KEY: tu-clave-secreta-muy-segura-aqui-cambiar-en-produccion
+      DEBUG: "True"
+      HOST: 0.0.0.0
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./uploads:/app/uploads
+      - ./static:/app/static
+    networks:
+      - sistema_pos_network
+    restart: unless-stopped
+
+  # Nginx (opcional, para producción)
+  nginx:
+    image: nginx:alpine
+    container_name: sistema_pos_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - app
+    networks:
+      - sistema_pos_network
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+
+networks:
+  sistema_pos_network:
+    driver: bridge 

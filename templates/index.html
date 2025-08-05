@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sistema POS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Estadísticas principales -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                            Ventas Hoy
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold" id="today-sales">$0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-cart-check fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                            Productos
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold" id="total-products">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-box fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                            Clientes
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold" id="total-customers">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                            Stock Bajo
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold" id="low-stock">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-exclamation-triangle fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Ventas recientes -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold">Ventas Recientes</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="recent-sales-table">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Cliente</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" class="text-center">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones rápidas -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold">Acciones Rápidas</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/sales/new" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Nueva Venta
+                    </a>
+                    <a href="/products/new" class="btn btn-outline-primary">
+                        <i class="bi bi-box"></i> Agregar Producto
+                    </a>
+                    <a href="/customers/new" class="btn btn-outline-primary">
+                        <i class="bi bi-person-plus"></i> Nuevo Cliente
+                    </a>
+                    <a href="/inventory/adjust" class="btn btn-outline-primary">
+                        <i class="bi bi-archive"></i> Ajustar Inventario
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos con stock bajo -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-warning">Stock Bajo</h6>
+            </div>
+            <div class="card-body">
+                <div id="low-stock-products">
+                    <p class="text-muted">Cargando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráfico de ventas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold">Ventas de la Semana</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="sales-chart" width="400" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    loadDashboardData();
+    loadRecentSales();
+    loadLowStockProducts();
+    createSalesChart();
+});
+
+function loadDashboardData() {
+    // Cargar estadísticas del dashboard
+    $.ajax({
+        url: '/api/v1/sales/reports/daily',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        success: function(data) {
+            $('#today-sales').text('$' + data.total_amount.toFixed(2));
+        },
+        error: function() {
+            $('#today-sales').text('Error');
+        }
+    });
+
+    // Cargar conteo de productos
+    $.ajax({
+        url: '/api/v1/products/',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        success: function(data) {
+            $('#total-products').text(data.length);
+        },
+        error: function() {
+            $('#total-products').text('Error');
+        }
+    });
+
+    // Cargar conteo de clientes
+    $.ajax({
+        url: '/api/v1/customers/',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        success: function(data) {
+            $('#total-customers').text(data.length);
+        },
+        error: function() {
+            $('#total-customers').text('Error');
+        }
+    });
+}
+
+function loadRecentSales() {
+    $.ajax({
+        url: '/api/v1/sales/',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        success: function(data) {
+            const tbody = $('#recent-sales-table tbody');
+            tbody.empty();
+            
+            data.slice(0, 5).forEach(sale => {
+                const row = `
+                    <tr>
+                        <td>${sale.sale_number}</td>
+                        <td>${sale.customer_name || 'Sin cliente'}</td>
+                        <td>$${sale.total}</td>
+                        <td><span class="badge bg-${getStatusColor(sale.status)}">${sale.status}</span></td>
+                        <td>${new Date(sale.created_at).toLocaleDateString()}</td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        },
+        error: function() {
+            $('#recent-sales-table tbody').html('<tr><td colspan="5" class="text-center text-danger">Error al cargar datos</td></tr>');
+        }
+    });
+}
+
+function loadLowStockProducts() {
+    $.ajax({
+        url: '/api/v1/products/',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        success: function(data) {
+            const lowStockProducts = data.filter(p => p.stock <= p.min_stock);
+            $('#low-stock').text(lowStockProducts.length);
+            
+            const container = $('#low-stock-products');
+            container.empty();
+            
+            if (lowStockProducts.length === 0) {
+                container.html('<p class="text-success">No hay productos con stock bajo</p>');
+            } else {
+                lowStockProducts.slice(0, 5).forEach(product => {
+                    const item = `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-truncate">${product.name}</span>
+                            <span class="badge bg-warning">${product.stock}</span>
+                        </div>
+                    `;
+                    container.append(item);
+                });
+            }
+        },
+        error: function() {
+            $('#low-stock-products').html('<p class="text-danger">Error al cargar datos</p>');
+        }
+    });
+}
+
+function createSalesChart() {
+    const ctx = document.getElementById('sales-chart').getContext('2d');
+    
+    // Datos de ejemplo - en producción se cargarían desde la API
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+            datasets: [{
+                label: 'Ventas ($)',
+                data: [1200, 1900, 1500, 2100, 1800, 2500, 2200],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'completada': return 'success';
+        case 'pendiente': return 'warning';
+        case 'cancelada': return 'danger';
+        default: return 'secondary';
+    }
+}
+</script>
+{% endblock %} 
