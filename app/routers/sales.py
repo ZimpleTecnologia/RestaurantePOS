@@ -5,12 +5,13 @@ from typing import List, Optional
 from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, and_
 from app.database import get_db
 from app.models.user import User
 from app.models.sale import Sale, SaleItem, SaleStatus
 from app.models.product import Product
 from app.models.customer import Customer
+from app.models.cash_register import CashSession, CashMovement, CASH_REGISTER_STATUS, CASH_MOVEMENT_TYPE
 from app.auth.dependencies import get_current_active_user
 from app.schemas.sale import (
     SaleCreate, SaleUpdate, SaleResponse, SaleWithDetails,
@@ -18,6 +19,17 @@ from app.schemas.sale import (
 )
 
 router = APIRouter(prefix="/sales", tags=["ventas"])
+
+
+def get_active_cash_session(db: Session, user_id: int) -> Optional[CashSession]:
+    """Obtener la sesión activa de caja para el usuario"""
+    active_session = db.query(CashSession).filter(
+        and_(
+            CashSession.user_id == user_id,
+            CashSession.status == CASH_REGISTER_STATUS['OPEN']
+        )
+    ).first()
+    return active_session
 
 
 def generate_sale_number(db: Session) -> str:
@@ -133,6 +145,24 @@ def create_sale(
         
         # Actualizar stock
         product.stock -= item_data.quantity
+    
+    # Crear movimiento de caja automáticamente
+    active_session = get_active_cash_session(db, current_user.id)
+    if active_session:
+        cash_movement = CashMovement(
+            session_id=active_session.id,
+            movement_type=CASH_MOVEMENT_TYPE['SALE'],
+            amount=sale_data.total,
+            description=f"Venta {sale_number}",
+            reference=str(db_sale.id),
+            notes=f"Venta automática generada por el sistema"
+        )
+        db.add(cash_movement)
+    else:
+        # Si no hay sesión activa, podemos lanzar un error o continuar según la política
+        # Por ahora continuamos sin crear el movimiento pero registramos la venta
+        # En un entorno de producción, podrías querer lanzar un error aquí
+        pass
     
     db.commit()
     db.refresh(db_sale)
@@ -298,6 +328,153 @@ def get_monthly_report(
             }
             for item in product_sales
         ]
+    }
+
+
+@router.get("/without-cash-movement")
+def get_sales_without_cash_movement(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener ventas que no tienen movimiento de caja asociado"""
+    # Obtener todas las ventas completadas
+    sales = db.query(Sale).filter(
+        Sale.status == SaleStatus.COMPLETADA
+    ).all()
+    
+    # Obtener todos los movimientos de caja que son ventas
+    cash_movements = db.query(CashMovement).filter(
+        CashMovement.movement_type == CASH_MOVEMENT_TYPE['SALE']
+    ).all()
+    
+    # Crear un set de IDs de ventas que ya tienen movimiento de caja
+    sales_with_movement = set()
+    for movement in cash_movements:
+        try:
+            sale_id = int(movement.reference)
+            sales_with_movement.add(sale_id)
+        except (ValueError, TypeError):
+            continue
+    
+    # Filtrar ventas sin movimiento de caja
+    sales_without_movement = []
+    for sale in sales:
+        if sale.id not in sales_with_movement:
+            sales_without_movement.append({
+                "id": sale.id,
+                "sale_number": sale.sale_number,
+                "total": sale.total,
+                "created_at": sale.created_at,
+                "user_name": sale.user.full_name
+            })
+    
+    return {
+        "sales_without_movement": sales_without_movement,
+        "count": len(sales_without_movement)
+    }
+
+
+@router.post("/{sale_id}/create-cash-movement")
+def create_cash_movement_for_sale(
+    sale_id: int,
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Crear movimiento de caja para una venta específica"""
+    # Verificar que la venta existe
+    sale = db.query(Sale).filter(Sale.id == sale_id).first()
+    if not sale:
+        raise HTTPException(status_code=404, detail="Venta no encontrada")
+    
+    # Verificar que la venta está completada
+    if sale.status != SaleStatus.COMPLETADA:
+        raise HTTPException(status_code=400, detail="Solo se pueden crear movimientos para ventas completadas")
+    
+    # Verificar que la sesión existe y está abierta
+    session = db.query(CashSession).filter(CashSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesión de caja no encontrada")
+    
+    if session.status != CASH_REGISTER_STATUS['OPEN']:
+        raise HTTPException(status_code=400, detail="Solo se pueden agregar movimientos a sesiones abiertas")
+    
+    # Verificar que no existe ya un movimiento para esta venta
+    existing_movement = db.query(CashMovement).filter(
+        and_(
+            CashMovement.movement_type == CASH_MOVEMENT_TYPE['SALE'],
+            CashMovement.reference == str(sale_id)
+        )
+    ).first()
+    
+    if existing_movement:
+        raise HTTPException(status_code=400, detail="Ya existe un movimiento de caja para esta venta")
+    
+    # Crear el movimiento de caja
+    cash_movement = CashMovement(
+        session_id=session_id,
+        movement_type=CASH_MOVEMENT_TYPE['SALE'],
+        amount=sale.total,
+        description=f"Venta {sale.sale_number}",
+        reference=str(sale_id),
+        notes=f"Movimiento creado manualmente para venta {sale.sale_number}"
+    )
+    
+    db.add(cash_movement)
+    db.commit()
+    db.refresh(cash_movement)
+    
+    return {
+        "message": "Movimiento de caja creado exitosamente",
+        "movement_id": cash_movement.id,
+        "sale_id": sale_id,
+        "amount": cash_movement.amount
+    }
+
+
+@router.get("/cash-integration/summary")
+def get_cash_integration_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener resumen de la integración entre ventas y caja"""
+    # Total de ventas completadas
+    total_sales = db.query(func.count(Sale.id)).filter(
+        Sale.status == SaleStatus.COMPLETADA
+    ).scalar()
+    
+    total_sales_amount = db.query(func.sum(Sale.total)).filter(
+        Sale.status == SaleStatus.COMPLETADA
+    ).scalar() or 0
+    
+    # Total de movimientos de caja por ventas
+    total_cash_movements = db.query(func.count(CashMovement.id)).filter(
+        CashMovement.movement_type == CASH_MOVEMENT_TYPE['SALE']
+    ).scalar()
+    
+    total_cash_amount = db.query(func.sum(CashMovement.amount)).filter(
+        CashMovement.movement_type == CASH_MOVEMENT_TYPE['SALE']
+    ).scalar() or 0
+    
+    # Ventas sin movimiento de caja
+    sales_without_movement = db.query(func.count(Sale.id)).filter(
+        Sale.status == SaleStatus.COMPLETADA
+    ).scalar()
+    
+    # Restar las que sí tienen movimiento
+    sales_with_movement = db.query(func.count(CashMovement.id)).filter(
+        CashMovement.movement_type == CASH_MOVEMENT_TYPE['SALE']
+    ).scalar()
+    
+    sales_without_movement = sales_without_movement - sales_with_movement
+    
+    return {
+        "total_sales": total_sales,
+        "total_sales_amount": float(total_sales_amount),
+        "total_cash_movements": total_cash_movements,
+        "total_cash_amount": float(total_cash_amount),
+        "sales_without_movement": max(0, sales_without_movement),
+        "integration_percentage": round((total_cash_movements / total_sales * 100) if total_sales > 0 else 0, 2)
     }
 
 
