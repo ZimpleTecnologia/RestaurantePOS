@@ -14,7 +14,7 @@ services:
     networks:
       - sistema_pos_network
 
-  # Aplicación Sistema POS
+  # Aplicación Sistema POSS
   app:
     build: .
     container_name: sistema_pos_app
