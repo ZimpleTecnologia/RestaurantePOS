@@ -103,6 +103,31 @@ async def settings_page(request: Request):
     return templates.TemplateResponse("settings.html", {"request": request})
 
 
+# Acciones rápidas
+@app.get("/sales/new", response_class=HTMLResponse)
+async def new_sale_page(request: Request):
+    """Página de nueva venta"""
+    return templates.TemplateResponse("sales.html", {"request": request})
+
+
+@app.get("/products/new", response_class=HTMLResponse)
+async def new_product_page(request: Request):
+    """Página de nuevo producto"""
+    return templates.TemplateResponse("products.html", {"request": request})
+
+
+@app.get("/customers/new", response_class=HTMLResponse)
+async def new_customer_page(request: Request):
+    """Página de nuevo cliente"""
+    return templates.TemplateResponse("customers.html", {"request": request})
+
+
+@app.get("/inventory/adjust", response_class=HTMLResponse)
+async def adjust_inventory_page(request: Request):
+    """Página de ajuste de inventario"""
+    return templates.TemplateResponse("inventory.html", {"request": request})
+
+
 @app.get("/health")
 async def health_check():
     """Verificación de salud de la aplicación"""

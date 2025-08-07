@@ -117,18 +117,18 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="/sales/new" class="btn btn-primary">
+                    <button class="btn btn-primary" onclick="openNewSale()">
                         <i class="bi bi-plus-circle"></i> Nueva Venta
-                    </a>
-                    <a href="/products/new" class="btn btn-outline-primary">
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="openNewProduct()">
                         <i class="bi bi-box"></i> Agregar Producto
-                    </a>
-                    <a href="/customers/new" class="btn btn-outline-primary">
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="openNewCustomer()">
                         <i class="bi bi-person-plus"></i> Nuevo Cliente
-                    </a>
-                    <a href="/inventory/adjust" class="btn btn-outline-primary">
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="openInventoryAdjust()">
                         <i class="bi bi-archive"></i> Ajustar Inventario
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -284,33 +284,75 @@ function loadLowStockProducts() {
 }
 
 function createSalesChart() {
-    const ctx = document.getElementById('sales-chart').getContext('2d');
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
     
-    // Datos de ejemplo - en producción se cargarían desde la API
-    const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-            datasets: [{
-                label: 'Ventas ($)',
-                data: [1200, 1900, 1500, 2100, 1800, 2500, 2200],
-                borderColor: '#667eea',
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                tension: 0.4
-            }]
+    $.ajax({
+        url: '/api/v1/sales/reports/weekly',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token
         },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false
+        success: function(data) {
+            const ctx = document.getElementById('sales-chart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: data.daily_sales,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true
+            });
+        },
+        error: function() {
+            // Si hay error, mostrar gráfico con datos de ejemplo
+            const ctx = document.getElementById('sales-chart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
                 }
-            }
+            });
         }
     });
 }
@@ -322,6 +364,23 @@ function getStatusColor(status) {
         case 'cancelada': return 'danger';
         default: return 'secondary';
     }
+}
+
+// Funciones para acciones rápidas
+function openNewSale() {
+    window.location.href = '/sales';
+}
+
+function openNewProduct() {
+    window.location.href = '/products';
+}
+
+function openNewCustomer() {
+    window.location.href = '/customers';
+}
+
+function openInventoryAdjust() {
+    window.location.href = '/inventory';
 }
 </script>
 {% endblock %} 

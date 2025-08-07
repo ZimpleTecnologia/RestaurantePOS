@@ -207,4 +207,95 @@ def get_daily_report(
         "date": report_date,
         "total_sales": total_sales,
         "total_amount": total_amount
+    }
+
+
+@router.get("/reports/weekly")
+def get_weekly_report(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener reporte semanal de ventas"""
+    from datetime import timedelta
+    
+    # Obtener fecha de hace 7 días
+    end_date = date.today()
+    start_date = end_date - timedelta(days=6)
+    
+    # Ventas de la semana
+    sales = db.query(Sale).filter(
+        func.date(Sale.created_at) >= start_date,
+        func.date(Sale.created_at) <= end_date,
+        Sale.status == SaleStatus.COMPLETADA
+    ).all()
+    
+    # Agrupar por día
+    daily_sales = {}
+    for i in range(7):
+        current_date = start_date + timedelta(days=i)
+        daily_sales[current_date.strftime('%Y-%m-%d')] = 0
+    
+    for sale in sales:
+        sale_date = sale.created_at.date().strftime('%Y-%m-%d')
+        if sale_date in daily_sales:
+            daily_sales[sale_date] += sale.total
+    
+    return {
+        "start_date": start_date,
+        "end_date": end_date,
+        "total_sales": len(sales),
+        "total_amount": sum(sale.total for sale in sales),
+        "daily_sales": list(daily_sales.values()),
+        "labels": [d.strftime('%a') for d in [start_date + timedelta(days=i) for i in range(7)]]
+    }
+
+
+@router.get("/reports/monthly")
+def get_monthly_report(
+    year: int = Query(default_factory=lambda: date.today().year),
+    month: int = Query(default_factory=lambda: date.today().month),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener reporte mensual de ventas"""
+    from datetime import datetime
+    
+    # Ventas del mes
+    sales = db.query(Sale).filter(
+        func.extract('year', Sale.created_at) == year,
+        func.extract('month', Sale.created_at) == month,
+        Sale.status == SaleStatus.COMPLETADA
+    ).all()
+    
+    total_sales = len(sales)
+    total_amount = sum(sale.total for sale in sales)
+    
+    # Top productos vendidos
+    product_sales = db.query(
+        Product.name,
+        func.sum(SaleItem.quantity).label('total_quantity'),
+        func.sum(SaleItem.total).label('total_amount')
+    ).join(SaleItem, Product.id == SaleItem.product_id)\
+     .join(Sale, SaleItem.sale_id == Sale.id)\
+     .filter(
+        func.extract('year', Sale.created_at) == year,
+        func.extract('month', Sale.created_at) == month,
+        Sale.status == SaleStatus.COMPLETADA
+    ).group_by(Product.name)\
+     .order_by(func.sum(SaleItem.quantity).desc())\
+     .limit(10).all()
+    
+    return {
+        "year": year,
+        "month": month,
+        "total_sales": total_sales,
+        "total_amount": total_amount,
+        "top_products": [
+            {
+                "name": item.name,
+                "quantity": item.total_quantity,
+                "amount": float(item.total_amount)
+            }
+            for item in product_sales
+        ]
     } 

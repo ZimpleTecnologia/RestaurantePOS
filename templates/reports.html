@@ -53,23 +53,251 @@
         </div>
     </div>
 </div>
+
+<!-- Contenedor para mostrar reportes -->
+<div class="row mt-4" id="reports-container" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold" id="report-title">Reporte</h6>
+                <button class="btn btn-sm btn-outline-secondary" onclick="closeReport()">
+                    <i class="bi bi-x"></i> Cerrar
+                </button>
+            </div>
+            <div class="card-body" id="report-content">
+                <!-- El contenido del reporte se cargará aquí -->
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 function generateSalesReport() {
-    alert('Generando reporte de ventas...');
-    // Implementar generación de reporte de ventas
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        alert('No hay token de autenticación');
+        return;
+    }
+    
+    $('#report-title').text('Reporte de Ventas');
+    $('#reports-container').show();
+    $('#report-content').html('<div class="text-center"><i class="bi bi-hourglass-split"></i> Cargando reporte...</div>');
+    
+    // Cargar reporte semanal
+    $.ajax({
+        url: '/api/v1/sales/reports/weekly',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token
+        },
+        success: function(data) {
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Resumen Semanal</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Total de ventas:</strong> ${data.total_sales}</li>
+                            <li><strong>Monto total:</strong> $${data.total_amount.toFixed(2)}</li>
+                            <li><strong>Período:</strong> ${new Date(data.start_date).toLocaleDateString()} - ${new Date(data.end_date).toLocaleDateString()}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <canvas id="weekly-chart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            `;
+            $('#report-content').html(content);
+            
+            // Crear gráfico
+            const ctx = document.getElementById('weekly-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: data.daily_sales,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        },
+        error: function() {
+            $('#report-content').html('<div class="alert alert-danger">Error al cargar el reporte de ventas</div>');
+        }
+    });
 }
 
 function generateInventoryReport() {
-    alert('Generando reporte de inventario...');
-    // Implementar generación de reporte de inventario
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        alert('No hay token de autenticación');
+        return;
+    }
+    
+    $('#report-title').text('Reporte de Inventario');
+    $('#reports-container').show();
+    $('#report-content').html('<div class="text-center"><i class="bi bi-hourglass-split"></i> Cargando reporte...</div>');
+    
+    $.ajax({
+        url: '/api/v1/products/reports/inventory',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token
+        },
+        success: function(data) {
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Resumen del Inventario</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Total de productos:</strong> ${data.total_products}</li>
+                            <li><strong>Productos con stock bajo:</strong> ${data.low_stock_count}</li>
+                            <li><strong>Productos sin stock:</strong> ${data.out_of_stock_count}</li>
+                            <li><strong>Valor total del inventario:</strong> $${data.total_inventory_value.toFixed(2)}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Productos con Stock Bajo</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Stock</th>
+                                        <th>Mínimo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.low_stock_products.map(p => `
+                                        <tr>
+                                            <td>${p.name}</td>
+                                            <td><span class="badge bg-warning">${p.stock}</span></td>
+                                            <td>${p.min_stock}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#report-content').html(content);
+        },
+        error: function() {
+            $('#report-content').html('<div class="alert alert-danger">Error al cargar el reporte de inventario</div>');
+        }
+    });
 }
 
 function generateCustomersReport() {
-    alert('Generando reporte de clientes...');
-    // Implementar generación de reporte de clientes
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        alert('No hay token de autenticación');
+        return;
+    }
+    
+    $('#report-title').text('Reporte de Clientes');
+    $('#reports-container').show();
+    $('#report-content').html('<div class="text-center"><i class="bi bi-hourglass-split"></i> Cargando reporte...</div>');
+    
+    $.ajax({
+        url: '/api/v1/customers/reports/customers',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token
+        },
+        success: function(data) {
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Resumen de Clientes</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Total de clientes:</strong> ${data.total_customers}</li>
+                            <li><strong>Nuevos clientes este mes:</strong> ${data.new_customers_this_month}</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">Top Clientes</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Ventas</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.top_customers.map(c => `
+                                        <tr>
+                                            <td>${c.name}</td>
+                                            <td>${c.total_sales}</td>
+                                            <td>$${c.total_amount.toFixed(2)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <canvas id="customers-chart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            `;
+            $('#report-content').html(content);
+            
+            // Crear gráfico de clientes por ciudad
+            if (data.customers_by_city.length > 0) {
+                const ctx = document.getElementById('customers-chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.customers_by_city.map(c => c.city),
+                        datasets: [{
+                            data: data.customers_by_city.map(c => c.total_customers),
+                            backgroundColor: [
+                                '#667eea', '#764ba2', '#f093fb', '#f5576c',
+                                '#4facfe', '#00f2fe', '#43e97b', '#38f9d7'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        },
+        error: function() {
+            $('#report-content').html('<div class="alert alert-danger">Error al cargar el reporte de clientes</div>');
+        }
+    });
+}
+
+function closeReport() {
+    $('#reports-container').hide();
 }
 </script>
 {% endblock %}

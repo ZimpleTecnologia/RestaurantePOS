@@ -191,4 +191,74 @@ def delete_product(
     
     db_product.is_active = False
     db.commit()
-    return {"message": "Producto eliminado exitosamente"} 
+    return {"message": "Producto eliminado exitosamente"}
+
+
+# Reportes de inventario
+@router.get("/reports/inventory")
+def get_inventory_report(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener reporte de inventario"""
+    from sqlalchemy import func
+    
+    # Productos con stock bajo
+    low_stock_products = db.query(Product).filter(
+        Product.stock <= Product.min_stock,
+        Product.is_active == True
+    ).all()
+    
+    # Productos sin stock
+    out_of_stock_products = db.query(Product).filter(
+        Product.stock == 0,
+        Product.is_active == True
+    ).all()
+    
+    # Productos por categoría
+    products_by_category = db.query(
+        Category.name,
+        func.count(Product.id).label('total_products'),
+        func.sum(Product.stock).label('total_stock'),
+        func.sum(Product.stock * Product.price).label('total_value')
+    ).join(Product, Category.id == Product.category_id)\
+     .filter(Product.is_active == True)\
+     .group_by(Category.name).all()
+    
+    # Valor total del inventario
+    total_inventory_value = db.query(func.sum(Product.stock * Product.price))\
+        .filter(Product.is_active == True).scalar() or 0
+    
+    return {
+        "total_products": db.query(Product).filter(Product.is_active == True).count(),
+        "low_stock_count": len(low_stock_products),
+        "out_of_stock_count": len(out_of_stock_products),
+        "total_inventory_value": float(total_inventory_value),
+        "low_stock_products": [
+            {
+                "id": p.id,
+                "name": p.name,
+                "code": p.code,
+                "stock": p.stock,
+                "min_stock": p.min_stock
+            }
+            for p in low_stock_products[:10]  # Top 10
+        ],
+        "out_of_stock_products": [
+            {
+                "id": p.id,
+                "name": p.name,
+                "code": p.code
+            }
+            for p in out_of_stock_products[:10]  # Top 10
+        ],
+        "products_by_category": [
+            {
+                "category": item.name,
+                "total_products": item.total_products,
+                "total_stock": item.total_stock or 0,
+                "total_value": float(item.total_value or 0)
+            }
+            for item in products_by_category
+        ]
+    } 

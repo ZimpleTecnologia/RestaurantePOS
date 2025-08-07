@@ -220,6 +220,91 @@ def get_debts_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    """Obtener reporte de deudas de clientes"""
+    from sqlalchemy import func
+    
+    # Clientes con deudas
+    customers_with_debts = db.query(Customer).filter(
+        Customer.current_balance > 0,
+        Customer.is_active == True
+    ).all()
+    
+    total_debt = sum(customer.current_balance for customer in customers_with_debts)
+    
+    return {
+        "total_customers_with_debts": len(customers_with_debts),
+        "total_debt_amount": total_debt,
+        "customers_with_debts": [
+            {
+                "id": customer.id,
+                "full_name": customer.full_name,
+                "current_balance": customer.current_balance,
+                "credit_limit": customer.credit_limit
+            }
+            for customer in customers_with_debts[:10]  # Top 10
+        ]
+    }
+
+
+@router.get("/reports/customers")
+def get_customers_report(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener reporte general de clientes"""
+    from sqlalchemy import func
+    from datetime import datetime, timedelta
+    
+    # Estadísticas generales
+    total_customers = db.query(Customer).filter(Customer.is_active == True).count()
+    new_customers_this_month = db.query(Customer).filter(
+        Customer.created_at >= datetime.now().replace(day=1),
+        Customer.is_active == True
+    ).count()
+    
+    # Clientes por ciudad
+    customers_by_city = db.query(
+        Customer.city,
+        func.count(Customer.id).label('total_customers')
+    ).filter(Customer.is_active == True)\
+     .group_by(Customer.city)\
+     .order_by(func.count(Customer.id).desc())\
+     .limit(10).all()
+    
+    # Top clientes por compras (si hay ventas)
+    from app.models.sale import Sale, SaleStatus
+    
+    top_customers = db.query(
+        Customer.full_name,
+        func.count(Sale.id).label('total_sales'),
+        func.sum(Sale.total).label('total_amount')
+    ).join(Sale, Customer.id == Sale.customer_id)\
+     .filter(
+        Sale.status == SaleStatus.COMPLETADA,
+        Customer.is_active == True
+    ).group_by(Customer.id, Customer.full_name)\
+     .order_by(func.sum(Sale.total).desc())\
+     .limit(10).all()
+    
+    return {
+        "total_customers": total_customers,
+        "new_customers_this_month": new_customers_this_month,
+        "customers_by_city": [
+            {
+                "city": item.city or "Sin ciudad",
+                "total_customers": item.total_customers
+            }
+            for item in customers_by_city
+        ],
+        "top_customers": [
+            {
+                "name": item.full_name,
+                "total_sales": item.total_sales,
+                "total_amount": float(item.total_amount or 0)
+            }
+            for item in top_customers
+        ]
+    }
     """Obtener reporte de deudas por cliente"""
     customers_with_debts = db.query(Customer).filter(
         Customer.current_balance > 0,
