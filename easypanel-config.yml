@@ -1,0 +1,57 @@
+# Configuración para EasyPanel - Sistema POS
+# Configurado para usar el servicio PostgreSQL independiente de EasyPanel
+
+# Variables de entorno necesarias para la aplicación
+environment:
+  # Base de datos PostgreSQL - Servicio independiente en EasyPanel
+  DATABASE_URL: "postgresql://sistema_pos_user:TU_PASSWORD_AQUI@zimple_postgresql:5432/sistema_pos"
+  
+  # Configuración de seguridad (IMPORTANTE: Cambiar en producción)
+  SECRET_KEY: "tu-super-secret-key-muy-largo-y-seguro-aqui"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  
+  # Configuración de la aplicación
+  DEBUG: "false"
+  HOST: "0.0.0.0"
+  PORT: "8000"
+  
+  # Configuración de archivos
+  UPLOAD_DIR: "uploads"
+  MAX_FILE_SIZE: "10485760"
+  
+  # CORS - Configurar con tu dominio
+  ALLOWED_ORIGINS: "https://tu-dominio.com,https://www.tu-dominio.com"
+  
+  # Logging
+  LOG_LEVEL: "INFO"
+  LOG_FILE: "logs/app.log"
+
+# Configuración de puertos
+ports:
+  - "8000:8000"
+
+# Configuración de volúmenes (opcional)
+volumes:
+  - "./uploads:/app/uploads"
+  - "./logs:/app/logs"
+
+# Configuración de recursos
+resources:
+  memory: "512M"
+  cpu: "0.5"
+
+# Configuración de health check
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+  interval: "30s"
+  timeout: "10s"
+  retries: "3"
+  start_period: "40s"
+
+# Configuración de reinicio
+restart: "unless-stopped"
+
+# Configuración de red (para conectar con el servicio PostgreSQL)
+networks:
+  - default
+  - zimple_default  # Red donde está tu servicio PostgreSQL
