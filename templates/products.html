@@ -101,17 +101,27 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Categoría</label>
-                                <select class="form-control" id="productCategory" required>
-                                    <option value="">Seleccionar categoría...</option>
-                                </select>
+                                <div class="input-group">
+                                    <select class="form-control" id="productCategory" required>
+                                        <option value="">Seleccionar categoría...</option>
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="openNewCategory()" title="Crear nueva categoría">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Subcategoría (opcional)</label>
-                                <select class="form-control" id="productSubcategory">
-                                    <option value="">Seleccionar subcategoría...</option>
-                                </select>
+                                <div class="input-group">
+                                    <select class="form-control" id="productSubcategory">
+                                        <option value="">Seleccionar subcategoría...</option>
+                                    </select>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="openNewSubcategory()" title="Crear nueva subcategoría" id="btnNewSubcategory" disabled>
+                                        <i class="bi bi-plus-circle"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -134,6 +144,72 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Crear Categoría -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva Categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de la Categoría</label>
+                        <input type="text" class="form-control" id="categoryName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción (opcional)</label>
+                        <textarea class="form-control" id="categoryDescription" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveCategory()">
+                    <i class="bi bi-check-circle"></i> Guardar Categoría
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear Subcategoría -->
+<div class="modal fade" id="subcategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva Subcategoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="subcategoryForm">
+                    <div class="mb-3">
+                        <label class="form-label">Categoría Padre</label>
+                        <select class="form-control" id="subcategoryParentCategory" required>
+                            <option value="">Seleccionar categoría...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de la Subcategoría</label>
+                        <input type="text" class="form-control" id="subcategoryName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción (opcional)</label>
+                        <textarea class="form-control" id="subcategoryDescription" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveSubcategory()">
+                    <i class="bi bi-check-circle"></i> Guardar Subcategoría
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -143,6 +219,24 @@ let currentProductId = null;
 $(document).ready(function() {
     loadProducts();
     loadCategories();
+    
+    // Cargar subcategorías cuando se seleccione una categoría
+    $('#productCategory').on('change', function() {
+        const categoryId = $(this).val();
+        if (categoryId) {
+            loadSubcategories(categoryId);
+            $('#btnNewSubcategory').prop('disabled', false);
+        } else {
+            $('#productSubcategory').empty().append('<option value="">Seleccionar subcategoría...</option>');
+            $('#btnNewSubcategory').prop('disabled', true);
+        }
+    });
+    
+    // Limpiar subcategorías cuando se cierre el modal de producto
+    $('#productModal').on('hidden.bs.modal', function() {
+        $('#productSubcategory').empty().append('<option value="">Seleccionar subcategoría...</option>');
+        $('#btnNewSubcategory').prop('disabled', true);
+    });
 });
 
 function loadProducts() {
@@ -219,16 +313,48 @@ function loadCategories() {
         },
         success: function(categories) {
             const categorySelect = $('#productCategory');
+            const subcategoryParentSelect = $('#subcategoryParentCategory');
+            
             categorySelect.empty();
             categorySelect.append('<option value="">Seleccionar categoría...</option>');
             
+            subcategoryParentSelect.empty();
+            subcategoryParentSelect.append('<option value="">Seleccionar categoría...</option>');
+            
             categories.forEach(category => {
                 categorySelect.append(`<option value="${category.id}">${category.name}</option>`);
+                subcategoryParentSelect.append(`<option value="${category.id}">${category.name}</option>`);
             });
         },
         error: function(xhr, status, error) {
             console.error('Error al cargar categorías:', xhr.responseText);
         }
+    });
+}
+
+function loadSubcategories(categoryId = null) {
+    const token = localStorage.getItem('access_token');
+    if (!token) return Promise.resolve();
+    
+    const params = categoryId ? { category_id: categoryId } : {};
+    
+    return $.ajax({
+        url: '/api/v1/products/subcategories',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token
+        },
+        data: params
+    }).then(function(subcategories) {
+        const subcategorySelect = $('#productSubcategory');
+        subcategorySelect.empty();
+        subcategorySelect.append('<option value="">Seleccionar subcategoría...</option>');
+        
+        subcategories.forEach(subcategory => {
+            subcategorySelect.append(`<option value="${subcategory.id}">${subcategory.name}</option>`);
+        });
+    }).fail(function(xhr, status, error) {
+        console.error('Error al cargar subcategorías:', xhr.responseText);
     });
 }
 
@@ -260,9 +386,15 @@ function editProduct(productId) {
             $('#productMinStock').val(product.min_stock);
             $('#productMaxStock').val(product.max_stock);
             $('#productCategory').val(product.category_id);
-            $('#productSubcategory').val(product.subcategory_id || '');
             $('#productDescription').val(product.description);
             $('#productActive').prop('checked', product.is_active);
+            
+            // Cargar subcategorías si hay una categoría seleccionada
+            if (product.category_id) {
+                loadSubcategories(product.category_id).then(() => {
+                    $('#productSubcategory').val(product.subcategory_id || '');
+                });
+            }
             
             $('#productModal').modal('show');
         },
@@ -347,6 +479,108 @@ function deleteProduct(productId) {
             }
         });
     }
+}
+
+// Funciones para manejar categorías y subcategorías
+function openNewCategory() {
+    $('#categoryForm')[0].reset();
+    $('#categoryModal').modal('show');
+}
+
+function openNewSubcategory() {
+    $('#subcategoryForm')[0].reset();
+    
+    // Preseleccionar la categoría actual si hay una seleccionada
+    const currentCategoryId = $('#productCategory').val();
+    if (currentCategoryId) {
+        $('#subcategoryParentCategory').val(currentCategoryId);
+    }
+    
+    $('#subcategoryModal').modal('show');
+}
+
+function saveCategory() {
+    const categoryData = {
+        name: $('#categoryName').val(),
+        description: $('#categoryDescription').val()
+    };
+    
+    if (!categoryData.name) {
+        alert('Por favor ingrese el nombre de la categoría');
+        return;
+    }
+    
+    $.ajax({
+        url: '/api/v1/products/categories',
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(categoryData),
+        success: function(response) {
+            $('#categoryModal').modal('hide');
+            loadCategories();
+            $('#productCategory').val(response.id);
+            // Cargar subcategorías de la nueva categoría
+            loadSubcategories(response.id);
+            $('#btnNewSubcategory').prop('disabled', false);
+            alert('Categoría creada correctamente');
+        },
+        error: function(xhr) {
+            if (xhr.status === 400) {
+                try {
+                    const errorData = JSON.parse(xhr.responseText);
+                    alert('Error: ' + (errorData.detail || 'Datos inválidos'));
+                } catch (e) {
+                    alert('Error al crear la categoría');
+                }
+            } else {
+                alert('Error al crear la categoría');
+            }
+        }
+    });
+}
+
+function saveSubcategory() {
+    const subcategoryData = {
+        name: $('#subcategoryName').val(),
+        description: $('#subcategoryDescription').val(),
+        category_id: parseInt($('#subcategoryParentCategory').val())
+    };
+    
+    if (!subcategoryData.name || !subcategoryData.category_id) {
+        alert('Por favor complete todos los campos requeridos');
+        return;
+    }
+    
+    $.ajax({
+        url: '/api/v1/products/subcategories',
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(subcategoryData),
+        success: function(response) {
+            $('#subcategoryModal').modal('hide');
+            loadSubcategories(response.category_id);
+            $('#productSubcategory').val(response.id);
+            alert('Subcategoría creada correctamente');
+        },
+        error: function(xhr) {
+            if (xhr.status === 400) {
+                try {
+                    const errorData = JSON.parse(xhr.responseText);
+                    alert('Error: ' + (errorData.detail || 'Datos inválidos'));
+                } catch (e) {
+                    alert('Error al crear la subcategoría');
+                }
+            } else {
+                alert('Error al crear la subcategoría');
+            }
+        }
+    });
 }
 </script>
 {% endblock %}
