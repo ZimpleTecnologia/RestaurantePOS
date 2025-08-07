@@ -178,7 +178,7 @@ function loadDashboardData() {
         url: '/api/v1/sales/reports/daily',
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
         },
         success: function(data) {
             $('#today-sales').text('$' + data.total_amount.toFixed(2));
@@ -193,7 +193,7 @@ function loadDashboardData() {
         url: '/api/v1/products/',
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
         },
         success: function(data) {
             $('#total-products').text(data.length);
@@ -208,7 +208,7 @@ function loadDashboardData() {
         url: '/api/v1/customers/',
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
         },
         success: function(data) {
             $('#total-customers').text(data.length);
@@ -224,7 +224,7 @@ function loadRecentSales() {
         url: '/api/v1/sales/',
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
         },
         success: function(data) {
             const tbody = $('#recent-sales-table tbody');
@@ -254,7 +254,7 @@ function loadLowStockProducts() {
         url: '/api/v1/products/',
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('token')
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
         },
         success: function(data) {
             const lowStockProducts = data.filter(p => p.stock <= p.min_stock);

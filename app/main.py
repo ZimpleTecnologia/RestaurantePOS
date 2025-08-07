@@ -10,7 +10,7 @@ import os
 
 from app.config import settings
 from app.database import create_tables
-from app.routers import auth, products, sales, customers
+from app.routers import auth, products, sales, customers, inventory
 from app.models import *  # Importar todos los modelos para crear las tablas
 
 # Crear aplicación FastAPI
@@ -43,6 +43,7 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(products.router, prefix="/api/v1")
 app.include_router(sales.router, prefix="/api/v1")
 app.include_router(customers.router, prefix="/api/v1")
+app.include_router(inventory.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
@@ -58,6 +59,48 @@ async def startup_event():
 async def root(request: Request):
     """Página principal"""
     return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Página de login"""
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.get("/sales", response_class=HTMLResponse)
+async def sales_page(request: Request):
+    """Página de ventas"""
+    return templates.TemplateResponse("sales.html", {"request": request})
+
+
+@app.get("/products", response_class=HTMLResponse)
+async def products_page(request: Request):
+    """Página de productos"""
+    return templates.TemplateResponse("products.html", {"request": request})
+
+
+@app.get("/customers", response_class=HTMLResponse)
+async def customers_page(request: Request):
+    """Página de clientes"""
+    return templates.TemplateResponse("customers.html", {"request": request})
+
+
+@app.get("/inventory", response_class=HTMLResponse)
+async def inventory_page(request: Request):
+    """Página de inventario"""
+    return templates.TemplateResponse("inventory.html", {"request": request})
+
+
+@app.get("/reports", response_class=HTMLResponse)
+async def reports_page(request: Request):
+    """Página de reportes"""
+    return templates.TemplateResponse("reports.html", {"request": request})
+
+
+@app.get("/settings", response_class=HTMLResponse)
+async def settings_page(request: Request):
+    """Página de configuración"""
+    return templates.TemplateResponse("settings.html", {"request": request})
 
 
 @app.get("/health")
@@ -81,7 +124,8 @@ async def api_info():
             "auth": "/api/v1/auth",
             "products": "/api/v1/products",
             "sales": "/api/v1/sales",
-            "customers": "/api/v1/customers"
+            "customers": "/api/v1/customers",
+            "inventory": "/api/v1/inventory"
         }
     }
 

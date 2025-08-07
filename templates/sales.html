@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+
+{% block title %}Ventas - Sistema POS{% endblock %}
+{% block page_title %}Ventas{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">Gestión de Ventas</h6>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#saleModal" onclick="openNewSale()">
+                    <i class="bi bi-plus-circle"></i> Nueva Venta
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="sales-table">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Cliente</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="text-center">Cargando ventas...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Nueva Venta -->
+<div class="modal fade" id="saleModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva Venta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Panel de Productos -->
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0">Productos Disponibles</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="productSearch" placeholder="Buscar producto por código o nombre...">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="searchProducts()">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                                <div class="table-responsive" style="max-height: 300px;">
+                                    <table class="table table-sm" id="products-sale-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Código</th>
+                                                <th>Producto</th>
+                                                <th>Precio</th>
+                                                <th>Stock</th>
+                                                <th>Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="5" class="text-center">Cargando productos...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Panel del Carrito -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0">Carrito de Compra</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Cliente</label>
+                                    <select class="form-select" id="saleCustomer">
+                                        <option value="">Sin cliente</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="table-responsive" style="max-height: 200px;">
+                                    <table class="table table-sm" id="cart-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Cant.</th>
+                                                <th>Precio</th>
+                                                <th>Total</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">Carrito vacío</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="border-top pt-3">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Subtotal:</strong>
+                                        <span id="subtotal">$0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>IVA (16%):</strong>
+                                        <span id="tax">$0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Total:</strong>
+                                        <span id="total">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="completeSale()">
+                    <i class="bi bi-check-circle"></i> Completar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let cart = [];
+let products = [];
+
+$(document).ready(function() {
+    loadSales();
+    loadProductsForSale();
+    loadCustomers();
+});
+
+function loadSales() {
+    $.ajax({
+        url: '/api/v1/sales/',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        },
+        success: function(data) {
+            const tbody = $('#sales-table tbody');
+            tbody.empty();
+            
+            if (data.length === 0) {
+                tbody.html('<tr><td colspan="6" class="text-center text-muted">No hay ventas registradas</td></tr>');
+            } else {
+                data.forEach(sale => {
+                    const row = `
+                        <tr>
+                            <td>${sale.sale_number || 'N/A'}</td>
+                            <td>${sale.customer_name || 'Sin cliente'}</td>
+                            <td>$${sale.total || 0}</td>
+                            <td><span class="badge bg-${getStatusColor(sale.status)}">${sale.status || 'pendiente'}</span></td>
+                            <td>${sale.created_at ? new Date(sale.created_at).toLocaleDateString() : 'N/A'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewSale(${sale.id})">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            }
+        },
+        error: function() {
+            $('#sales-table tbody').html('<tr><td colspan="6" class="text-center text-danger">Error al cargar ventas</td></tr>');
+        }
+    });
+}
+
+function loadProductsForSale() {
+    $.ajax({
+        url: '/api/v1/products/',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        },
+        success: function(data) {
+            products = data.filter(p => p.is_active && p.stock > 0);
+            displayProducts(products);
+        },
+        error: function() {
+            $('#products-sale-table tbody').html('<tr><td colspan="5" class="text-center text-danger">Error al cargar productos</td></tr>');
+        }
+    });
+}
+
+function loadCustomers() {
+    $.ajax({
+        url: '/api/v1/customers/',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        },
+        success: function(data) {
+            const select = $('#saleCustomer');
+            select.empty();
+            select.append('<option value="">Sin cliente</option>');
+            
+            data.forEach(customer => {
+                select.append(`<option value="${customer.id}">${customer.full_name}</option>`);
+            });
+        },
+        error: function() {
+            console.log('Error al cargar clientes');
+        }
+    });
+}
+
+function displayProducts(productsToShow) {
+    const tbody = $('#products-sale-table tbody');
+    tbody.empty();
+    
+    if (productsToShow.length === 0) {
+        tbody.html('<tr><td colspan="5" class="text-center text-muted">No hay productos disponibles</td></tr>');
+    } else {
+        productsToShow.forEach(product => {
+            const row = `
+                <tr>
+                    <td>${product.code || 'N/A'}</td>
+                    <td>${product.name || 'N/A'}</td>
+                    <td>$${product.price || 0}</td>
+                    <td>${product.stock || 0}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="addToCart(${product.id})">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+}
+
+function searchProducts() {
+    const searchTerm = $('#productSearch').val().toLowerCase();
+    const filteredProducts = products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) || 
+        product.code.toLowerCase().includes(searchTerm)
+    );
+    displayProducts(filteredProducts);
+}
+
+function addToCart(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    const existingItem = cart.find(item => item.product_id === productId);
+    
+    if (existingItem) {
+        if (existingItem.quantity < product.stock) {
+            existingItem.quantity++;
+            existingItem.total = existingItem.quantity * existingItem.price;
+        } else {
+            alert('No hay suficiente stock disponible');
+            return;
+        }
+    } else {
+        cart.push({
+            product_id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+            total: product.price
+        });
+    }
+    
+    updateCartDisplay();
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    updateCartDisplay();
+}
+
+function updateQuantity(index, newQuantity) {
+    const item = cart[index];
+    const product = products.find(p => p.id === item.product_id);
+    
+    if (newQuantity <= 0) {
+        removeFromCart(index);
+        return;
+    }
+    
+    if (newQuantity > product.stock) {
+        alert('No hay suficiente stock disponible');
+        return;
+    }
+    
+    item.quantity = newQuantity;
+    item.total = item.quantity * item.price;
+    updateCartDisplay();
+}
+
+function updateCartDisplay() {
+    const tbody = $('#cart-table tbody');
+    tbody.empty();
+    
+    if (cart.length === 0) {
+        tbody.html('<tr><td colspan="5" class="text-center text-muted">Carrito vacío</td></tr>');
+    } else {
+        cart.forEach((item, index) => {
+            const row = `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm" 
+                               style="width: 60px;" value="${item.quantity}" 
+                               onchange="updateQuantity(${index}, this.value)">
+                    </td>
+                    <td>$${item.price}</td>
+                    <td>$${item.total.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${index})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+    
+    updateTotals();
+}
+
+function updateTotals() {
+    const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
+    const tax = subtotal * 0.16; // 16% IVA
+    const total = subtotal + tax;
+    
+    $('#subtotal').text('$' + subtotal.toFixed(2));
+    $('#tax').text('$' + tax.toFixed(2));
+    $('#total').text('$' + total.toFixed(2));
+}
+
+function openNewSale() {
+    cart = [];
+    updateCartDisplay();
+    $('#saleCustomer').val('');
+    $('#productSearch').val('');
+    displayProducts(products);
+}
+
+function completeSale() {
+    if (cart.length === 0) {
+        alert('El carrito está vacío');
+        return;
+    }
+    
+    const saleData = {
+        customer_id: $('#saleCustomer').val() || null,
+        items: cart.map(item => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price: item.price
+        })),
+        total: parseFloat($('#total').text().replace('$', ''))
+    };
+    
+    $.ajax({
+        url: '/api/v1/sales/',
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(saleData),
+        success: function(response) {
+            $('#saleModal').modal('hide');
+            loadSales();
+            alert('Venta completada correctamente');
+        },
+        error: function() {
+            alert('Error al completar la venta');
+        }
+    });
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'completada': return 'success';
+        case 'pendiente': return 'warning';
+        case 'cancelada': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function viewSale(saleId) {
+    // Implementar vista de venta
+    alert('Ver venta: ' + saleId);
+}
+</script>
+{% endblock %}

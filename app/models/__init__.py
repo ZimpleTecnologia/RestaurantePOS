@@ -5,7 +5,7 @@ from .sale import Sale, SaleItem, PaymentMethod
 from .customer import Customer, Credit, Payment
 from .supplier import Supplier, Purchase, PurchaseItem
 from .location import Location, Table
-from .inventory import Inventory, InventoryMovement
+from .inventory import InventoryMovement
 from .recipe import Recipe, RecipeItem
 
 __all__ = [
@@ -24,7 +24,6 @@ __all__ = [
     "PurchaseItem",
     "Location",
     "Table",
-    "Inventory",
     "InventoryMovement",
     "Recipe",
     "RecipeItem"

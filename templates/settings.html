@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración - Sistema POS{% endblock %}
+{% block page_title %}Configuración{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold">Configuración del Sistema</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">Configuración General</h6>
+                            </div>
+                            <div class="card-body">
+                                <form>
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre de la Empresa</label>
+                                        <input type="text" class="form-control" value="Mi Empresa">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Moneda</label>
+                                        <select class="form-select">
+                                            <option>USD - Dólar</option>
+                                            <option>EUR - Euro</option>
+                                            <option>MXN - Peso Mexicano</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Zona Horaria</label>
+                                        <select class="form-select">
+                                            <option>UTC-5 (América Central)</option>
+                                            <option>UTC-6 (América Central)</option>
+                                            <option>UTC-8 (Pacífico)</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">Configuración de Usuario</h6>
+                            </div>
+                            <div class="card-body">
+                                <form>
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre Completo</label>
+                                        <input type="text" class="form-control" value="Administrador">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" value="admin@sistema.com">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Nueva Contraseña</label>
+                                        <input type="password" class="form-control">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Confirmar Contraseña</label>
+                                        <input type="password" class="form-control">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Actualizar Perfil</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Funcionalidad básica de configuración
+$(document).ready(function() {
+    // Aquí se puede agregar la lógica para cargar y guardar configuraciones
+    console.log('Página de configuración cargada');
+});
+</script>
+{% endblock %}

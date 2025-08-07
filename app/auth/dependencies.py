@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.auth.security import verify_token
 from app.schemas.user import TokenData
 
@@ -54,7 +54,7 @@ def get_current_active_user(current_user: User = Depends(get_current_user)) -> U
 
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
     """Requerir rol de administrador"""
-    if current_user.role.value != "admin":
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Se requieren permisos de administrador"
@@ -64,7 +64,7 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
 
 def require_supervisor_or_admin(current_user: User = Depends(get_current_user)) -> User:
     """Requerir rol de supervisor o administrador"""
-    if current_user.role.value not in ["admin", "supervisor"]:
+    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Se requieren permisos de supervisor o administrador"

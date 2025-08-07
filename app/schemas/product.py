@@ -4,7 +4,6 @@ Esquemas Pydantic para Productos y Categorías
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
-from decimal import Decimal
 from app.models.product import ProductType
 
 
@@ -73,8 +72,8 @@ class ProductBase(BaseModel):
     code: str
     name: str
     description: Optional[str] = None
-    price: Decimal
-    cost_price: Optional[Decimal] = None
+    price: float
+    cost_price: Optional[float] = None
     stock: int = 0
     min_stock: int = 0
     max_stock: int = 1000
@@ -95,8 +94,8 @@ class ProductUpdate(BaseModel):
     code: Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
-    price: Optional[Decimal] = None
-    cost_price: Optional[Decimal] = None
+    price: Optional[float] = None
+    cost_price: Optional[float] = None
     stock: Optional[int] = None
     min_stock: Optional[int] = None
     max_stock: Optional[int] = None
@@ -121,5 +120,5 @@ class ProductResponse(ProductBase):
 
 class ProductWithCategory(ProductResponse):
     """Esquema de producto con información de categoría"""
-    category: CategoryResponse
+    category: Optional[CategoryResponse] = None
     subcategory: Optional[SubCategoryResponse] = None 

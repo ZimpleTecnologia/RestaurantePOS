@@ -103,7 +103,7 @@ def create_subcategory(
 
 
 # Rutas para productos
-@router.get("/", response_model=List[ProductWithCategory])
+@router.get("/", response_model=List[ProductResponse])
 def get_products(
     skip: int = 0,
     limit: int = 100,
@@ -131,7 +131,7 @@ def get_products(
 def create_product(
     product: ProductCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(get_current_active_user)
 ):
     """Crear nuevo producto"""
     # Verificar si el código ya existe
@@ -149,7 +149,7 @@ def create_product(
     return db_product
 
 
-@router.get("/{product_id}", response_model=ProductWithCategory)
+@router.get("/{product_id}", response_model=ProductResponse)
 def get_product(product_id: int, db: Session = Depends(get_db)):
     """Obtener producto por ID"""
     product = db.query(Product).filter(Product.id == product_id).first()
@@ -163,7 +163,7 @@ def update_product(
     product_id: int,
     product: ProductUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(get_current_active_user)
 ):
     """Actualizar producto"""
     db_product = db.query(Product).filter(Product.id == product_id).first()
@@ -182,7 +182,7 @@ def update_product(
 def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(get_current_active_user)
 ):
     """Eliminar producto (desactivar)"""
     db_product = db.query(Product).filter(Product.id == product_id).first()

@@ -160,13 +160,14 @@
     <script>
         // Función para cerrar sesión
         function logout() {
-            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('token_type');
             window.location.href = '/login';
         }
 
         // Verificar autenticación
         function checkAuth() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             if (!token && window.location.pathname !== '/login') {
                 window.location.href = '/login';
             }

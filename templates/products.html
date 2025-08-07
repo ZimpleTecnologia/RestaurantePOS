@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Productos - Sistema POS{% endblock %}
+{% block page_title %}Productos{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">Gestión de Productos</h6>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#productModal" onclick="openNewProduct()">
+                    <i class="bi bi-plus-circle"></i> Nuevo Producto
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="products-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="text-center">Cargando productos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Agregar/Editar Producto -->
+<div class="modal fade" id="productModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalTitle">Nuevo Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <input type="hidden" id="productId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Código del Producto</label>
+                                <input type="text" class="form-control" id="productCode" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="productName" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Precio de Venta</label>
+                                <input type="number" class="form-control" id="productPrice" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Precio de Costo</label>
+                                <input type="number" class="form-control" id="productCostPrice" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Stock Inicial</label>
+                                <input type="number" class="form-control" id="productStock" value="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Stock Mínimo</label>
+                                <input type="number" class="form-control" id="productMinStock" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Stock Máximo</label>
+                                <input type="number" class="form-control" id="productMaxStock" value="100">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Categoría</label>
+                                <select class="form-control" id="productCategory" required>
+                                    <option value="">Seleccionar categoría...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Subcategoría (opcional)</label>
+                                <select class="form-control" id="productSubcategory">
+                                    <option value="">Seleccionar subcategoría...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="productDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="productActive" checked>
+                            <label class="form-check-label">Producto Activo</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveProduct()">Guardar Producto</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentProductId = null;
+
+$(document).ready(function() {
+    loadProducts();
+    loadCategories();
+});
+
+function loadProducts() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        $('#products-table tbody').html('<tr><td colspan="6" class="text-center text-danger">No hay token de autenticación</td></tr>');
+        return;
+    }
+    
+    $.ajax({
+        url: '/api/v1/products/',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token
+        },
+        success: function(data) {
+            const tbody = $('#products-table tbody');
+            tbody.empty();
+            
+            if (data.length === 0) {
+                tbody.html('<tr><td colspan="6" class="text-center text-muted">No hay productos registrados</td></tr>');
+            } else {
+                data.forEach(product => {
+                    const row = `
+                        <tr>
+                            <td>${product.code || 'N/A'}</td>
+                            <td>${product.name || 'N/A'}</td>
+                            <td>$${product.price || 0}</td>
+                            <td>
+                                <span class="badge bg-${product.stock <= product.min_stock ? 'danger' : 'success'}">
+                                    ${product.stock || 0}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-${product.is_active ? 'success' : 'secondary'}">
+                                    ${product.is_active ? 'Activo' : 'Inactivo'}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${product.id})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${product.id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al cargar productos:', xhr.responseText);
+            
+            if (xhr.status === 401) {
+                $('#products-table tbody').html('<tr><td colspan="6" class="text-center text-danger">Sesión expirada. <a href="/login">Iniciar sesión</a></td></tr>');
+            } else {
+                $('#products-table tbody').html('<tr><td colspan="6" class="text-center text-danger">Error al cargar productos</td></tr>');
+            }
+        }
+    });
+}
+
+function loadCategories() {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+    
+    $.ajax({
+        url: '/api/v1/products/categories',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token
+        },
+        success: function(categories) {
+            const categorySelect = $('#productCategory');
+            categorySelect.empty();
+            categorySelect.append('<option value="">Seleccionar categoría...</option>');
+            
+            categories.forEach(category => {
+                categorySelect.append(`<option value="${category.id}">${category.name}</option>`);
+            });
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al cargar categorías:', xhr.responseText);
+        }
+    });
+}
+
+function openNewProduct() {
+    currentProductId = null;
+    $('#productModalTitle').text('Nuevo Producto');
+    $('#productForm')[0].reset();
+    $('#productActive').prop('checked', true);
+}
+
+function editProduct(productId) {
+    currentProductId = productId;
+    $('#productModalTitle').text('Editar Producto');
+    
+    // Cargar datos del producto
+    $.ajax({
+        url: `/api/v1/products/${productId}`,
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        },
+        success: function(product) {
+            $('#productId').val(product.id);
+            $('#productCode').val(product.code);
+            $('#productName').val(product.name);
+            $('#productPrice').val(product.price);
+            $('#productCostPrice').val(product.cost_price);
+            $('#productStock').val(product.stock);
+            $('#productMinStock').val(product.min_stock);
+            $('#productMaxStock').val(product.max_stock);
+            $('#productCategory').val(product.category_id);
+            $('#productSubcategory').val(product.subcategory_id || '');
+            $('#productDescription').val(product.description);
+            $('#productActive').prop('checked', product.is_active);
+            
+            $('#productModal').modal('show');
+        },
+        error: function() {
+            alert('Error al cargar el producto');
+        }
+    });
+}
+
+function saveProduct() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+        alert('No hay token de autenticación. Por favor, inicie sesión nuevamente.');
+        window.location.href = '/login';
+        return;
+    }
+    
+    const productData = {
+        code: $('#productCode').val(),
+        name: $('#productName').val(),
+        price: parseFloat($('#productPrice').val()),
+        cost_price: parseFloat($('#productCostPrice').val()) || 0,
+        stock: parseInt($('#productStock').val()),
+        min_stock: parseInt($('#productMinStock').val()) || 0,
+        max_stock: parseInt($('#productMaxStock').val()) || 100,
+        category_id: parseInt($('#productCategory').val()),
+        subcategory_id: $('#productSubcategory').val() ? parseInt($('#productSubcategory').val()) : null,
+        description: $('#productDescription').val(),
+        is_active: $('#productActive').is(':checked')
+    };
+    
+    const method = currentProductId ? 'PUT' : 'POST';
+    const url = currentProductId ? `/api/v1/products/${currentProductId}` : '/api/v1/products/';
+    
+    $.ajax({
+        url: url,
+        method: method,
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(productData),
+        success: function() {
+            $('#productModal').modal('hide');
+            loadProducts();
+            alert(currentProductId ? 'Producto actualizado correctamente' : 'Producto creado correctamente');
+        },
+        error: function(xhr, status, error) {
+            console.error('Error al guardar producto:', xhr.responseText);
+            
+            if (xhr.status === 401) {
+                alert('Sesión expirada. Por favor, inicie sesión nuevamente.');
+                window.location.href = '/login';
+            } else if (xhr.status === 400) {
+                try {
+                    const errorData = JSON.parse(xhr.responseText);
+                    alert('Error de validación: ' + (errorData.detail || 'Datos inválidos'));
+                } catch (e) {
+                    alert('Error de validación en los datos del producto');
+                }
+            } else {
+                alert('Error al guardar el producto. Código: ' + xhr.status);
+            }
+        }
+    });
+}
+
+function deleteProduct(productId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+        $.ajax({
+            url: `/api/v1/products/${productId}`,
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+            },
+            success: function() {
+                loadProducts();
+                alert('Producto eliminado correctamente');
+            },
+            error: function() {
+                alert('Error al eliminar el producto');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

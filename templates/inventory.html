@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Inventario - Sistema POS{% endblock %}
+{% block page_title %}Inventario{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">Control de Inventario</h6>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#stockModal" onclick="openStockAdjustment()">
+                    <i class="bi bi-plus-circle"></i> Ajustar Stock
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Stock Actual</th>
+                                <th>Stock Mínimo</th>
+                                <th>Stock Máximo</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="text-center">Cargando inventario...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ajustar Stock -->
+<div class="modal fade" id="stockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajustar Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="stockForm">
+                    <div class="mb-3">
+                        <label class="form-label">Producto</label>
+                        <select class="form-select" id="stockProduct" required>
+                            <option value="">Seleccionar producto...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Ajuste</label>
+                        <select class="form-select" id="adjustmentType" required>
+                            <option value="add">Agregar Stock</option>
+                            <option value="subtract">Reducir Stock</option>
+                            <option value="set">Establecer Stock</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" id="adjustmentQuantity" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Motivo</label>
+                        <select class="form-select" id="adjustmentReason" required>
+                            <option value="">Seleccionar motivo...</option>
+                            <option value="compra">Compra de Mercancía</option>
+                            <option value="venta">Venta</option>
+                            <option value="devolucion">Devolución</option>
+                            <option value="merma">Merma/Pérdida</option>
+                            <option value="inventario">Ajuste de Inventario</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="adjustmentNotes" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveStockAdjustment()">Guardar Ajuste</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ver Historial de Movimientos -->
+<div class="modal fade" id="movementModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Historial de Movimientos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="movements-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Cantidad</th>
+                                <th>Stock Anterior</th>
+                                <th>Stock Nuevo</th>
+                                <th>Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="text-center">Cargando movimientos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let products = [];
+
+$(document).ready(function() {
+    loadInventory();
+    loadProductsForStock();
+});
+
+function loadInventory() {
+    $.ajax({
+        url: '/api/v1/products/',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        },
+        success: function(data) {
+            products = data;
+            const tbody = $('#inventory-table tbody');
+            tbody.empty();
+            
+            if (data.length === 0) {
+                tbody.html('<tr><td colspan="6" class="text-center text-muted">No hay productos en inventario</td></tr>');
+            } else {
+                data.forEach(product => {
+                    const stockStatus = getStockStatus(product.stock, product.min_stock, product.max_stock);
+                    const row = `
+                        <tr>
+                            <td>${product.name || 'N/A'}</td>
+                            <td>${product.stock || 0}</td>
+                            <td>${product.min_stock || 0}</td>
+                            <td>${product.max_stock || 0}</td>
+                            <td>
+                                <span class="badge bg-${stockStatus.color}">
+                                    ${stockStatus.text}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="adjustStock(${product.id})">
+                                    <i class="bi bi-gear"></i> Ajustar
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="viewMovements(${product.id})">
+                                    <i class="bi bi-clock-history"></i> Historial
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            }
+        },
+        error: function() {
+            $('#inventory-table tbody').html('<tr><td colspan="6" class="text-center text-danger">Error al cargar inventario</td></tr>');
+        }
+    });
+}
+
+function loadProductsForStock() {
+    $.ajax({
+        url: '/api/v1/products/',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        },
+        success: function(data) {
+            const select = $('#stockProduct');
+            select.empty();
+            select.append('<option value="">Seleccionar producto...</option>');
+            
+            data.forEach(product => {
+                select.append(`<option value="${product.id}" data-stock="${product.stock}">${product.name} (Stock: ${product.stock})</option>`);
+            });
+        },
+        error: function() {
+            console.log('Error al cargar productos para stock');
+        }
+    });
+}
+
+function getStockStatus(stock, minStock, maxStock) {
+    if (stock <= minStock) {
+        return { color: 'danger', text: 'Stock Bajo' };
+    } else if (stock >= maxStock) {
+        return { color: 'warning', text: 'Stock Alto' };
+    } else {
+        return { color: 'success', text: 'Normal' };
+    }
+}
+
+function openStockAdjustment() {
+    $('#stockForm')[0].reset();
+    $('#stockProduct').val('');
+    $('#adjustmentType').val('add');
+    $('#adjustmentQuantity').val('');
+    $('#adjustmentReason').val('');
+    $('#adjustmentNotes').val('');
+}
+
+function adjustStock(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    $('#stockProduct').val(productId);
+    $('#stockModal').modal('show');
+}
+
+function saveStockAdjustment() {
+    const productId = $('#stockProduct').val();
+    const adjustmentType = $('#adjustmentType').val();
+    const quantity = parseInt($('#adjustmentQuantity').val());
+    const reason = $('#adjustmentReason').val();
+    const notes = $('#adjustmentNotes').val();
+    
+    if (!productId || !quantity || !reason) {
+        alert('Por favor complete todos los campos requeridos');
+        return;
+    }
+    
+    const product = products.find(p => p.id == productId);
+    let newStock = product.stock;
+    
+    switch(adjustmentType) {
+        case 'add':
+            newStock += quantity;
+            break;
+        case 'subtract':
+            newStock -= quantity;
+            if (newStock < 0) {
+                alert('No se puede reducir más stock del disponible');
+                return;
+            }
+            break;
+        case 'set':
+            newStock = quantity;
+            break;
+    }
+    
+    const adjustmentData = {
+        product_id: productId,
+        adjustment_type: adjustmentType,
+        quantity: quantity,
+        new_stock: newStock,
+        reason: reason,
+        notes: notes
+    };
+    
+    $.ajax({
+        url: '/api/v1/inventory/adjust',
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify(adjustmentData),
+        success: function() {
+            $('#stockModal').modal('hide');
+            loadInventory();
+            alert('Ajuste de stock guardado correctamente');
+        },
+        error: function() {
+            alert('Error al guardar el ajuste de stock');
+        }
+    });
+}
+
+function viewMovements(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    // Cargar movimientos del producto
+    $.ajax({
+        url: `/api/v1/inventory/movements/${productId}`,
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        },
+        success: function(data) {
+            const tbody = $('#movements-table tbody');
+            tbody.empty();
+            
+            if (data.length === 0) {
+                tbody.html('<tr><td colspan="6" class="text-center text-muted">No hay movimientos registrados</td></tr>');
+            } else {
+                data.forEach(movement => {
+                    const row = `
+                        <tr>
+                            <td>${new Date(movement.created_at).toLocaleString()}</td>
+                            <td>
+                                <span class="badge bg-${movement.adjustment_type === 'add' ? 'success' : movement.adjustment_type === 'subtract' ? 'danger' : 'info'}">
+                                    ${movement.adjustment_type === 'add' ? 'Agregar' : movement.adjustment_type === 'subtract' ? 'Reducir' : 'Establecer'}
+                                </span>
+                            </td>
+                            <td>${movement.quantity}</td>
+                            <td>${movement.previous_stock}</td>
+                            <td>${movement.new_stock}</td>
+                            <td>${movement.reason}</td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            }
+            
+            $('#movementModal').modal('show');
+        },
+        error: function() {
+            alert('Error al cargar el historial de movimientos');
+        }
+    });
+}
+
+// Actualizar stock mostrado cuando se selecciona un producto
+$('#stockProduct').change(function() {
+    const selectedOption = $(this).find('option:selected');
+    const currentStock = selectedOption.data('stock') || 0;
+    
+    // Mostrar información del stock actual
+    if (selectedOption.val()) {
+        $('#adjustmentQuantity').attr('placeholder', `Stock actual: ${currentStock}`);
+    }
+});
+</script>
+{% endblock %}

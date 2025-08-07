@@ -1,7 +1,7 @@
 """
 Router de autenticación
 """
-from datetime import timedelta
+from datetime import timedelta, datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -65,7 +65,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         )
     
     # Actualizar último login
-    user.last_login = timedelta(hours=0)
+    user.last_login = datetime.utcnow()
     db.commit()
     
     # Crear token de acceso

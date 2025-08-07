@@ -8,13 +8,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
 from app.models.user import User
-from app.models.sale import Sale, SaleItem, PaymentMethod, SaleStatus
+from app.models.sale import Sale, SaleItem, SaleStatus
 from app.models.product import Product
+from app.models.customer import Customer
 from app.auth.dependencies import get_current_active_user
 from app.schemas.sale import (
     SaleCreate, SaleUpdate, SaleResponse, SaleWithDetails,
-    SaleItemCreate, SaleItemResponse,
-    PaymentMethodCreate, PaymentMethodResponse
+    SaleItemCreate, SaleItemResponse
 )
 
 router = APIRouter(prefix="/sales", tags=["ventas"])
@@ -37,30 +37,51 @@ def generate_sale_number(db: Session) -> str:
 def get_sales(
     skip: int = 0,
     limit: int = 100,
-    status: Optional[SaleStatus] = Query(None),
-    start_date: Optional[date] = Query(None),
-    end_date: Optional[date] = Query(None),
-    user_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """Obtener lista de ventas"""
-    query = db.query(Sale)
+    sales = db.query(Sale).order_by(Sale.created_at.desc()).offset(skip).limit(limit).all()
     
-    if status:
-        query = query.filter(Sale.status == status)
+    # Agregar información del cliente
+    result = []
+    for sale in sales:
+        sale_dict = {
+            "id": sale.id,
+            "sale_number": sale.sale_number,
+            "customer_id": sale.customer_id,
+            "user_id": sale.user_id,
+            "total": sale.total,
+            "status": sale.status,
+            "created_at": sale.created_at,
+            "completed_at": sale.completed_at,
+            "items": [],
+            "customer_name": None
+        }
+        
+        # Obtener nombre del cliente
+        if sale.customer_id:
+            customer = db.query(Customer).filter(Customer.id == sale.customer_id).first()
+            if customer:
+                sale_dict["customer_name"] = customer.full_name
+        
+        # Obtener items de la venta
+        items = db.query(SaleItem).filter(SaleItem.sale_id == sale.id).all()
+        sale_dict["items"] = [
+            {
+                "id": item.id,
+                "sale_id": item.sale_id,
+                "product_id": item.product_id,
+                "quantity": item.quantity,
+                "unit_price": item.unit_price,
+                "total": item.total
+            }
+            for item in items
+        ]
+        
+        result.append(sale_dict)
     
-    if start_date:
-        query = query.filter(func.date(Sale.created_at) >= start_date)
-    
-    if end_date:
-        query = query.filter(func.date(Sale.created_at) <= end_date)
-    
-    if user_id:
-        query = query.filter(Sale.user_id == user_id)
-    
-    sales = query.order_by(Sale.created_at.desc()).offset(skip).limit(limit).all()
-    return sales
+    return result
 
 
 @router.post("/", response_model=SaleResponse)
@@ -77,7 +98,9 @@ def create_sale(
     db_sale = Sale(
         sale_number=sale_number,
         user_id=current_user.id,
-        **sale_data.dict(exclude={'items', 'payments'})
+        customer_id=sale_data.customer_id,
+        total=sale_data.total,
+        status=SaleStatus.COMPLETADA
     )
     
     db.add(db_sale)
@@ -97,25 +120,19 @@ def create_sale(
             )
         
         # Calcular total del item
-        item_total = (item_data.unit_price * item_data.quantity) - item_data.discount
+        item_total = item_data.price * item_data.quantity
         
         db_item = SaleItem(
             sale_id=db_sale.id,
-            **item_data.dict(),
+            product_id=item_data.product_id,
+            quantity=item_data.quantity,
+            unit_price=item_data.price,
             total=item_total
         )
         db.add(db_item)
         
         # Actualizar stock
         product.stock -= item_data.quantity
-    
-    # Crear métodos de pago
-    for payment_data in sale_data.payments:
-        db_payment = PaymentMethod(
-            sale_id=db_sale.id,
-            **payment_data.dict()
-        )
-        db.add(db_payment)
     
     db.commit()
     db.refresh(db_sale)
@@ -132,88 +149,42 @@ def get_sale(
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if not sale:
         raise HTTPException(status_code=404, detail="Venta no encontrada")
-    return sale
-
-
-@router.put("/{sale_id}", response_model=SaleResponse)
-def update_sale(
-    sale_id: int,
-    sale_data: SaleUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Actualizar venta"""
-    db_sale = db.query(Sale).filter(Sale.id == sale_id).first()
-    if not db_sale:
-        raise HTTPException(status_code=404, detail="Venta no encontrada")
     
-    # Solo permitir actualizar ventas pendientes
-    if db_sale.status != SaleStatus.PENDIENTE:
-        raise HTTPException(
-            status_code=400, 
-            detail="Solo se pueden actualizar ventas pendientes"
-        )
+    # Agregar información del cliente
+    sale_dict = {
+        "id": sale.id,
+        "sale_number": sale.sale_number,
+        "customer_id": sale.customer_id,
+        "user_id": sale.user_id,
+        "total": sale.total,
+        "status": sale.status,
+        "created_at": sale.created_at,
+        "completed_at": sale.completed_at,
+        "items": [],
+        "customer_name": None
+    }
     
-    for field, value in sale_data.dict(exclude_unset=True).items():
-        setattr(db_sale, field, value)
+    # Obtener nombre del cliente
+    if sale.customer_id:
+        customer = db.query(Customer).filter(Customer.id == sale.customer_id).first()
+        if customer:
+            sale_dict["customer_name"] = customer.full_name
     
-    db.commit()
-    db.refresh(db_sale)
-    return db_sale
-
-
-@router.post("/{sale_id}/complete")
-def complete_sale(
-    sale_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Completar venta"""
-    db_sale = db.query(Sale).filter(Sale.id == sale_id).first()
-    if not db_sale:
-        raise HTTPException(status_code=404, detail="Venta no encontrada")
+    # Obtener items de la venta
+    items = db.query(SaleItem).filter(SaleItem.sale_id == sale.id).all()
+    sale_dict["items"] = [
+        {
+            "id": item.id,
+            "sale_id": item.sale_id,
+            "product_id": item.product_id,
+            "quantity": item.quantity,
+            "unit_price": item.unit_price,
+            "total": item.total
+        }
+        for item in items
+    ]
     
-    if db_sale.status != SaleStatus.PENDIENTE:
-        raise HTTPException(
-            status_code=400, 
-            detail="Solo se pueden completar ventas pendientes"
-        )
-    
-    db_sale.status = SaleStatus.COMPLETADA
-    db_sale.completed_at = datetime.utcnow()
-    db.commit()
-    
-    return {"message": "Venta completada exitosamente"}
-
-
-@router.post("/{sale_id}/cancel")
-def cancel_sale(
-    sale_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Cancelar venta y devolver stock"""
-    db_sale = db.query(Sale).filter(Sale.id == sale_id).first()
-    if not db_sale:
-        raise HTTPException(status_code=404, detail="Venta no encontrada")
-    
-    if db_sale.status not in [SaleStatus.PENDIENTE, SaleStatus.COMPLETADA]:
-        raise HTTPException(
-            status_code=400, 
-            detail="No se puede cancelar esta venta"
-        )
-    
-    # Devolver stock si la venta estaba completada
-    if db_sale.status == SaleStatus.COMPLETADA:
-        for item in db_sale.items:
-            product = db.query(Product).filter(Product.id == item.product_id).first()
-            if product:
-                product.stock += item.quantity
-    
-    db_sale.status = SaleStatus.CANCELADA
-    db.commit()
-    
-    return {"message": "Venta cancelada exitosamente"}
+    return sale_dict
 
 
 @router.get("/reports/daily")
@@ -231,23 +202,9 @@ def get_daily_report(
     
     total_sales = len(sales)
     total_amount = sum(sale.total for sale in sales)
-    total_tips = sum(sale.tip for sale in sales)
-    total_commission = sum(sale.commission for sale in sales)
-    
-    # Métodos de pago
-    payment_methods = {}
-    for sale in sales:
-        for payment in sale.payments:
-            method = payment.payment_type.value
-            if method not in payment_methods:
-                payment_methods[method] = 0
-            payment_methods[method] += payment.amount
     
     return {
         "date": report_date,
         "total_sales": total_sales,
-        "total_amount": total_amount,
-        "total_tips": total_tips,
-        "total_commission": total_commission,
-        "payment_methods": payment_methods
+        "total_amount": total_amount
     } 
