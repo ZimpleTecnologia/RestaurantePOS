@@ -10,7 +10,7 @@ import os
 
 from app.config import settings
 from app.database import create_tables
-from app.routers import auth, products, sales, customers, inventory
+from app.routers import auth, products, sales, customers, inventory, cash_register
 from app.models import *  # Importar todos los modelos para crear las tablas
 
 # Crear aplicación FastAPI
@@ -44,6 +44,7 @@ app.include_router(products.router, prefix="/api/v1")
 app.include_router(sales.router, prefix="/api/v1")
 app.include_router(customers.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
+app.include_router(cash_register.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
@@ -101,6 +102,12 @@ async def reports_page(request: Request):
 async def settings_page(request: Request):
     """Página de configuración"""
     return templates.TemplateResponse("settings.html", {"request": request})
+
+
+@app.get("/cash-register", response_class=HTMLResponse)
+async def cash_register_page(request: Request):
+    """Página del sistema de caja"""
+    return templates.TemplateResponse("cash-register.html", {"request": request})
 
 
 # Acciones rápidas
