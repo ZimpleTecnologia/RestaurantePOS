@@ -359,14 +359,9 @@ function loadSessions() {
                             <td>${session.closing_amount ? '$' + session.closing_amount : '-'}</td>
                             <td><span class="badge bg-${session.status === 'abierta' ? 'success' : 'secondary'}">${session.status}</span></td>
                             <td>
-                                <div class="btn-group" role="group">
-                                    <button class="btn btn-sm btn-outline-info" onclick="viewSessionDetails(${session.id})" title="Ver detalles">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="viewSessionSummary(${session.id})" title="Ver resumen">
-                                        <i class="bi bi-file-earmark-text"></i>
-                                    </button>
-                                </div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewSessionSummary(${session.id})" title="Ver resumen">
+                                    <i class="bi bi-file-earmark-text"></i> Ver Resumen
+                                </button>
                             </td>
                         </tr>
                     `;
@@ -544,14 +539,56 @@ function viewSessionSummary(sessionId) {
     });
 }
 
-function viewSessionDetails(sessionId) {
-    // Implementar vista detallada de la sesión
-    alert('Funcionalidad en desarrollo');
-}
+
 
 function printSummary() {
-    // Implementar impresión del resumen
-    alert('Funcionalidad en desarrollo');
+    // Imprimir el resumen actual del modal
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    const modalContent = $('#summary-content').html();
+    
+    const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Resumen de Sesión</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; font-weight: bold; }
+                .table-info { background-color: #e8f4f8; }
+                .table-warning { background-color: #fff3cd; }
+                .table-success { background-color: #d4edda; }
+                .table-danger { background-color: #f8d7da; }
+                .badge { padding: 4px 8px; border-radius: 4px; color: white; }
+                .bg-success { background-color: #28a745; }
+                .bg-secondary { background-color: #6c757d; }
+                @media print {
+                    body { margin: 0; }
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>SISTEMA POS</h1>
+                <h2>Resumen de Sesión de Caja</h2>
+                <p>Documento generado el ${new Date().toLocaleString()}</p>
+            </div>
+            
+            ${modalContent}
+            
+            <div class="no-print" style="margin-top: 20px; text-align: center;">
+                <button onclick="window.print()">Imprimir</button>
+                <button onclick="window.close()">Cerrar</button>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
 }
 </script>
 {% endblock %}
