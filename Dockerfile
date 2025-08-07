@@ -25,7 +25,6 @@ RUN mkdir -p uploads static templates
 COPY app/ ./app/
 COPY static/ ./static/
 COPY templates/ ./templates/
-COPY create_admin_user.py ./
 
 # Exponer puerto
 EXPOSE 8000
