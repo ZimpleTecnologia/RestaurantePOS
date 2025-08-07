@@ -1,0 +1,52 @@
+services:
+  app:
+    image: zimpletecnologia/app_pos:v1.1.1
+    restart: unless-stopped
+    
+    ports:
+      - "8000:8000"
+    
+    environment:
+      # Database Configuration
+      DATABASE_URL: postgresql://sistema_pos_user:sistema_pos_password@zimple_postgresql:5432/sistema_pos
+      
+      # Security
+      SECRET_KEY: zimple2025_pos_super_secret_key_change_this
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      
+      # Application Settings
+      DEBUG: false
+      HOST: 0.0.0.0
+      PORT: 8000
+      
+      # File Upload Settings
+      UPLOAD_DIR: uploads
+      MAX_FILE_SIZE: 10485760
+      
+      # CORS Settings
+      ALLOWED_ORIGINS: https://zimple.lat,https://www.zimple.lat
+      
+      # Logging
+      LOG_LEVEL: INFO
+      LOG_FILE: logs/app.log
+    
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'

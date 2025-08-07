@@ -1,30 +1,14 @@
-# Entorno virtual
-venv/
-env/
-.venv/
-.env/
-
-# Archivos de Python
+# Archivos de desarrollo
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 # Archivos de IDE
 .vscode/
@@ -46,29 +30,36 @@ logs/
 *.temp
 
 # Archivos de configuración local
+.env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.production
 
 # Archivos de base de datos
 *.db
-*.sqlite
 *.sqlite3
+
+# Archivos de Git
+.git/
+.gitignore
 
 # Archivos de Docker
 Dockerfile*
 docker-compose*
 .dockerignore
 
-# Archivos de Git
-.git/
-.gitignore
-
 # Archivos de documentación
 README.md
 *.md
 
-# Archivos de configuración de desarrollo
-setup.py
-alembic.ini 
+# Archivos de pruebas
+tests/
+test_*
+*_test.py
+
+# Archivos de backup
+*.bak
+*.backup
+
+# Archivos de uploads (se crearán en runtime)
+uploads/*
+!uploads/.gitkeep 
