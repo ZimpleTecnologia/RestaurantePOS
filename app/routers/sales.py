@@ -3,7 +3,7 @@ Router de ventas
 """
 from typing import List, Optional
 from datetime import datetime, date
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
@@ -298,4 +298,251 @@ def get_monthly_report(
             }
             for item in product_sales
         ]
-    } 
+    }
+
+
+@router.get("/{sale_id}/print")
+def print_sale_ticket(
+    sale_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Generar ticket de venta para imprimir"""
+    sale = db.query(Sale).filter(Sale.id == sale_id).first()
+    if not sale:
+        raise HTTPException(status_code=404, detail="Venta no encontrada")
+    
+    # Obtener información del cliente
+    customer_name = "Cliente General"
+    if sale.customer_id:
+        customer = db.query(Customer).filter(Customer.id == sale.customer_id).first()
+        if customer:
+            customer_name = customer.full_name
+    
+    # Obtener items de la venta con información del producto
+    items = db.query(SaleItem, Product.name, Product.code).join(
+        Product, SaleItem.product_id == Product.id
+    ).filter(SaleItem.sale_id == sale.id).all()
+    
+    # Generar HTML del ticket
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Ticket de Venta</title>
+        <style>
+        /* Estilos para tickets de impresión */
+        @media print {{
+            body {{
+                font-family: 'Courier New', monospace !important;
+                font-size: 12px !important;
+                margin: 0 !important;
+                padding: 10px !important;
+                width: 300px !important;
+                background: white !important;
+                color: black !important;
+            }}
+            
+            .ticket-header {{
+                text-align: center;
+                border-bottom: 1px dashed #000;
+                padding-bottom: 10px;
+                margin-bottom: 10px;
+            }}
+            
+            .ticket-title {{
+                font-size: 16px;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }}
+            
+            .ticket-subtitle {{
+                font-size: 10px;
+                color: #666;
+            }}
+            
+            .ticket-info {{
+                margin-bottom: 10px;
+            }}
+            
+            .ticket-items {{
+                border-bottom: 1px dashed #000;
+                padding-bottom: 10px;
+                margin-bottom: 10px;
+            }}
+            
+            .ticket-item {{
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 3px;
+            }}
+            
+            .ticket-item-name {{
+                flex: 1;
+            }}
+            
+            .ticket-item-qty {{
+                text-align: center;
+                margin: 0 5px;
+            }}
+            
+            .ticket-item-price {{
+                text-align: right;
+                margin-left: 5px;
+            }}
+            
+            .ticket-totals {{
+                text-align: right;
+            }}
+            
+            .ticket-total-line {{
+                margin-bottom: 3px;
+            }}
+            
+            .ticket-footer {{
+                text-align: center;
+                margin-top: 15px;
+                font-size: 10px;
+                color: #666;
+            }}
+        }}
+        
+        /* Estilos para vista previa en pantalla */
+        body {{
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 0;
+            padding: 10px;
+            width: 300px;
+            background: white;
+            color: black;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        
+        .ticket-header {{
+            text-align: center;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }}
+        
+        .ticket-title {{
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }}
+        
+        .ticket-subtitle {{
+            font-size: 10px;
+            color: #666;
+        }}
+        
+        .ticket-info {{
+            margin-bottom: 10px;
+        }}
+        
+        .ticket-items {{
+            border-bottom: 1px dashed #000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }}
+        
+        .ticket-item {{
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+        }}
+        
+        .ticket-item-name {{
+            flex: 1;
+        }}
+        
+        .ticket-item-qty {{
+            text-align: center;
+            margin: 0 5px;
+        }}
+        
+        .ticket-item-price {{
+            text-align: right;
+            margin-left: 5px;
+        }}
+        
+        .ticket-totals {{
+            text-align: right;
+        }}
+        
+        .ticket-total-line {{
+            margin-bottom: 3px;
+        }}
+        
+        .ticket-footer {{
+            text-align: center;
+            margin-top: 15px;
+            font-size: 10px;
+            color: #666;
+        }}
+        </style>
+    </head>
+    <body>
+        <div class="ticket-header">
+            <div class="ticket-title">SISTEMA POS</div>
+            <div class="ticket-subtitle">Punto de Venta</div>
+        </div>
+        
+        <div class="ticket-info">
+            <div><strong>Ticket:</strong> {sale.sale_number}</div>
+            <div><strong>Fecha:</strong> {sale.created_at.strftime('%d/%m/%Y %H:%M')}</div>
+            <div><strong>Cliente:</strong> {customer_name}</div>
+            <div><strong>Vendedor:</strong> {current_user.full_name}</div>
+        </div>
+        
+        <div class="ticket-items">
+            <div style="border-bottom: 1px solid #000; margin-bottom: 5px; padding-bottom: 3px;">
+                <strong>PRODUCTOS</strong>
+            </div>
+    """
+    
+    for item, product_name, product_code in items:
+        html_content += f"""
+            <div class="ticket-item">
+                <div class="ticket-item-name">{product_name}</div>
+                <div class="ticket-item-qty">{item.quantity}</div>
+                <div class="ticket-item-price">${item.unit_price:.2f}</div>
+            </div>
+            <div style="text-align: right; font-size: 10px; color: #666; margin-bottom: 5px;">
+                {product_code} - ${item.total:.2f}
+            </div>
+        """
+    
+    subtotal = float(sale.total) / 1.16  # Asumiendo 16% IVA
+    tax = float(sale.total) - subtotal
+    
+    html_content += f"""
+        </div>
+        
+        <div class="ticket-totals">
+            <div class="ticket-total-line">
+                <span>Subtotal:</span>
+                <span style="margin-left: 20px;">${subtotal:.2f}</span>
+            </div>
+            <div class="ticket-total-line">
+                <span>IVA (16%):</span>
+                <span style="margin-left: 20px;">${tax:.2f}</span>
+            </div>
+            <div class="ticket-total-line" style="border-top: 1px solid #000; padding-top: 5px; font-weight: bold;">
+                <span>TOTAL:</span>
+                <span style="margin-left: 20px;">${sale.total:.2f}</span>
+            </div>
+        </div>
+        
+        <div class="ticket-footer">
+            <div>¡Gracias por su compra!</div>
+            <div>Vuelva pronto</div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return Response(content=html_content, media_type="text/html")

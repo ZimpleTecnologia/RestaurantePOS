@@ -88,6 +88,51 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - **Usuario**: admin
 - **Contraseña**: admin123
 
+## 🖨️ Funcionalidades Principales
+
+### Gestión de Ventas
+- Crear y gestionar ventas
+- **Impresión de tickets** con formato profesional
+- Vista previa de tickets antes de imprimir
+- Cálculo automático de IVA y totales
+- Gestión de clientes y productos
+
+### Gestión de Productos
+- Catálogo completo de productos
+- Control de inventario en tiempo real
+- Códigos de barras y precios
+- Categorización y búsqueda
+
+### Gestión de Clientes
+- Base de datos de clientes
+- Historial de compras
+- Información de contacto
+
+### Reportes
+- Reportes de ventas diarias, semanales y mensuales
+- Análisis de productos más vendidos
+- Estadísticas de rendimiento
+
+## 🖨️ Impresión de Tickets
+
+### Características
+- **Formato profesional**: Tickets optimizados para impresoras térmicas (80mm)
+- **Información completa**: Número de ticket, fecha, cliente, productos, totales
+- **Vista previa**: Revisar el ticket antes de imprimir
+- **Impresión directa**: Un clic para imprimir desde la interfaz
+
+### Uso
+1. Ve a la página de **Ventas**
+2. Encuentra la venta que deseas imprimir
+3. Haz clic en el botón **Imprimir** (ícono de impresora)
+4. Confirma la impresión
+5. El ticket se imprimirá automáticamente
+
+### Personalización
+- Los estilos se encuentran en `static/css/ticket.css`
+- Puedes modificar fuentes, tamaños y formato
+- Documentación completa en `docs/PRINTING_TICKETS.md`
+
 ## 📋 Comandos Útiles
 
 ### Desarrollo

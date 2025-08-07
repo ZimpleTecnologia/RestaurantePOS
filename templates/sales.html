@@ -179,11 +179,16 @@ function loadSales() {
                             <td>$${sale.total || 0}</td>
                             <td><span class="badge bg-${getStatusColor(sale.status)}">${sale.status || 'pendiente'}</span></td>
                             <td>${sale.created_at ? new Date(sale.created_at).toLocaleDateString() : 'N/A'}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary" onclick="viewSale(${sale.id})">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </td>
+                                                         <td>
+                                 <div class="btn-group" role="group">
+                                     <button class="btn btn-sm btn-outline-info" onclick="previewTicket(${sale.id})" title="Vista previa del ticket">
+                                         <i class="bi bi-eye-fill"></i>
+                                     </button>
+                                     <button class="btn btn-sm btn-outline-success" onclick="printTicket(${sale.id})" title="Imprimir ticket">
+                                         <i class="bi bi-printer"></i>
+                                     </button>
+                                 </div>
+                             </td>
                         </tr>
                     `;
                     tbody.append(row);
@@ -415,9 +420,76 @@ function getStatusColor(status) {
     }
 }
 
-function viewSale(saleId) {
-    // Implementar vista de venta
-    alert('Ver venta: ' + saleId);
+
+
+function printTicket(saleId) {
+    // Mostrar modal de confirmación
+    if (confirm('¿Desea imprimir el ticket de esta venta?')) {
+        // Primero obtener el contenido del ticket con autenticación
+        $.ajax({
+            url: `/api/v1/sales/${saleId}/print`,
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+            },
+            success: function(ticketHtml) {
+                // Abrir una nueva ventana y escribir el contenido del ticket
+                const printWindow = window.open('', '_blank', 'width=400,height=600');
+                
+                if (printWindow) {
+                    printWindow.document.write(ticketHtml);
+                    printWindow.document.close();
+                    
+                    printWindow.onload = function() {
+                        // Esperar un momento para que se cargue el contenido
+                        setTimeout(function() {
+                            printWindow.print();
+                            // Cerrar la ventana después de imprimir (opcional)
+                            // printWindow.close();
+                        }, 500);
+                    };
+                } else {
+                    alert('Error: No se pudo abrir la ventana de impresión. Verifique que el bloqueador de ventanas emergentes esté deshabilitado.');
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    alert('Error de autenticación. Por favor, inicie sesión nuevamente.');
+                } else {
+                    alert('Error al obtener el ticket para imprimir: ' + xhr.responseText);
+                }
+            }
+        });
+    }
+}
+
+function previewTicket(saleId) {
+    // Primero obtener el contenido del ticket con autenticación
+    $.ajax({
+        url: `/api/v1/sales/${saleId}/print`,
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        },
+        success: function(ticketHtml) {
+            // Abrir una nueva ventana y escribir el contenido del ticket
+            const previewWindow = window.open('', '_blank', 'width=400,height=600');
+            
+            if (previewWindow) {
+                previewWindow.document.write(ticketHtml);
+                previewWindow.document.close();
+            } else {
+                alert('Error: No se pudo abrir la ventana de vista previa. Verifique que el bloqueador de ventanas emergentes esté deshabilitado.');
+            }
+        },
+        error: function(xhr) {
+            if (xhr.status === 401) {
+                alert('Error de autenticación. Por favor, inicie sesión nuevamente.');
+            } else {
+                alert('Error al obtener el ticket para vista previa: ' + xhr.responseText);
+            }
+        }
+    });
 }
 </script>
 {% endblock %}

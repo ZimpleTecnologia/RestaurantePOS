@@ -1,0 +1,156 @@
+/* Estilos para tickets de impresión */
+@media print {
+    body {
+        font-family: 'Courier New', monospace !important;
+        font-size: 12px !important;
+        margin: 0 !important;
+        padding: 10px !important;
+        width: 300px !important;
+        background: white !important;
+        color: black !important;
+    }
+    
+    .ticket-header {
+        text-align: center;
+        border-bottom: 1px dashed #000;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .ticket-title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .ticket-subtitle {
+        font-size: 10px;
+        color: #666;
+    }
+    
+    .ticket-info {
+        margin-bottom: 10px;
+    }
+    
+    .ticket-items {
+        border-bottom: 1px dashed #000;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .ticket-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 3px;
+    }
+    
+    .ticket-item-name {
+        flex: 1;
+    }
+    
+    .ticket-item-qty {
+        text-align: center;
+        margin: 0 5px;
+    }
+    
+    .ticket-item-price {
+        text-align: right;
+        margin-left: 5px;
+    }
+    
+    .ticket-totals {
+        text-align: right;
+    }
+    
+    .ticket-total-line {
+        margin-bottom: 3px;
+    }
+    
+    .ticket-footer {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 10px;
+        color: #666;
+    }
+    
+    /* Ocultar elementos innecesarios para impresión */
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* Estilos para vista previa en pantalla */
+.ticket-preview {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    margin: 0;
+    padding: 10px;
+    width: 300px;
+    background: white;
+    color: black;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.ticket-preview .ticket-header {
+    text-align: center;
+    border-bottom: 1px dashed #000;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.ticket-preview .ticket-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.ticket-preview .ticket-subtitle {
+    font-size: 10px;
+    color: #666;
+}
+
+.ticket-preview .ticket-info {
+    margin-bottom: 10px;
+}
+
+.ticket-preview .ticket-items {
+    border-bottom: 1px dashed #000;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.ticket-preview .ticket-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3px;
+}
+
+.ticket-preview .ticket-item-name {
+    flex: 1;
+}
+
+.ticket-preview .ticket-item-qty {
+    text-align: center;
+    margin: 0 5px;
+}
+
+.ticket-preview .ticket-item-price {
+    text-align: right;
+    margin-left: 5px;
+}
+
+.ticket-preview .ticket-totals {
+    text-align: right;
+}
+
+.ticket-preview .ticket-total-line {
+    margin-bottom: 3px;
+}
+
+.ticket-preview .ticket-footer {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 10px;
+    color: #666;
+}
