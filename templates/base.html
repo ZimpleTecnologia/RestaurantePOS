@@ -208,9 +208,22 @@
                 if (response.ok) {
                     const settings = await response.json();
                     applyThemeSettings(settings);
+                    
+                    // Guardar configuración en localStorage para uso offline
+                    localStorage.setItem('theme_settings', JSON.stringify(settings));
                 }
             } catch (error) {
                 console.error('Error cargando configuración del tema:', error);
+                // Intentar cargar desde localStorage si hay error de red
+                const savedSettings = localStorage.getItem('theme_settings');
+                if (savedSettings) {
+                    try {
+                        const settings = JSON.parse(savedSettings);
+                        applyThemeSettings(settings);
+                    } catch (e) {
+                        console.error('Error cargando configuración guardada:', e);
+                    }
+                }
             }
         }
         
@@ -235,14 +248,337 @@
                 if (sidebarTitle) {
                     sidebarTitle.textContent = settings.app_title;
                 }
+                
+                // Actualizar título de la página
+                const pageTitle = document.querySelector('title');
+                if (pageTitle) {
+                    const currentTitle = pageTitle.textContent;
+                    const baseTitle = currentTitle.includes(' - ') ? 
+                        currentTitle.split(' - ')[1] : currentTitle;
+                    pageTitle.textContent = `${settings.app_title} - ${baseTitle}`;
+                }
             }
+            
+            // Actualizar subtítulo si existe
+            if (settings.app_subtitle) {
+                const sidebarSubtitle = document.querySelector('.sidebar small');
+                if (sidebarSubtitle) {
+                    sidebarSubtitle.textContent = settings.app_subtitle;
+                }
+            }
+            
+            // Forzar re-renderizado de elementos con gradientes
+            const elementsToUpdate = document.querySelectorAll('.sidebar, .btn-primary, .stats-card, .login-header, .btn-login');
+            elementsToUpdate.forEach(element => {
+                element.style.animation = 'none';
+                element.offsetHeight; // Trigger reflow
+                element.style.animation = null;
+            });
         }
         
+        // Función global para obtener configuración de impresión
+        function getPrintSettings() {
+            return {
+                header: localStorage.getItem('print_header') || 'Mi Empresa\nDirección de la empresa\nTel: (123) 456-7890',
+                footer: localStorage.getItem('print_footer') || '¡Gracias por su compra!\nVuelva pronto',
+                company_name: localStorage.getItem('company_name') || 'Mi Empresa',
+                ticket_size: localStorage.getItem('ticket_size') || '80mm',
+                print_copies: parseInt(localStorage.getItem('print_copies')) || 1
+            };
+        }
+
+        // Función global para generar contenido de ticket
+        function generateTicketContent(saleData) {
+            const printSettings = getPrintSettings();
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            let ticketContent = '';
+            
+            // Encabezado
+            ticketContent += printSettings.header + '\n';
+            ticketContent += '='.repeat(32) + '\n';
+            
+            // Información del ticket
+            ticketContent += 'TICKET DE VENTA\n';
+            ticketContent += `Fecha: ${dateStr}\n`;
+            ticketContent += `Ticket #: ${saleData.ticket_number || saleData.sale_number || '001'}\n`;
+            ticketContent += '='.repeat(32) + '\n';
+            
+            // Productos - Manejar diferentes estructuras de datos
+            let items = [];
+            if (saleData.items && saleData.items.length > 0) {
+                items = saleData.items;
+            } else if (saleData.sale_items && saleData.sale_items.length > 0) {
+                items = saleData.sale_items;
+            }
+            
+            if (items.length > 0) {
+                items.forEach(item => {
+                    // Obtener nombre del producto
+                    const productName = item.name || item.product_name || 'Producto';
+                    
+                    // Obtener cantidad
+                    const quantity = parseFloat(item.quantity) || 1;
+                    
+                    // Obtener precio - manejar diferentes formatos
+                    let price = 0;
+                    if (item.price !== undefined && item.price !== null) {
+                        price = parseFloat(item.price);
+                    } else if (item.unit_price !== undefined && item.unit_price !== null) {
+                        price = parseFloat(item.unit_price);
+                    }
+                    
+                    // Calcular total del item
+                    const itemTotal = quantity * price;
+                    
+                    ticketContent += `${productName}\n`;
+                    ticketContent += `${quantity} x $${price.toFixed(2)} = $${itemTotal.toFixed(2)}\n`;
+                });
+            }
+            
+            ticketContent += '='.repeat(32) + '\n';
+            
+            // Calcular total si no está disponible
+            let total = 0;
+            if (saleData.total !== undefined && saleData.total !== null) {
+                total = parseFloat(saleData.total);
+            } else {
+                // Calcular total sumando los items
+                total = items.reduce((sum, item) => {
+                    const quantity = parseFloat(item.quantity) || 1;
+                    let price = 0;
+                    if (item.price !== undefined && item.price !== null) {
+                        price = parseFloat(item.price);
+                    } else if (item.unit_price !== undefined && item.unit_price !== null) {
+                        price = parseFloat(item.unit_price);
+                    }
+                    return sum + (quantity * price);
+                }, 0);
+            }
+            
+            ticketContent += `TOTAL: $${total.toFixed(2)}\n`;
+            ticketContent += '='.repeat(32) + '\n';
+            
+            // Pie de página
+            ticketContent += printSettings.footer + '\n';
+            
+            return ticketContent;
+        }
+
+        // Función global para imprimir ticket
+        function printTicket(saleData) {
+            const printSettings = getPrintSettings();
+            const ticketSize = printSettings.ticket_size || '80mm';
+            const printCopies = printSettings.print_copies || 1;
+            const ticketContent = generateTicketContent(saleData);
+            
+            // Configuraciones de tamaño según el tipo de ticket
+            const ticketConfigs = {
+                '58mm': {
+                    pageSize: '58mm 200mm',
+                    bodyWidth: '48mm',
+                    printWidth: '54mm',
+                    fontSize: '8px',
+                    padding: '3mm',
+                    printPadding: '1mm'
+                },
+                '80mm': {
+                    pageSize: '80mm 200mm',
+                    bodyWidth: '70mm',
+                    printWidth: '76mm',
+                    fontSize: '10px',
+                    padding: '5mm',
+                    printPadding: '2mm'
+                },
+                '112mm': {
+                    pageSize: '112mm 200mm',
+                    bodyWidth: '102mm',
+                    printWidth: '108mm',
+                    fontSize: '12px',
+                    padding: '5mm',
+                    printPadding: '2mm'
+                }
+            };
+            
+            const config = ticketConfigs[ticketSize] || ticketConfigs['80mm'];
+            
+            // Crear ventana de impresión
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Ticket de Venta</title>
+                    <style>
+                        @page {
+                            size: ${config.pageSize};
+                            margin: 0;
+                        }
+                        
+                        body {
+                            font-family: 'Courier New', monospace;
+                            font-size: ${config.fontSize};
+                            line-height: 1.1;
+                            margin: 0;
+                            padding: ${config.padding};
+                            white-space: pre-line;
+                            width: ${config.bodyWidth};
+                            max-width: ${config.bodyWidth};
+                            overflow: hidden;
+                        }
+                        
+                        @media print {
+                            body { 
+                                margin: 0; 
+                                padding: ${config.printPadding};
+                                width: ${config.printWidth};
+                                max-width: ${config.printWidth};
+                            }
+                            
+                            /* Ocultar elementos innecesarios */
+                            * {
+                                -webkit-print-color-adjust: exact;
+                                color-adjust: exact;
+                            }
+                            
+                            /* Asegurar que solo se imprima el contenido del ticket */
+                            html, body {
+                                height: auto;
+                                min-height: auto;
+                            }
+                        }
+                        
+                        /* Estilos específicos para el ticket */
+                        .ticket-content {
+                            width: 100%;
+                            max-width: 100%;
+                            word-wrap: break-word;
+                            overflow-wrap: break-word;
+                        }
+                        
+                        /* Asegurar que el texto no se desborde */
+                        pre {
+                            margin: 0;
+                            padding: 0;
+                            white-space: pre-line;
+                            font-family: inherit;
+                            font-size: inherit;
+                            line-height: inherit;
+                        }
+                        
+                        /* Ocultar en pantalla pero mostrar en impresión */
+                        @media screen {
+                            body {
+                                background: #f0f0f0;
+                                border: 1px solid #ccc;
+                                margin: 20px auto;
+                                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="ticket-content">
+                        <pre>${ticketContent}</pre>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            
+            // Función para imprimir una copia
+            function printCopy(copyNumber) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        printWindow.print();
+                        setTimeout(() => {
+                            resolve();
+                        }, 1000);
+                    }, 500);
+                });
+            }
+            
+            // Imprimir múltiples copias si está configurado
+            async function printMultipleCopies() {
+                for (let i = 0; i < printCopies; i++) {
+                    await printCopy(i + 1);
+                    // Pequeña pausa entre copias
+                    if (i < printCopies - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+                printWindow.close();
+            }
+            
+            // Iniciar impresión
+            printMultipleCopies();
+        }
+
+        // Función para verificar cambios en la configuración
+        function checkForThemeUpdates() {
+            // Verificar cambios cada 30 segundos
+            setInterval(async () => {
+                try {
+                    const response = await fetch('/api/v1/settings/');
+                    if (response.ok) {
+                        const newSettings = await response.json();
+                        const savedSettings = localStorage.getItem('theme_settings');
+                        
+                        if (savedSettings) {
+                            const currentSettings = JSON.parse(savedSettings);
+                            // Comparar si hay cambios
+                            if (JSON.stringify(newSettings) !== JSON.stringify(currentSettings)) {
+                                console.log('Detectados cambios en la configuración del tema');
+                                applyThemeSettings(newSettings);
+                                localStorage.setItem('theme_settings', JSON.stringify(newSettings));
+                            }
+                        } else {
+                            // Primera carga
+                            applyThemeSettings(newSettings);
+                            localStorage.setItem('theme_settings', JSON.stringify(newSettings));
+                        }
+                    }
+                } catch (error) {
+                    // Error silencioso para no interrumpir la experiencia del usuario
+                }
+            }, 30000); // 30 segundos
+        }
+
+        // Escuchar cambios en localStorage para sincronización entre pestañas
+        function setupThemeSync() {
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'theme_settings') {
+                    try {
+                        const newSettings = JSON.parse(e.newValue);
+                        console.log('Cambios de tema detectados desde otra pestaña');
+                        applyThemeSettings(newSettings);
+                    } catch (error) {
+                        console.error('Error aplicando configuración desde otra pestaña:', error);
+                    }
+                }
+            });
+            
+            // Escuchar evento personalizado para cambios de tema
+            window.addEventListener('themeChanged', function(e) {
+                console.log('Cambios de tema detectados desde la misma página');
+                applyThemeSettings(e.detail);
+            });
+        }
+
         // Inicializar
         $(document).ready(function() {
             checkAuth();
             setActiveNav();
             loadThemeSettings();
+            checkForThemeUpdates();
+            setupThemeSync();
         });
     </script>
     {% block extra_js %}{% endblock %}

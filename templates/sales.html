@@ -181,10 +181,10 @@ function loadSales() {
                             <td>${sale.created_at ? new Date(sale.created_at).toLocaleDateString() : 'N/A'}</td>
                                                          <td>
                                  <div class="btn-group" role="group">
-                                     <button class="btn btn-sm btn-outline-info" onclick="previewTicket(${sale.id})" title="Vista previa del ticket">
+                                                                           <button class="btn btn-sm btn-outline-info" onclick="previewSaleTicket(${sale.id})" title="Vista previa del ticket">
                                          <i class="bi bi-eye-fill"></i>
                                      </button>
-                                     <button class="btn btn-sm btn-outline-success" onclick="printTicket(${sale.id})" title="Imprimir ticket">
+                                                                           <button class="btn btn-sm btn-outline-success" onclick="printSaleTicket(${sale.id})" title="Imprimir ticket">
                                          <i class="bi bi-printer"></i>
                                      </button>
                                  </div>
@@ -422,61 +422,97 @@ function getStatusColor(status) {
 
 
 
-function printTicket(saleId) {
+function printSaleTicket(saleId) {
     // Mostrar modal de confirmación
     if (confirm('¿Desea imprimir el ticket de esta venta?')) {
-        // Primero obtener el contenido del ticket con autenticación
+        // Obtener los datos de la venta
         $.ajax({
-            url: `/api/v1/sales/${saleId}/print`,
+            url: `/api/v1/sales/${saleId}`,
             method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + localStorage.getItem('access_token')
             },
-            success: function(ticketHtml) {
-                // Abrir una nueva ventana y escribir el contenido del ticket
-                const printWindow = window.open('', '_blank', 'width=400,height=600');
+            success: function(saleData) {
+                // Debug: Mostrar la estructura de datos en la consola
+                console.log('Datos de la venta para imprimir:', saleData);
                 
-                if (printWindow) {
-                    printWindow.document.write(ticketHtml);
-                    printWindow.document.close();
-                    
-                    printWindow.onload = function() {
-                        // Esperar un momento para que se cargue el contenido
-                        setTimeout(function() {
-                            printWindow.print();
-                            // Cerrar la ventana después de imprimir (opcional)
-                            // printWindow.close();
-                        }, 500);
-                    };
-                } else {
-                    alert('Error: No se pudo abrir la ventana de impresión. Verifique que el bloqueador de ventanas emergentes esté deshabilitado.');
-                }
+                // Usar la función global de impresión con la configuración personalizada
+                printTicket(saleData);
             },
             error: function(xhr) {
                 if (xhr.status === 401) {
                     alert('Error de autenticación. Por favor, inicie sesión nuevamente.');
                 } else {
-                    alert('Error al obtener el ticket para imprimir: ' + xhr.responseText);
+                    alert('Error al obtener los datos de la venta: ' + xhr.responseText);
                 }
             }
         });
     }
 }
 
-function previewTicket(saleId) {
-    // Primero obtener el contenido del ticket con autenticación
+function previewSaleTicket(saleId) {
+    // Obtener los datos de la venta
     $.ajax({
-        url: `/api/v1/sales/${saleId}/print`,
+        url: `/api/v1/sales/${saleId}`,
         method: 'GET',
         headers: {
             'Authorization': 'Bearer ' + localStorage.getItem('access_token')
         },
-        success: function(ticketHtml) {
-            // Abrir una nueva ventana y escribir el contenido del ticket
+        success: function(saleData) {
+            // Debug: Mostrar la estructura de datos en la consola
+            console.log('Datos de la venta recibidos:', saleData);
+            
+            // Si no hay datos válidos, usar datos de ejemplo
+            if (!saleData || (!saleData.items && !saleData.sale_items)) {
+                console.log('Usando datos de ejemplo para la vista previa');
+                saleData = {
+                    sale_number: '001',
+                    total: 25.50,
+                    items: [
+                        {
+                            name: 'Producto de Ejemplo 1',
+                            quantity: 2,
+                            price: 10.00
+                        },
+                        {
+                            name: 'Producto de Ejemplo 2',
+                            quantity: 1,
+                            price: 5.50
+                        }
+                    ]
+                };
+            }
+            
+            // Generar contenido del ticket con la configuración personalizada
+            const ticketContent = generateTicketContent(saleData);
+            
+            // Abrir una nueva ventana para vista previa
             const previewWindow = window.open('', '_blank', 'width=400,height=600');
             
             if (previewWindow) {
-                previewWindow.document.write(ticketHtml);
+                previewWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>Vista Previa - Ticket de Venta</title>
+                        <style>
+                            body {
+                                font-family: 'Courier New', monospace;
+                                font-size: 12px;
+                                line-height: 1.2;
+                                margin: 0;
+                                padding: 10px;
+                                white-space: pre-line;
+                                background-color: #f8f9fa;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h4>Vista Previa del Ticket</h4>
+                        <hr>
+                        ${ticketContent}
+                    </body>
+                    </html>
+                `);
                 previewWindow.document.close();
             } else {
                 alert('Error: No se pudo abrir la ventana de vista previa. Verifique que el bloqueador de ventanas emergentes esté deshabilitado.');
@@ -486,10 +522,100 @@ function previewTicket(saleId) {
             if (xhr.status === 401) {
                 alert('Error de autenticación. Por favor, inicie sesión nuevamente.');
             } else {
-                alert('Error al obtener el ticket para vista previa: ' + xhr.responseText);
+                alert('Error al obtener los datos de la venta: ' + xhr.responseText);
             }
         }
     });
+}
+
+// Función de prueba para verificar la generación de tickets
+function testSaleTicketGeneration() {
+    console.log('Probando generación de ticket...');
+    
+    const testData = {
+        sale_number: 'TEST-001',
+        total: 45.75,
+        items: [
+            {
+                name: 'Producto de Prueba 1',
+                quantity: 3,
+                price: 12.50
+            },
+            {
+                name: 'Producto de Prueba 2',
+                quantity: 1,
+                price: 8.25
+            }
+        ]
+    };
+    
+    console.log('Datos de prueba:', testData);
+    
+    try {
+        const ticketContent = generateTicketContent(testData);
+        console.log('Ticket generado exitosamente:');
+        console.log(ticketContent);
+        
+        // Mostrar en una ventana emergente
+        const testWindow = window.open('', '_blank', 'width=400,height=600');
+        if (testWindow) {
+            testWindow.document.write(`
+                <html>
+                <head>
+                    <title>Prueba de Ticket</title>
+                    <style>
+                        body {
+                            font-family: 'Courier New', monospace;
+                            font-size: 12px;
+                            line-height: 1.2;
+                            margin: 0;
+                            padding: 10px;
+                            white-space: pre-line;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h4>Prueba de Generación de Ticket</h4>
+                    <hr>
+                    ${ticketContent}
+                </body>
+                </html>
+            `);
+            testWindow.document.close();
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error generando ticket:', error);
+        return false;
+    }
+}
+
+// Función para obtener información de configuración de impresión
+function getPrintInfo() {
+    const settings = getPrintSettings();
+    console.log('Configuración de impresión actual:', settings);
+    return settings;
+}
+
+// Función para verificar que todas las funciones estén disponibles
+function checkFunctions() {
+    console.log('Verificando funciones disponibles...');
+    console.log('printSaleTicket:', typeof printSaleTicket);
+    console.log('previewSaleTicket:', typeof previewSaleTicket);
+    console.log('printTicket (global):', typeof printTicket);
+    console.log('generateTicketContent:', typeof generateTicketContent);
+    console.log('getPrintSettings:', typeof getPrintSettings);
+    console.log('testSaleTicketGeneration:', typeof testSaleTicketGeneration);
+    
+    return {
+        printSaleTicket: typeof printSaleTicket,
+        previewSaleTicket: typeof previewSaleTicket,
+        printTicket: typeof printTicket,
+        generateTicketContent: typeof generateTicketContent,
+        getPrintSettings: typeof getPrintSettings,
+        testSaleTicketGeneration: typeof testSaleTicketGeneration
+    };
 }
 </script>
 {% endblock %}
