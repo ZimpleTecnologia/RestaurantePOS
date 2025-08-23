@@ -10,7 +10,7 @@ import os
 
 from app.config import settings
 from app.database import create_tables
-from app.routers import auth, products, sales, customers, inventory, cash_register
+from app.routers import auth, products, sales, customers, inventory, cash_register, settings
 from app.models import *  # Importar todos los modelos para crear las tablas
 
 # Crear aplicación FastAPI
@@ -45,6 +45,7 @@ app.include_router(sales.router, prefix="/api/v1")
 app.include_router(customers.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
 app.include_router(cash_register.router, prefix="/api/v1")
+app.include_router(settings.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
@@ -157,7 +158,23 @@ async def api_info():
             "products": "/api/v1/products",
             "sales": "/api/v1/sales",
             "customers": "/api/v1/customers",
-            "inventory": "/api/v1/inventory"
+            "inventory": "/api/v1/inventory",
+            "settings": "/api/v1/settings"
+        }
+    }
+
+@app.get("/api/v1/test-settings")
+async def test_settings():
+    """Endpoint de prueba para verificar que las rutas funcionan"""
+    return {
+        "message": "Settings router está funcionando",
+        "status": "ok",
+        "endpoints": {
+            "get_settings": "/api/v1/settings/",
+            "update_settings": "/api/v1/settings/ (PUT)",
+            "get_themes": "/api/v1/settings/themes",
+            "get_currencies": "/api/v1/settings/currencies",
+            "reset_settings": "/api/v1/settings/reset (POST)"
         }
     }
 

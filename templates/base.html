@@ -11,9 +11,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Custom CSS -->
     <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #28a745;
+            --sidebar-color: #667eea;
+        }
+        
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--sidebar-color) 0%, var(--secondary-color) 100%);
         }
         .sidebar .nav-link {
             color: rgba(255,255,255,0.8);
@@ -35,23 +42,29 @@
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         }
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             border: none;
             border-radius: 8px;
         }
         .btn-primary:hover {
-            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            filter: brightness(0.9);
         }
         .navbar-brand {
             font-weight: bold;
-            color: #667eea !important;
+            color: var(--primary-color) !important;
         }
         .stats-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
         }
         .table-responsive {
             border-radius: 10px;
+        }
+        
+        /* Transiciones suaves para cambios de tema */
+        .sidebar, .btn-primary, .stats-card {
+            transition: all 0.3s ease;
         }
     </style>
     {% block extra_css %}{% endblock %}
@@ -188,10 +201,48 @@
             });
         }
 
+        // Cargar configuración del tema
+        async function loadThemeSettings() {
+            try {
+                const response = await fetch('/api/v1/settings/');
+                if (response.ok) {
+                    const settings = await response.json();
+                    applyThemeSettings(settings);
+                }
+            } catch (error) {
+                console.error('Error cargando configuración del tema:', error);
+            }
+        }
+        
+        // Aplicar configuración del tema
+        function applyThemeSettings(settings) {
+            if (settings.primary_color) {
+                document.documentElement.style.setProperty('--primary-color', settings.primary_color);
+            }
+            if (settings.secondary_color) {
+                document.documentElement.style.setProperty('--secondary-color', settings.secondary_color);
+            }
+            if (settings.accent_color) {
+                document.documentElement.style.setProperty('--accent-color', settings.accent_color);
+            }
+            if (settings.sidebar_color) {
+                document.documentElement.style.setProperty('--sidebar-color', settings.sidebar_color);
+            }
+            
+            // Actualizar título de la aplicación
+            if (settings.app_title) {
+                const sidebarTitle = document.querySelector('.sidebar h4');
+                if (sidebarTitle) {
+                    sidebarTitle.textContent = settings.app_title;
+                }
+            }
+        }
+        
         // Inicializar
         $(document).ready(function() {
             checkAuth();
             setActiveNav();
+            loadThemeSettings();
         });
     </script>
     {% block extra_js %}{% endblock %}

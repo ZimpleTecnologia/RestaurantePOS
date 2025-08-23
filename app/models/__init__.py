@@ -7,6 +7,7 @@ from .supplier import Supplier, Purchase, PurchaseItem
 from .location import Location, Table
 from .inventory import InventoryMovement
 from .recipe import Recipe, RecipeItem
+from .settings import SystemSettings
 
 __all__ = [
     "User",
@@ -26,5 +27,6 @@ __all__ = [
     "Table",
     "InventoryMovement",
     "Recipe",
-    "RecipeItem"
+    "RecipeItem",
+    "SystemSettings"
 ] 
