@@ -8,6 +8,7 @@ from .location import Location, Table
 from .inventory import InventoryMovement
 from .recipe import Recipe, RecipeItem
 from .settings import SystemSettings
+from .order import Order, OrderItem
 
 __all__ = [
     "User",
@@ -28,5 +29,7 @@ __all__ = [
     "InventoryMovement",
     "Recipe",
     "RecipeItem",
-    "SystemSettings"
+    "SystemSettings",
+    "Order",
+    "OrderItem"
 ] 

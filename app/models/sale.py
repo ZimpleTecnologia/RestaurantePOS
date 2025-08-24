@@ -66,6 +66,7 @@ class Sale(Base):
     table = relationship("Table", back_populates="sales")
     items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
     payments = relationship("PaymentMethod", back_populates="sale", cascade="all, delete-orphan")
+    order = relationship("Order", back_populates="sale", uselist=False)
     
     def __repr__(self):
         return f"<Sale(id={self.id}, sale_number='{self.sale_number}', total={self.total})>"

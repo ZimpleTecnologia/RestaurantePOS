@@ -9,11 +9,13 @@ import enum
 
 
 class UserRole(str, enum.Enum):
-    """Roles de usuario en el sistema"""
-    ADMIN = "admin"
-    VENDEDOR = "vendedor"
-    CAJA = "caja"
-    SUPERVISOR = "supervisor"
+    """Roles de usuario en el sistema de restaurante"""
+    ADMIN = "ADMIN"
+    MESERO = "MESERO"
+    COCINA = "COCINA"
+    CAJA = "CAJA"
+    ALMACEN = "ALMACEN"
+    SUPERVISOR = "SUPERVISOR"
 
 
 class User(Base):
@@ -25,7 +27,7 @@ class User(Base):
     email = Column(String(100), unique=True, index=True, nullable=False)
     full_name = Column(String(100), nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.VENDEDOR, nullable=False)
+    role = Column(Enum(UserRole), default=UserRole.MESERO, nullable=False)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

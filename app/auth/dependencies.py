@@ -10,7 +10,7 @@ from app.auth.security import verify_token
 from app.schemas.user import TokenData
 
 # Esquema de autenticación
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
@@ -23,6 +23,9 @@ def get_current_user(
         detail="No se pudieron validar las credenciales",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    if credentials is None:
+        raise credentials_exception
     
     token = credentials.credentials
     username = verify_token(token)

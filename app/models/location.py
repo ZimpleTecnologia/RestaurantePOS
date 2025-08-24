@@ -72,6 +72,7 @@ class Table(Base):
     # Relaciones
     location = relationship("Location", back_populates="tables")
     sales = relationship("Sale", back_populates="table")
+    orders = relationship("Order", back_populates="table")
     
     def __repr__(self):
         return f"<Table(id={self.id}, number='{self.table_number}', status='{self.status}')>" 

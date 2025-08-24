@@ -10,7 +10,7 @@ import os
 
 from app.config import settings
 from app.database import create_tables
-from app.routers import auth, products, sales, customers, inventory, cash_register, settings
+from app.routers import auth, products, sales, customers, inventory, cash_register, settings, orders, tables, notifications, reports
 from app.models import *  # Importar todos los modelos para crear las tablas
 
 # Crear aplicación FastAPI
@@ -46,6 +46,10 @@ app.include_router(customers.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
 app.include_router(cash_register.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
+app.include_router(orders.router, prefix="/api/v1")
+app.include_router(tables.router, prefix="/api/v1")
+app.include_router(notifications.router, prefix="/api/v1")
+app.include_router(reports.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
@@ -60,7 +64,7 @@ async def startup_event():
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """Página principal"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("dashboard.html", {"request": request})
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -109,6 +113,18 @@ async def settings_page(request: Request):
 async def cash_register_page(request: Request):
     """Página del sistema de caja"""
     return templates.TemplateResponse("cash-register.html", {"request": request})
+
+
+@app.get("/waiters", response_class=HTMLResponse)
+async def waiters_page(request: Request):
+    """Página para meseros"""
+    return templates.TemplateResponse("waiters/index.html", {"request": request})
+
+
+@app.get("/kitchen", response_class=HTMLResponse)
+async def kitchen_page(request: Request):
+    """Página para cocina"""
+    return templates.TemplateResponse("kitchen/index.html", {"request": request})
 
 
 # Acciones rápidas
