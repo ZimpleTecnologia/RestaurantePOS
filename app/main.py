@@ -125,7 +125,7 @@ async def waiters_page(request: Request):
 @app.get("/kitchen", response_class=HTMLResponse)
 async def kitchen_page(request: Request):
     """Página para cocina"""
-    return templates.TemplateResponse("kitchen/dashboard.html", {"request": request})
+    return templates.TemplateResponse("kitchen/index.html", {"request": request})
 
 
 @app.get("/test-kitchen", response_class=HTMLResponse)

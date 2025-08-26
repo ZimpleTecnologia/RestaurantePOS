@@ -167,7 +167,7 @@
 
         // Verificar autenticación
         async function checkAuth() {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
             if (!token) {
                 window.location.href = '/login';
                 return;
@@ -193,6 +193,7 @@
                     }
                 } else {
                     localStorage.removeItem('token');
+                    localStorage.removeItem('access_token');
                     window.location.href = '/login';
                 }
             } catch (error) {
@@ -204,9 +205,10 @@
         // Cargar órdenes
         async function loadOrders() {
             try {
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
                 const response = await fetch('/api/v1/kitchen/orders', {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
@@ -388,10 +390,11 @@
         // Iniciar preparación
         async function startPreparation(orderId) {
             try {
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
                 const response = await fetch(`/api/v1/kitchen/orders/${orderId}/start`, {
                     method: 'PUT',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
@@ -411,10 +414,11 @@
         // Completar orden
         async function completeOrder(orderId) {
             try {
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
                 const response = await fetch(`/api/v1/kitchen/orders/${orderId}/complete`, {
                     method: 'PUT',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
@@ -443,10 +447,11 @@
             const notes = document.getElementById('kitchen-notes').value;
             
             try {
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
                 const response = await fetch(`/api/v1/kitchen/orders/${selectedOrderId}/notes`, {
                     method: 'PUT',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ kitchen_notes: notes })
@@ -532,6 +537,7 @@
         // Cerrar sesión
         function logout() {
             localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
             window.location.href = '/login';
         }
 

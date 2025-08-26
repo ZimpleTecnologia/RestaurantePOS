@@ -35,10 +35,6 @@ COPY templates/ ./templates/
 COPY create_admin.py ./
 COPY create_test_data.py ./
 COPY init_db.py ./
-COPY start.sh ./
-
-# Hacer el script ejecutable
-RUN chmod +x start.sh
 
 # Exponer puerto
 EXPOSE 8000
@@ -49,4 +45,4 @@ ENV HOST=0.0.0.0
 ENV PORT=8000
 
 # Comando para ejecutar la aplicación
-CMD ["./start.sh"] 
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"] 
