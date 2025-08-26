@@ -1,7 +1,7 @@
 """
 Modelos de Ventas, Items de Venta y Métodos de Pago
 """
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, Enum, Numeric
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, Numeric
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -49,7 +49,7 @@ class Sale(Base):
     tip = Column(Numeric(10, 2), default=0)
     commission = Column(Numeric(10, 2), default=0)
     
-    status = Column(Enum(SaleStatus), default=SaleStatus.PENDIENTE)
+    status = Column(String(20), default="pendiente")
     notes = Column(Text, nullable=True)
     is_delivery = Column(Boolean, default=False)
     delivery_address = Column(Text, nullable=True)
@@ -102,7 +102,7 @@ class PaymentMethod(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     sale_id = Column(Integer, ForeignKey("sales.id"), nullable=False)
-    payment_type = Column(Enum(PaymentMethodType), nullable=False)
+    payment_type = Column(String(20), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
     reference = Column(String(100), nullable=True)
     notes = Column(Text, nullable=True)

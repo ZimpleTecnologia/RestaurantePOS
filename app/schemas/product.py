@@ -69,10 +69,10 @@ class SubCategoryResponse(SubCategoryBase):
 
 class ProductBase(BaseModel):
     """Esquema base para productos"""
-    code: str
+    code: Optional[str] = None
     name: str
     description: Optional[str] = None
-    price: float
+    price: Optional[float] = None
     cost_price: Optional[float] = None
     stock: int = 0
     min_stock: int = 0

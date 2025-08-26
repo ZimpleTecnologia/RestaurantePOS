@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     """Configuraciones del sistema POS"""
     
     # Database
-    database_url: str = "postgresql://username:password@localhost:5432/sistema_pos"
-    database_test_url: str = "postgresql://username:password@localhost:5432/sistema_pos_test"
+    database_url: str = "postgresql://postgres:sistema_pos_password@localhost:5432/sistema_pos"
+    database_test_url: str = "postgresql://postgres:sistema_pos_password@localhost:5432/sistema_pos_test"
     
     # Security
     secret_key: str = "your-secret-key-here-change-in-production"

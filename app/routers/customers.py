@@ -280,7 +280,7 @@ def get_customers_report(
         func.sum(Sale.total).label('total_amount')
     ).join(Sale, Customer.id == Sale.customer_id)\
      .filter(
-        Sale.status == SaleStatus.COMPLETADA,
+        Sale.status == "completada",
         Customer.is_active == True
     ).group_by(Customer.id, Customer.full_name)\
      .order_by(func.sum(Sale.total).desc())\

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
-from app.models.sale import SaleStatus
+from typing import Literal
 
 
 class SaleItemCreate(BaseModel):
@@ -24,7 +24,7 @@ class SaleCreate(BaseModel):
 
 class SaleUpdate(BaseModel):
     """Esquema para actualizar venta"""
-    status: Optional[SaleStatus] = None
+    status: Optional[Literal["pendiente", "completada", "cancelada", "devuelta"]] = None
     total: Optional[Decimal] = None
 
 
@@ -48,7 +48,7 @@ class SaleResponse(BaseModel):
     customer_id: Optional[int]
     user_id: int
     total: Decimal
-    status: SaleStatus
+    status: Literal["pendiente", "completada", "cancelada", "devuelta"]
     created_at: datetime
     completed_at: Optional[datetime] = None
     

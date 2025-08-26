@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 from app.database import get_db
 from app.models.user import User, UserRole
-from app.models.order import Order, OrderStatus
+from app.models.order import Order
 from app.models.location import Table
 from app.auth.dependencies import get_current_user
 
@@ -26,7 +26,7 @@ class NotificationService:
         # Órdenes listas para servir
         ready_orders = db.query(Order).filter(
             Order.waiter_id == waiter_id,
-            Order.status == OrderStatus.LISTO
+            Order.status == "listo"
         ).all()
         
         for order in ready_orders:
@@ -46,7 +46,7 @@ class NotificationService:
         # Mesas que han estado ocupadas por mucho tiempo sin órdenes
         occupied_tables = db.query(Table).join(Order).filter(
             Order.waiter_id == waiter_id,
-            Order.status == OrderStatus.SERVIDO,
+            Order.status == "servido",
             Order.served_time < datetime.now() - timedelta(hours=1)
         ).all()
         
@@ -72,7 +72,7 @@ class NotificationService:
         
         # Órdenes pendientes por mucho tiempo
         old_orders = db.query(Order).filter(
-            Order.status == OrderStatus.PENDIENTE,
+            Order.status == "pendiente",
             Order.created_at < datetime.now() - timedelta(minutes=15)
         ).all()
         
@@ -92,7 +92,7 @@ class NotificationService:
         # Órdenes urgentes
         urgent_orders = db.query(Order).filter(
             Order.priority == "urgente",
-            Order.status.in_([OrderStatus.PENDIENTE, OrderStatus.EN_PREPARACION])
+            Order.status.in_(["pendiente", "en_preparacion"])
         ).all()
         
         for order in urgent_orders:
@@ -117,7 +117,7 @@ class NotificationService:
         
         # Órdenes servidas pendientes de pago
         unpaid_orders = db.query(Order).filter(
-            Order.status == OrderStatus.SERVIDO,
+            Order.status == "servido",
             Order.served_time < datetime.now() - timedelta(minutes=30)
         ).all()
         
@@ -203,20 +203,20 @@ def get_restaurant_stats(
     ).count()
     
     pending_orders = db.query(Order).filter(
-        Order.status == OrderStatus.PENDIENTE
+        Order.status == "pendiente"
     ).count()
     
     preparing_orders = db.query(Order).filter(
-        Order.status == OrderStatus.EN_PREPARACION
+        Order.status == "en_preparacion"
     ).count()
     
     ready_orders = db.query(Order).filter(
-        Order.status == OrderStatus.LISTO
+        Order.status == "listo"
     ).count()
     
     # Tiempo promedio de preparación hoy
     completed_orders = db.query(Order).filter(
-        Order.status == OrderStatus.SERVIDO,
+        Order.status == "servido",
         Order.created_at >= datetime.now().replace(hour=0, minute=0, second=0, microsecond=0),
         Order.kitchen_start_time.isnot(None),
         Order.kitchen_end_time.isnot(None)

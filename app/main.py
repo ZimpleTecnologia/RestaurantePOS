@@ -10,7 +10,7 @@ import os
 
 from app.config import settings
 from app.database import create_tables
-from app.routers import auth, products, sales, customers, inventory, cash_register, settings, orders, tables, notifications, reports
+from app.routers import auth, products, sales, customers, inventory, cash_register, settings, orders, tables, notifications, reports, kitchen
 from app.models import *  # Importar todos los modelos para crear las tablas
 
 # Crear aplicación FastAPI
@@ -50,6 +50,7 @@ app.include_router(orders.router, prefix="/api/v1")
 app.include_router(tables.router, prefix="/api/v1")
 app.include_router(notifications.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
+app.include_router(kitchen.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
@@ -124,7 +125,19 @@ async def waiters_page(request: Request):
 @app.get("/kitchen", response_class=HTMLResponse)
 async def kitchen_page(request: Request):
     """Página para cocina"""
-    return templates.TemplateResponse("kitchen/index.html", {"request": request})
+    return templates.TemplateResponse("kitchen/dashboard.html", {"request": request})
+
+
+@app.get("/test-kitchen", response_class=HTMLResponse)
+async def test_kitchen_page(request: Request):
+    """Página de prueba para cocina"""
+    return templates.TemplateResponse("test_kitchen_simple.html", {"request": request})
+
+
+@app.get("/kitchen-simple", response_class=HTMLResponse)
+async def kitchen_simple_page(request: Request):
+    """Página simple de cocina para debug"""
+    return templates.TemplateResponse("kitchen_simple.html", {"request": request})
 
 
 # Acciones rápidas

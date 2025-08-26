@@ -9,7 +9,7 @@ from datetime import datetime, date, timedelta
 
 from app.database import get_db
 from app.models.user import User, UserRole
-from app.models.order import Order, OrderStatus, OrderItem
+from app.models.order import Order, OrderItem
 from app.models.sale import Sale, SaleStatus
 from app.models.product import Product
 from app.models.location import Table
@@ -45,8 +45,8 @@ def get_daily_summary(
     )
     
     total_orders = orders_query.count()
-    completed_orders = orders_query.filter(Order.status == OrderStatus.SERVIDO).count()
-    cancelled_orders = orders_query.filter(Order.status == OrderStatus.CANCELADO).count()
+    completed_orders = orders_query.filter(Order.status == "servido").count()
+    cancelled_orders = orders_query.filter(Order.status == "cancelado").count()
     
     # Tiempo promedio de preparación
     prep_times = db.query(
@@ -68,11 +68,11 @@ def get_daily_summary(
         Sale.created_at < end_date
     )
     
-    total_sales = sales_query.filter(Sale.status == SaleStatus.COMPLETADA).count()
+    total_sales = sales_query.filter(Sale.status == "completada").count()
     total_revenue = db.query(func.sum(Sale.total)).filter(
         Sale.created_at >= start_date,
         Sale.created_at < end_date,
-        Sale.status == SaleStatus.COMPLETADA
+        Sale.status == "completada"
     ).scalar() or 0
     
     # Productos más vendidos
@@ -83,7 +83,7 @@ def get_daily_summary(
     ).join(OrderItem).join(Order).filter(
         Order.created_at >= start_date,
         Order.created_at < end_date,
-        Order.status == OrderStatus.SERVIDO
+        Order.status == "servido"
     ).group_by(Product.id, Product.name).order_by(
         func.sum(OrderItem.quantity).desc()
     ).limit(10).all()
@@ -96,7 +96,7 @@ def get_daily_summary(
     ).join(Order, User.id == Order.waiter_id).join(Sale, Order.sale_id == Sale.id).filter(
         Order.created_at >= start_date,
         Order.created_at < end_date,
-        Sale.status == SaleStatus.COMPLETADA
+        Sale.status == "completada"
     ).group_by(User.id, User.full_name).all()
     
     # Distribución por horas
@@ -172,7 +172,7 @@ def get_kitchen_performance(
     completed_orders = db.query(Order).filter(
         Order.created_at >= start_datetime,
         Order.created_at <= end_datetime,
-        Order.status == OrderStatus.SERVIDO,
+        Order.status == "servido",
         Order.kitchen_start_time.isnot(None),
         Order.kitchen_end_time.isnot(None)
     ).all()
@@ -272,8 +272,8 @@ def get_waiter_performance(
         User.id,
         User.full_name,
         func.count(Order.id).label('total_orders'),
-        func.count(func.nullif(Order.status == OrderStatus.SERVIDO, False)).label('completed_orders'),
-        func.count(func.nullif(Order.status == OrderStatus.CANCELADO, False)).label('cancelled_orders'),
+        func.count(func.nullif(Order.status == "servido", False)).label('completed_orders'),
+        func.count(func.nullif(Order.status == "cancelado", False)).label('cancelled_orders'),
         func.sum(Sale.total).label('total_sales'),
         func.avg(func.extract('epoch', Order.served_time - Order.created_at) / 60).label('avg_service_time')
     ).join(Order, User.id == Order.waiter_id).outerjoin(Sale, Order.sale_id == Sale.id).filter(
@@ -300,7 +300,7 @@ def get_waiter_performance(
             Order.waiter_id == waiter_id,
             Order.created_at >= start_datetime,
             Order.created_at <= end_datetime,
-            Sale.status == SaleStatus.COMPLETADA
+            Sale.status == "completada"
         ).group_by(func.date(Order.created_at)).order_by('date').all()
         
         return {
@@ -382,7 +382,7 @@ def get_table_turnover(
         or_(Order.created_at == None, and_(
             Order.created_at >= start_date,
             Order.created_at < end_date,
-            Order.status == OrderStatus.SERVIDO
+            Order.status == "servido"
         ))
     ).group_by(Table.id, Table.table_number, Table.capacity).all()
     

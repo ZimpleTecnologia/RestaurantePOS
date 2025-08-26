@@ -1,17 +1,20 @@
 """
 Esquemas Pydantic para Órdenes
 """
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, Field
+from typing import Optional, List, Literal, Any
 from datetime import datetime
-from app.models.order import OrderStatus, OrderPriority
+
+# Definir tipos literales para validación
+OrderStatusType = Literal["pendiente", "en_preparacion", "listo", "servido", "cancelado"]
+OrderPriorityType = Literal["baja", "normal", "alta", "urgente"]
 
 
 class OrderItemBase(BaseModel):
     """Esquema base para items de orden"""
     product_id: int
     quantity: int
-    unit_price: float
+    unit_price: Optional[float] = None
     special_instructions: Optional[str] = None
 
 
@@ -24,7 +27,7 @@ class OrderItemUpdate(BaseModel):
     """Esquema para actualizar item de orden"""
     quantity: Optional[int] = None
     special_instructions: Optional[str] = None
-    status: Optional[OrderStatus] = None
+    status: Optional[OrderStatusType] = None
 
 
 class OrderItemResponse(OrderItemBase):
@@ -32,7 +35,7 @@ class OrderItemResponse(OrderItemBase):
     id: int
     order_id: int
     subtotal: float
-    status: OrderStatus
+    status: Optional[OrderStatusType] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     kitchen_start_time: Optional[datetime] = None
@@ -49,7 +52,7 @@ class OrderBase(BaseModel):
     """Esquema base para órdenes"""
     table_id: int
     people_count: int = 1
-    priority: OrderPriority = OrderPriority.NORMAL
+    priority: OrderPriorityType = "normal"
     notes: Optional[str] = None
 
 
@@ -61,8 +64,8 @@ class OrderCreate(OrderBase):
 class OrderUpdate(BaseModel):
     """Esquema para actualizar orden"""
     people_count: Optional[int] = None
-    priority: Optional[OrderPriority] = None
-    status: Optional[OrderStatus] = None
+    priority: Optional[OrderPriorityType] = None
+    status: Optional[OrderStatusType] = None
     notes: Optional[str] = None
     kitchen_notes: Optional[str] = None
 
@@ -72,7 +75,8 @@ class OrderResponse(OrderBase):
     id: int
     order_number: str
     waiter_id: int
-    status: OrderStatus
+    sale_id: Optional[int] = None
+    status: OrderStatusType
     created_at: datetime
     updated_at: Optional[datetime] = None
     kitchen_start_time: Optional[datetime] = None
@@ -95,15 +99,16 @@ class KitchenOrderResponse(BaseModel):
     table_number: str
     waiter_name: str
     people_count: int
-    status: OrderStatus
-    priority: OrderPriority
-    notes: Optional[str] = None
-    kitchen_notes: Optional[str] = None
+    status: OrderStatusType
+    priority: OrderPriorityType
     created_at: datetime
     kitchen_start_time: Optional[datetime] = None
     kitchen_end_time: Optional[datetime] = None
+    notes: Optional[str] = None
+    kitchen_notes: Optional[str] = None
     
-    items: List[dict] = []
+    # Items de la orden
+    items: List[OrderItemResponse] = []
     
     class Config:
         from_attributes = True

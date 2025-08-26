@@ -256,6 +256,9 @@
 
     <!-- Quick Actions -->
     <div class="quick-actions">
+        <button class="btn btn-warning btn-floating" onclick="showAddTableModal()" title="Agregar Mesa">
+            <i class="bi bi-plus-lg"></i>
+        </button>
         <button class="btn btn-primary btn-floating" onclick="refreshTables()" title="Actualizar">
             <i class="bi bi-arrow-clockwise"></i>
         </button>
@@ -296,7 +299,12 @@
 
                             <!-- Product Categories -->
                             <div class="mb-3">
-                                <h6>Categorías</h6>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Categorías</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="showAddCategoryModal()">
+                                        <i class="bi bi-plus-lg"></i> Nueva Categoría
+                                    </button>
+                                </div>
                                 <div class="btn-group flex-wrap" id="categories-buttons">
                                     <!-- Categorías se cargan dinámicamente -->
                                 </div>
@@ -357,6 +365,159 @@
                     <div id="my-orders-container">
                         <!-- Órdenes del mesero -->
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Agregar Mesa -->
+    <div class="modal fade" id="addTableModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle"></i> Agregar Nueva Mesa
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-table-form">
+                        <div class="mb-3">
+                            <label for="table-number" class="form-label">Número de Mesa</label>
+                            <input type="number" class="form-control" id="table-number" required min="1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="table-capacity" class="form-label">Capacidad</label>
+                            <input type="number" class="form-control" id="table-capacity" required min="1" max="20" value="4">
+                        </div>
+                        <div class="mb-3">
+                            <label for="table-name" class="form-label">Nombre (Opcional)</label>
+                            <input type="text" class="form-control" id="table-name" placeholder="Ej: Terraza, Interior, etc.">
+                        </div>
+                        <div class="mb-3">
+                            <label for="table-notes" class="form-label">Notas (Opcional)</label>
+                            <textarea class="form-control" id="table-notes" rows="3" placeholder="Notas adicionales sobre la mesa"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="submitAddTable()">
+                        <i class="bi bi-check-circle"></i> Crear Mesa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Agregar Categoría -->
+    <div class="modal fade" id="addCategoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle"></i> Agregar Nueva Categoría
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-category-form">
+                        <div class="mb-3">
+                            <label for="category-name" class="form-label">Nombre de la Categoría</label>
+                            <input type="text" class="form-control" id="category-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category-description" class="form-label">Descripción (Opcional)</label>
+                            <textarea class="form-control" id="category-description" rows="3" placeholder="Descripción de la categoría"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="submitAddCategory()">
+                        <i class="bi bi-check-circle"></i> Crear Categoría
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Orden -->
+    <div class="modal fade" id="editOrderModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil"></i> 
+                        Editar Orden <span id="edit-order-number"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <!-- Order Info -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Número de Personas</label>
+                                    <input type="number" class="form-control" id="edit-people-count" min="1" value="1">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Prioridad</label>
+                                    <select class="form-select" id="edit-order-priority">
+                                        <option value="normal">Normal</option>
+                                        <option value="alta">Alta</option>
+                                        <option value="urgente">Urgente</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Product Categories -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Agregar Más Productos</h6>
+                                </div>
+                                <div class="btn-group flex-wrap" id="edit-categories-buttons">
+                                    <!-- Categorías se cargan dinámicamente -->
+                                </div>
+                            </div>
+
+                            <!-- Products -->
+                            <div class="mb-3">
+                                <h6>Productos Disponibles</h6>
+                                <div id="edit-products-container">
+                                    <!-- Productos se cargan dinámicamente -->
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="mb-3">
+                                <label class="form-label">Notas Especiales</label>
+                                <textarea class="form-control" id="edit-order-notes" rows="3" placeholder="Instrucciones especiales para la cocina..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <!-- Order Summary -->
+                            <div class="order-summary">
+                                <h6><i class="bi bi-receipt"></i> Resumen de Orden</h6>
+                                <div id="edit-order-items-list">
+                                    <!-- Items actuales y nuevos -->
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <strong>Total: </strong>
+                                    <strong id="edit-order-total">$0.00</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="submitEditOrder()">
+                        <i class="bi bi-check-circle"></i> Guardar Cambios
+                    </button>
                 </div>
             </div>
         </div>
@@ -737,48 +898,86 @@
             }
         }
 
-        // Render my orders
-        function renderMyOrders(orders) {
-            const container = document.getElementById('my-orders-container');
-            container.innerHTML = '';
-
-            if (orders.length === 0) {
-                container.innerHTML = '<p class="text-center text-muted">No tienes órdenes activas</p>';
-                return;
-            }
-
-            orders.forEach(order => {
-                const orderDiv = document.createElement('div');
-                orderDiv.className = 'card mb-3';
-                
-                let statusColor = '';
-                switch (order.status) {
-                    case 'pendiente': statusColor = 'warning'; break;
-                    case 'en_preparacion': statusColor = 'info'; break;
-                    case 'listo': statusColor = 'success'; break;
-                    case 'servido': statusColor = 'secondary'; break;
-                }
-
-                orderDiv.innerHTML = `
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span><strong>Orden ${order.order_number}</strong> - Mesa ${order.table.table_number}</span>
-                        <span class="badge bg-${statusColor}">${order.status.replace('_', ' ')}</span>
-                    </div>
-                    <div class="card-body">
-                        <p><strong>Personas:</strong> ${order.people_count}</p>
-                        <p><strong>Creado:</strong> ${new Date(order.created_at).toLocaleString()}</p>
-                        ${order.notes ? `<p><strong>Notas:</strong> ${order.notes}</p>` : ''}
-                        ${order.status === 'listo' ? 
-                            `<button class="btn btn-success btn-sm" onclick="markAsServed(${order.id})">
-                                <i class="bi bi-check-circle"></i> Marcar como Servido
-                            </button>` : ''
-                        }
-                    </div>
-                `;
-                
-                container.appendChild(orderDiv);
-            });
-        }
+                 // Render my orders
+         function renderMyOrders(orders) {
+             const container = document.getElementById('my-orders-container');
+             container.innerHTML = '';
+ 
+             if (orders.length === 0) {
+                 container.innerHTML = '<p class="text-center text-muted">No tienes órdenes activas</p>';
+                 return;
+             }
+ 
+             orders.forEach(order => {
+                 const orderDiv = document.createElement('div');
+                 orderDiv.className = 'card mb-3';
+                 
+                 let statusColor = '';
+                 switch (order.status) {
+                     case 'pendiente': statusColor = 'warning'; break;
+                     case 'en_preparacion': statusColor = 'info'; break;
+                     case 'listo': statusColor = 'success'; break;
+                     case 'servido': statusColor = 'secondary'; break;
+                 }
+ 
+                 // Renderizar items de la orden
+                 let itemsHtml = '';
+                 if (order.items && order.items.length > 0) {
+                     itemsHtml = '<div class="mt-2"><strong>Items:</strong><ul class="list-unstyled">';
+                     order.items.forEach(item => {
+                         itemsHtml += `
+                             <li class="d-flex justify-content-between align-items-center">
+                                 <span>${item.product?.name || 'Producto'} x${item.quantity}</span>
+                                 <div>
+                                     <span class="text-muted">$${item.subtotal}</span>
+                                     ${order.status !== 'servido' ? 
+                                         `<button class="btn btn-sm btn-outline-danger ms-2" onclick="removeOrderItem(${order.id}, ${item.id})">
+                                             <i class="bi bi-trash"></i>
+                                         </button>` : ''
+                                     }
+                                 </div>
+                             </li>
+                         `;
+                     });
+                     itemsHtml += '</ul></div>';
+                 }
+ 
+                 orderDiv.innerHTML = `
+                     <div class="card-header d-flex justify-content-between align-items-center">
+                         <span><strong>Orden ${order.order_number}</strong> - Mesa ${order.table.table_number}</span>
+                         <div>
+                             <span class="badge bg-${statusColor} me-2">${order.status.replace('_', ' ')}</span>
+                             ${order.status !== 'servido' ? 
+                                 `<button class="btn btn-sm btn-outline-primary me-1" onclick="editOrder(${order.id})">
+                                     <i class="bi bi-pencil"></i> Editar
+                                 </button>` : ''
+                             }
+                             <button class="btn btn-sm btn-outline-secondary me-1" onclick="duplicateOrder(${order.id})">
+                                 <i class="bi bi-files"></i> Duplicar
+                             </button>
+                             ${order.status !== 'servido' && order.status !== 'cancelado' ? 
+                                 `<button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${order.id})">
+                                     <i class="bi bi-x-circle"></i> Cancelar
+                                 </button>` : ''
+                             }
+                         </div>
+                     </div>
+                     <div class="card-body">
+                         <p><strong>Personas:</strong> ${order.people_count}</p>
+                         <p><strong>Creado:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+                         ${order.notes ? `<p><strong>Notas:</strong> ${order.notes}</p>` : ''}
+                         ${itemsHtml}
+                         ${order.status === 'listo' ? 
+                             `<button class="btn btn-success btn-sm" onclick="markAsServed(${order.id})">
+                                 <i class="bi bi-check-circle"></i> Marcar como Servido
+                             </button>` : ''
+                         }
+                     </div>
+                 `;
+                 
+                 container.appendChild(orderDiv);
+             });
+         }
 
         // Mark order as served
         async function markAsServed(orderId) {
@@ -875,6 +1074,443 @@
                     toast.parentNode.removeChild(toast);
                 }
             }, 3000);
+        }
+
+        // Show add table modal
+        function showAddTableModal() {
+            // Clear form
+            document.getElementById('add-table-form').reset();
+            
+            // Auto-generate next table number
+            const nextNumber = Math.max(...tables.map(t => parseInt(t.table_number) || 0), 0) + 1;
+            document.getElementById('table-number').value = nextNumber;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('addTableModal'));
+            modal.show();
+        }
+
+        // Submit add table
+        async function submitAddTable() {
+            const form = document.getElementById('add-table-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const tableData = {
+                table_number: document.getElementById('table-number').value.toString(),
+                capacity: parseInt(document.getElementById('table-capacity').value),
+                name: document.getElementById('table-name').value || null,
+                notes: document.getElementById('table-notes').value || null
+            };
+
+            try {
+                const response = await fetch('/api/v1/tables/', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(tableData)
+                });
+
+                if (response.ok) {
+                    showSuccess('Mesa creada exitosamente');
+                    bootstrap.Modal.getInstance(document.getElementById('addTableModal')).hide();
+                    refreshTables();
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Error creando mesa');
+                }
+            } catch (error) {
+                console.error('Error creating table:', error);
+                showError('Error de conexión');
+            }
+        }
+
+        // Show add category modal
+        function showAddCategoryModal() {
+            // Clear form
+            document.getElementById('add-category-form').reset();
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+            modal.show();
+        }
+
+        // Submit add category
+        async function submitAddCategory() {
+            const form = document.getElementById('add-category-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const categoryData = {
+                name: document.getElementById('category-name').value,
+                description: document.getElementById('category-description').value || null
+            };
+
+            try {
+                const response = await fetch('/api/v1/products/categories', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(categoryData)
+                });
+
+                if (response.ok) {
+                    showSuccess('Categoría creada exitosamente');
+                    bootstrap.Modal.getInstance(document.getElementById('addCategoryModal')).hide();
+                    loadCategories(); // Reload categories
+                    renderCategories(); // Re-render categories
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Error creando categoría');
+                }
+            } catch (error) {
+                console.error('Error creating category:', error);
+                showError('Error de conexión');
+            }
+        }
+
+        // Variables para edición de órdenes
+        let editingOrder = null;
+        let editingOrderItems = [];
+        let newOrderItems = [];
+
+        // Edit order
+        async function editOrder(orderId) {
+            try {
+                const response = await fetch(`/api/v1/orders/${orderId}`, { headers });
+                if (response.ok) {
+                    editingOrder = await response.json();
+                    editingOrderItems = [...editingOrder.items];
+                    newOrderItems = [];
+                    
+                    // Llenar el modal con los datos de la orden
+                    document.getElementById('edit-order-number').textContent = editingOrder.order_number;
+                    document.getElementById('edit-people-count').value = editingOrder.people_count;
+                    document.getElementById('edit-order-priority').value = editingOrder.priority;
+                    document.getElementById('edit-order-notes').value = editingOrder.notes || '';
+                    
+                    // Renderizar categorías y productos
+                    renderEditCategories();
+                    renderEditProducts();
+                    updateEditOrderSummary();
+                    
+                    // Mostrar modal
+                    new bootstrap.Modal(document.getElementById('editOrderModal')).show();
+                } else {
+                    showError('Error cargando orden');
+                }
+            } catch (error) {
+                console.error('Error loading order:', error);
+                showError('Error de conexión');
+            }
+        }
+
+        // Render edit categories
+        function renderEditCategories() {
+            const container = document.getElementById('edit-categories-buttons');
+            container.innerHTML = '<button class="btn btn-outline-primary me-2 mb-2 active" onclick="selectEditCategory(null)">Todos</button>';
+            
+            categories.forEach(category => {
+                const button = document.createElement('button');
+                button.className = 'btn btn-outline-primary me-2 mb-2';
+                button.textContent = category.name;
+                button.onclick = () => selectEditCategory(category.id);
+                container.appendChild(button);
+            });
+        }
+
+        // Select edit category
+        function selectEditCategory(categoryId) {
+            // Update button states
+            document.querySelectorAll('#edit-categories-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderEditProducts(categoryId);
+        }
+
+        // Render edit products
+        function renderEditProducts(categoryId = null) {
+            const container = document.getElementById('edit-products-container');
+            let filteredProducts = products;
+
+            if (categoryId) {
+                filteredProducts = products.filter(product => product.category_id === categoryId);
+            }
+
+            container.innerHTML = '';
+
+            filteredProducts.forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product-item';
+                productDiv.onclick = () => addToEditOrder(product);
+
+                productDiv.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${product.name}</strong>
+                            <div class="text-muted small">${product.description || ''}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold">$${product.price}</div>
+                            <small class="text-muted">Stock: ${product.stock}</small>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(productDiv);
+            });
+        }
+
+        // Add product to edit order
+        function addToEditOrder(product) {
+            const existingItem = newOrderItems.find(item => item.product_id === product.id);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+                existingItem.subtotal = existingItem.quantity * existingItem.unit_price;
+            } else {
+                newOrderItems.push({
+                    product_id: product.id,
+                    product_name: product.name,
+                    quantity: 1,
+                    unit_price: product.price,
+                    subtotal: product.price
+                });
+            }
+            
+            updateEditOrderSummary();
+        }
+
+        // Update edit order summary
+        function updateEditOrderSummary() {
+            const container = document.getElementById('edit-order-items-list');
+            const totalElement = document.getElementById('edit-order-total');
+            
+            container.innerHTML = '';
+            let total = 0;
+
+            // Mostrar items actuales
+            if (editingOrderItems.length > 0) {
+                container.innerHTML += '<h6 class="text-muted">Items Actuales:</h6>';
+                editingOrderItems.forEach((item, index) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'd-flex justify-content-between align-items-center mb-2';
+                    itemDiv.innerHTML = `
+                        <div>
+                            <div class="fw-bold">${item.product?.name || 'Producto'}</div>
+                            <small class="text-muted">$${item.unit_price} x ${item.quantity}</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <strong>$${item.subtotal}</strong>
+                            <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeEditOrderItem(${index})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(itemDiv);
+                    total += item.subtotal;
+                });
+            }
+
+            // Mostrar nuevos items
+            if (newOrderItems.length > 0) {
+                container.innerHTML += '<h6 class="text-success mt-3">Nuevos Items:</h6>';
+                newOrderItems.forEach((item, index) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'd-flex justify-content-between align-items-center mb-2';
+                    itemDiv.innerHTML = `
+                        <div>
+                            <div class="fw-bold text-success">${item.product_name}</div>
+                            <small class="text-muted">$${item.unit_price} x ${item.quantity}</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-sm btn-outline-secondary me-1" onclick="changeEditQuantity(${index}, -1)">-</button>
+                            <span class="mx-2">${item.quantity}</span>
+                            <button class="btn btn-sm btn-outline-secondary me-2" onclick="changeEditQuantity(${index}, 1)">+</button>
+                            <strong class="text-success">$${item.subtotal.toFixed(2)}</strong>
+                            <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeNewItem(${index})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(itemDiv);
+                    total += item.subtotal;
+                });
+            }
+
+            totalElement.textContent = `$${total.toFixed(2)}`;
+        }
+
+        // Remove item from edit order
+        async function removeEditOrderItem(index) {
+            const item = editingOrderItems[index];
+            if (confirm(`¿Eliminar ${item.product?.name || 'producto'} de la orden?`)) {
+                try {
+                    const response = await fetch(`/api/v1/orders/${editingOrder.id}/items/${item.id}`, {
+                        method: 'DELETE',
+                        headers
+                    });
+
+                    if (response.ok) {
+                        editingOrderItems.splice(index, 1);
+                        updateEditOrderSummary();
+                        showSuccess('Item eliminado');
+                    } else {
+                        showError('Error eliminando item');
+                    }
+                } catch (error) {
+                    console.error('Error removing item:', error);
+                    showError('Error de conexión');
+                }
+            }
+        }
+
+        // Change edit quantity
+        function changeEditQuantity(index, change) {
+            const item = newOrderItems[index];
+            item.quantity += change;
+            
+            if (item.quantity <= 0) {
+                newOrderItems.splice(index, 1);
+            } else {
+                item.subtotal = item.quantity * item.unit_price;
+            }
+            
+            updateEditOrderSummary();
+        }
+
+        // Remove new item
+        function removeNewItem(index) {
+            newOrderItems.splice(index, 1);
+            updateEditOrderSummary();
+        }
+
+        // Submit edit order
+        async function submitEditOrder() {
+            // Actualizar información básica de la orden
+            const orderUpdate = {
+                people_count: parseInt(document.getElementById('edit-people-count').value),
+                priority: document.getElementById('edit-order-priority').value,
+                notes: document.getElementById('edit-order-notes').value || null
+            };
+
+            try {
+                // Actualizar orden
+                const updateResponse = await fetch(`/api/v1/orders/${editingOrder.id}`, {
+                    method: 'PUT',
+                    headers,
+                    body: JSON.stringify(orderUpdate)
+                });
+
+                if (!updateResponse.ok) {
+                    showError('Error actualizando orden');
+                    return;
+                }
+
+                // Agregar nuevos items si hay
+                if (newOrderItems.length > 0) {
+                    const itemsData = newOrderItems.map(item => ({
+                        product_id: item.product_id,
+                        quantity: item.quantity,
+                        unit_price: item.unit_price
+                    }));
+
+                    const addResponse = await fetch(`/api/v1/orders/${editingOrder.id}/add-items`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(itemsData)
+                    });
+
+                    if (!addResponse.ok) {
+                        showError('Error agregando items');
+                        return;
+                    }
+                }
+
+                showSuccess('Orden actualizada exitosamente');
+                bootstrap.Modal.getInstance(document.getElementById('editOrderModal')).hide();
+                showMyOrders(); // Refresh orders
+                refreshTables();
+            } catch (error) {
+                console.error('Error updating order:', error);
+                showError('Error de conexión');
+            }
+        }
+
+        // Cancel order
+        async function cancelOrder(orderId) {
+            if (confirm('¿Cancelar esta orden? Esta acción no se puede deshacer y se restaurará el stock de los productos.')) {
+                try {
+                    const response = await fetch(`/api/v1/orders/${orderId}/cancel`, {
+                        method: 'POST',
+                        headers
+                    });
+
+                    if (response.ok) {
+                        showSuccess('Orden cancelada exitosamente');
+                        showMyOrders(); // Refresh orders
+                        refreshTables();
+                    } else {
+                        const error = await response.json();
+                        showError(error.detail || 'Error cancelando orden');
+                    }
+                } catch (error) {
+                    console.error('Error canceling order:', error);
+                    showError('Error de conexión');
+                }
+            }
+        }
+
+        // Duplicate order
+        async function duplicateOrder(orderId) {
+            if (confirm('¿Duplicar esta orden? Se creará una nueva orden con los mismos productos.')) {
+                try {
+                    const response = await fetch(`/api/v1/orders/${orderId}/duplicate`, {
+                        method: 'POST',
+                        headers
+                    });
+
+                    if (response.ok) {
+                        const newOrder = await response.json();
+                        showSuccess(`Orden duplicada exitosamente. Nueva orden: ${newOrder.order_number}`);
+                        showMyOrders(); // Refresh orders
+                        refreshTables();
+                    } else {
+                        const error = await response.json();
+                        showError(error.detail || 'Error duplicando orden');
+                    }
+                } catch (error) {
+                    console.error('Error duplicating order:', error);
+                    showError('Error de conexión');
+                }
+            }
+        }
+
+        // Remove order item (from my orders view)
+        async function removeOrderItem(orderId, itemId) {
+            if (confirm('¿Eliminar este item de la orden?')) {
+                try {
+                    const response = await fetch(`/api/v1/orders/${orderId}/items/${itemId}`, {
+                        method: 'DELETE',
+                        headers
+                    });
+
+                    if (response.ok) {
+                        showSuccess('Item eliminado exitosamente');
+                        showMyOrders(); // Refresh orders
+                        refreshTables();
+                    } else {
+                        showError('Error eliminando item');
+                    }
+                } catch (error) {
+                    console.error('Error removing item:', error);
+                    showError('Error de conexión');
+                }
+            }
         }
 
         // Logout

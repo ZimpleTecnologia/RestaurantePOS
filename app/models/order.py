@@ -1,7 +1,7 @@
 """
 Modelos para Órdenes de Restaurante
 """
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, Enum, Numeric
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, Numeric
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -37,8 +37,8 @@ class Order(Base):
     
     # Información de la orden
     people_count = Column(Integer, default=1)
-    status = Column(Enum(OrderStatus), default=OrderStatus.PENDIENTE)
-    priority = Column(Enum(OrderPriority), default=OrderPriority.NORMAL)
+    status = Column(String(20), default="pendiente")
+    priority = Column(String(20), default="normal")
     
     # Notas y observaciones
     notes = Column(Text, nullable=True)
@@ -72,9 +72,10 @@ class OrderItem(Base):
     quantity = Column(Integer, nullable=False)
     unit_price = Column(Numeric(10, 2), nullable=False)
     subtotal = Column(Numeric(10, 2), nullable=False)
+    total = Column(Numeric(10, 2), nullable=True)  # Columna adicional si existe en la BD
     
     # Estado específico del item
-    status = Column(Enum(OrderStatus), default=OrderStatus.PENDIENTE)
+    status = Column(String(20), default="pendiente")
     special_instructions = Column(Text, nullable=True)
     
     # Tiempos específicos del item

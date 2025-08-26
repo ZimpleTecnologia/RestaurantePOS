@@ -112,7 +112,7 @@ def create_sale(
         user_id=current_user.id,
         customer_id=sale_data.customer_id,
         total=sale_data.total,
-        status=SaleStatus.COMPLETADA
+                    status="completada"
     )
     
     db.add(db_sale)
@@ -227,7 +227,7 @@ def get_daily_report(
     # Ventas del día
     sales = db.query(Sale).filter(
         func.date(Sale.created_at) == report_date,
-        Sale.status == SaleStatus.COMPLETADA
+        Sale.status == "completada"
     ).all()
     
     total_sales = len(sales)
@@ -256,7 +256,7 @@ def get_weekly_report(
     sales = db.query(Sale).filter(
         func.date(Sale.created_at) >= start_date,
         func.date(Sale.created_at) <= end_date,
-        Sale.status == SaleStatus.COMPLETADA
+        Sale.status == "completada"
     ).all()
     
     # Agrupar por día
@@ -294,7 +294,7 @@ def get_monthly_report(
     sales = db.query(Sale).filter(
         func.extract('year', Sale.created_at) == year,
         func.extract('month', Sale.created_at) == month,
-        Sale.status == SaleStatus.COMPLETADA
+        Sale.status == "completada"
     ).all()
     
     total_sales = len(sales)
@@ -310,7 +310,7 @@ def get_monthly_report(
      .filter(
         func.extract('year', Sale.created_at) == year,
         func.extract('month', Sale.created_at) == month,
-        Sale.status == SaleStatus.COMPLETADA
+        Sale.status == "completada"
     ).group_by(Product.name)\
      .order_by(func.sum(SaleItem.quantity).desc())\
      .limit(10).all()
@@ -339,7 +339,7 @@ def get_sales_without_cash_movement(
     """Obtener ventas que no tienen movimiento de caja asociado"""
     # Obtener todas las ventas completadas
     sales = db.query(Sale).filter(
-        Sale.status == SaleStatus.COMPLETADA
+        Sale.status == "completada"
     ).all()
     
     # Obtener todos los movimientos de caja que son ventas
@@ -388,7 +388,7 @@ def create_cash_movement_for_sale(
         raise HTTPException(status_code=404, detail="Venta no encontrada")
     
     # Verificar que la venta está completada
-    if sale.status != SaleStatus.COMPLETADA:
+    if sale.status != "completada":
         raise HTTPException(status_code=400, detail="Solo se pueden crear movimientos para ventas completadas")
     
     # Verificar que la sesión existe y está abierta
@@ -440,11 +440,11 @@ def get_cash_integration_summary(
     """Obtener resumen de la integración entre ventas y caja"""
     # Total de ventas completadas
     total_sales = db.query(func.count(Sale.id)).filter(
-        Sale.status == SaleStatus.COMPLETADA
+        Sale.status == "completada"
     ).scalar()
     
     total_sales_amount = db.query(func.sum(Sale.total)).filter(
-        Sale.status == SaleStatus.COMPLETADA
+        Sale.status == "completada"
     ).scalar() or 0
     
     # Total de movimientos de caja por ventas
@@ -458,7 +458,7 @@ def get_cash_integration_summary(
     
     # Ventas sin movimiento de caja
     sales_without_movement = db.query(func.count(Sale.id)).filter(
-        Sale.status == SaleStatus.COMPLETADA
+        Sale.status == "completada"
     ).scalar()
     
     # Restar las que sí tienen movimiento

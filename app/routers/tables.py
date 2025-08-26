@@ -7,8 +7,8 @@ from typing import List, Optional
 
 from app.database import get_db
 from app.models.user import User, UserRole
-from app.models.location import Table, TableStatus, Location
-from app.models.order import Order, OrderStatus
+from app.models.location import Table, TableStatus, Location, LocationType
+from app.models.order import Order
 from app.schemas.location import TableCreate, TableUpdate, TableResponse
 from app.auth.dependencies import get_current_user
 
@@ -43,7 +43,7 @@ def get_tables(
         try:
             active_orders = db.query(Order).filter(
                 Order.table_id == table.id,
-                Order.status.in_([OrderStatus.pendiente, OrderStatus.en_preparacion, OrderStatus.listo])
+                Order.status.in_(["pendiente", "en_preparacion", "listo"])
             ).count()
             
             # Agregar como atributo dinámico
@@ -77,7 +77,7 @@ def get_table(
     # Agregar información de órdenes activas
     active_orders = db.query(Order).filter(
         Order.table_id == table.id,
-        Order.status.in_([OrderStatus.pendiente, OrderStatus.en_preparacion, OrderStatus.listo])
+        Order.status.in_(["pendiente", "en_preparacion", "listo"])
     ).count()
     
     table.active_orders = active_orders
@@ -91,20 +91,35 @@ def create_table(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Crear nueva mesa (solo admin)"""
-    if current_user.role != UserRole.ADMIN:
+    """Crear nueva mesa (admin y meseros)"""
+    if current_user.role not in [UserRole.ADMIN, UserRole.MESERO]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo los administradores pueden crear mesas"
+            detail="Solo administradores y meseros pueden crear mesas"
         )
     
-    # Verificar que la ubicación existe
-    location = db.query(Location).filter(Location.id == table_data.location_id).first()
-    if not location:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ubicación no encontrada"
-        )
+    # Si no se proporciona location_id, usar la primera ubicación disponible
+    if not table_data.location_id:
+        location = db.query(Location).first()
+        if not location:
+            # Crear una ubicación por defecto si no existe ninguna
+            location = Location(
+                name="Restaurante Principal",
+                description="Ubicación principal del restaurante",
+                location_type=LocationType.RESTAURANTE
+            )
+            db.add(location)
+            db.commit()
+            db.refresh(location)
+        table_data.location_id = location.id
+    else:
+        # Verificar que la ubicación existe
+        location = db.query(Location).filter(Location.id == table_data.location_id).first()
+        if not location:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Ubicación no encontrada"
+            )
     
     # Verificar que el número de mesa no existe en esa ubicación
     existing_table = db.query(Table).filter(
@@ -197,7 +212,7 @@ def update_table_status(
     if new_status == TableStatus.LIBRE:
         active_orders = db.query(Order).filter(
             Order.table_id == table.id,
-            Order.status.in_([OrderStatus.pendiente, OrderStatus.en_preparacion, OrderStatus.listo])
+            Order.status.in_(["pendiente", "en_preparacion", "listo"])
         ).count()
         
         if active_orders > 0:
@@ -232,7 +247,7 @@ def get_table_orders(
     
     if active_only:
         query = query.filter(
-            Order.status.in_([OrderStatus.pendiente, OrderStatus.en_preparacion, OrderStatus.listo])
+            Order.status.in_(["pendiente", "en_preparacion", "listo"])
         )
     
     orders = query.order_by(Order.created_at.desc()).all()
@@ -263,7 +278,7 @@ def delete_table(
     # Verificar que no tenga órdenes activas
     active_orders = db.query(Order).filter(
         Order.table_id == table.id,
-        Order.status.in_([OrderStatus.pendiente, OrderStatus.en_preparacion, OrderStatus.listo])
+        Order.status.in_(["pendiente", "en_preparacion", "listo"])
     ).count()
     
     if active_orders > 0:

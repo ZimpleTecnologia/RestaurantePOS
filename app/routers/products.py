@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
-from app.auth.dependencies import get_current_active_user, require_admin
+from app.auth.dependencies import get_current_active_user, require_admin, require_waiter_or_admin
 from app.models.product import Product, Category, SubCategory
 from app.schemas.product import (
     ProductCreate, ProductUpdate, ProductResponse, ProductWithCategory,
@@ -33,9 +33,9 @@ def get_categories(
 def create_category(
     category: CategoryCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_waiter_or_admin)
 ):
-    """Crear nueva categoría"""
+    """Crear nueva categoría (meseros y administradores)"""
     db_category = Category(**category.dict())
     db.add(db_category)
     db.commit()
