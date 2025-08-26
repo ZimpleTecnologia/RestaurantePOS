@@ -35,6 +35,7 @@ class OrderItemResponse(OrderItemBase):
     id: int
     order_id: int
     subtotal: float
+    total: Optional[float] = None
     status: Optional[OrderStatusType] = None
     created_at: datetime
     updated_at: Optional[datetime] = None

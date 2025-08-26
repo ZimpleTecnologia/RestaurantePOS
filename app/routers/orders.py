@@ -224,7 +224,7 @@ def create_order(
         )
 
 
-@router.get("/", response_model=List[OrderResponse])
+@router.get("/")
 def get_orders(
     status: Optional[str] = None,
     table_id: Optional[int] = None,
@@ -235,7 +235,11 @@ def get_orders(
     current_user: User = Depends(get_current_user)
 ):
     """Obtener órdenes con filtros"""
-    query = db.query(Order)
+    query = db.query(Order).options(
+        joinedload(Order.items).joinedload(OrderItem.product),
+        joinedload(Order.waiter),
+        joinedload(Order.table)
+    )
     
     # Filtros
     if status:
@@ -252,7 +256,70 @@ def get_orders(
         query = query.filter(Order.waiter_id == current_user.id)
     
     orders = query.order_by(Order.created_at.desc()).offset(skip).limit(limit).all()
-    return orders
+    
+    # Convertir a diccionarios para evitar problemas de validación
+    orders_list = []
+    for order in orders:
+        order_dict = {
+            "id": order.id,
+            "order_number": order.order_number,
+            "table_id": order.table_id,
+            "waiter_id": order.waiter_id,
+            "sale_id": order.sale_id,
+            "people_count": order.people_count,
+            "status": order.status,
+            "priority": order.priority,
+            "notes": order.notes,
+            "kitchen_notes": order.kitchen_notes,
+            "created_at": order.created_at,
+            "updated_at": order.updated_at,
+            "kitchen_start_time": order.kitchen_start_time,
+            "kitchen_end_time": order.kitchen_end_time,
+            "served_time": order.served_time,
+            "items": [
+                {
+                    "id": item.id,
+                    "order_id": item.order_id,
+                    "product_id": item.product_id,
+                    "quantity": item.quantity,
+                    "unit_price": float(item.unit_price) if item.unit_price else None,
+                    "subtotal": float(item.subtotal) if item.subtotal else None,
+                    "total": float(item.total) if item.total else None,
+                    "status": item.status,
+                    "special_instructions": item.special_instructions,
+                    "created_at": item.created_at,
+                    "updated_at": item.updated_at,
+                    "kitchen_start_time": item.kitchen_start_time,
+                    "kitchen_end_time": item.kitchen_end_time,
+                    "product": {
+                        "id": item.product.id,
+                        "code": item.product.code,
+                        "name": item.product.name,
+                        "description": item.product.description,
+                        "price": float(item.product.price) if item.product.price else None
+                    } if item.product else None
+                }
+                for item in order.items
+            ],
+            "waiter": {
+                "id": order.waiter.id,
+                "username": order.waiter.username,
+                "email": order.waiter.email,
+                "full_name": order.waiter.full_name,
+                "role": order.waiter.role
+            } if order.waiter else None,
+            "table": {
+                "id": order.table.id,
+                "table_number": order.table.table_number,
+                "capacity": order.table.capacity,
+                "status": order.table.status,
+                "name": order.table.name,
+                "notes": order.table.notes
+            } if order.table else None
+        }
+        orders_list.append(order_dict)
+    
+    return orders_list
 
 
 @router.get("/kitchen", response_model=List[KitchenOrderResponse])
@@ -417,14 +484,19 @@ def update_order_status(
     return order
 
 
-@router.get("/{order_id}", response_model=OrderResponse)
+@router.get("/{order_id}")
 def get_order(
     order_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Obtener orden específica"""
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = db.query(Order).options(
+        joinedload(Order.items).joinedload(OrderItem.product),
+        joinedload(Order.waiter),
+        joinedload(Order.table)
+    ).filter(Order.id == order_id).first()
+    
     if not order:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -438,10 +510,69 @@ def get_order(
             detail="No tienes permiso para ver esta orden"
         )
     
-    return order
+    # Convertir a diccionario para evitar problemas de validación
+    order_dict = {
+        "id": order.id,
+        "order_number": order.order_number,
+        "table_id": order.table_id,
+        "waiter_id": order.waiter_id,
+        "sale_id": order.sale_id,
+        "people_count": order.people_count,
+        "status": order.status,
+        "priority": order.priority,
+        "notes": order.notes,
+        "kitchen_notes": order.kitchen_notes,
+        "created_at": order.created_at,
+        "updated_at": order.updated_at,
+        "kitchen_start_time": order.kitchen_start_time,
+        "kitchen_end_time": order.kitchen_end_time,
+        "served_time": order.served_time,
+        "items": [
+            {
+                "id": item.id,
+                "order_id": item.order_id,
+                "product_id": item.product_id,
+                "quantity": item.quantity,
+                "unit_price": float(item.unit_price) if item.unit_price else None,
+                "subtotal": float(item.subtotal) if item.subtotal else None,
+                "total": float(item.total) if item.total else None,
+                "status": item.status,
+                "special_instructions": item.special_instructions,
+                "created_at": item.created_at,
+                "updated_at": item.updated_at,
+                "kitchen_start_time": item.kitchen_start_time,
+                "kitchen_end_time": item.kitchen_end_time,
+                "product": {
+                    "id": item.product.id,
+                    "code": item.product.code,
+                    "name": item.product.name,
+                    "description": item.product.description,
+                    "price": float(item.product.price) if item.product.price else None
+                } if item.product else None
+            }
+            for item in order.items
+        ],
+        "waiter": {
+            "id": order.waiter.id,
+            "username": order.waiter.username,
+            "email": order.waiter.email,
+            "full_name": order.waiter.full_name,
+            "role": order.waiter.role
+        } if order.waiter else None,
+        "table": {
+            "id": order.table.id,
+            "table_number": order.table.table_number,
+            "capacity": order.table.capacity,
+            "status": order.table.status,
+            "name": order.table.name,
+            "notes": order.table.notes
+        } if order.table else None
+    }
+    
+    return order_dict
 
 
-@router.put("/{order_id}", response_model=OrderResponse)
+@router.put("/{order_id}")
 def update_order(
     order_id: int,
     order_update: OrderUpdate,
@@ -478,10 +609,75 @@ def update_order(
     db.commit()
     db.refresh(order)
     
-    return order
+    # Cargar relaciones y convertir a diccionario
+    order = db.query(Order).options(
+        joinedload(Order.items).joinedload(OrderItem.product),
+        joinedload(Order.waiter),
+        joinedload(Order.table)
+    ).filter(Order.id == order_id).first()
+    
+    order_dict = {
+        "id": order.id,
+        "order_number": order.order_number,
+        "table_id": order.table_id,
+        "waiter_id": order.waiter_id,
+        "sale_id": order.sale_id,
+        "people_count": order.people_count,
+        "status": order.status,
+        "priority": order.priority,
+        "notes": order.notes,
+        "kitchen_notes": order.kitchen_notes,
+        "created_at": order.created_at,
+        "updated_at": order.updated_at,
+        "kitchen_start_time": order.kitchen_start_time,
+        "kitchen_end_time": order.kitchen_end_time,
+        "served_time": order.served_time,
+        "items": [
+            {
+                "id": item.id,
+                "order_id": item.order_id,
+                "product_id": item.product_id,
+                "quantity": item.quantity,
+                "unit_price": float(item.unit_price) if item.unit_price else None,
+                "subtotal": float(item.subtotal) if item.subtotal else None,
+                "total": float(item.total) if item.total else None,
+                "status": item.status,
+                "special_instructions": item.special_instructions,
+                "created_at": item.created_at,
+                "updated_at": item.updated_at,
+                "kitchen_start_time": item.kitchen_start_time,
+                "kitchen_end_time": item.kitchen_end_time,
+                "product": {
+                    "id": item.product.id,
+                    "code": item.product.code,
+                    "name": item.product.name,
+                    "description": item.product.description,
+                    "price": float(item.product.price) if item.product.price else None
+                } if item.product else None
+            }
+            for item in order.items
+        ],
+        "waiter": {
+            "id": order.waiter.id,
+            "username": order.waiter.username,
+            "email": order.waiter.email,
+            "full_name": order.waiter.full_name,
+            "role": order.waiter.role
+        } if order.waiter else None,
+        "table": {
+            "id": order.table.id,
+            "table_number": order.table.table_number,
+            "capacity": order.table.capacity,
+            "status": order.table.status,
+            "name": order.table.name,
+            "notes": order.table.notes
+        } if order.table else None
+    }
+    
+    return order_dict
 
 
-@router.post("/{order_id}/add-items", response_model=OrderResponse)
+@router.post("/{order_id}/add-items")
 def add_items_to_order(
     order_id: int,
     items_data: List[OrderItemCreate],
@@ -920,4 +1116,181 @@ def duplicate_order(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error duplicando orden: {str(e)}"
+        )
+
+
+@router.post("/{order_id}/add-items")
+def add_items_to_order(
+    order_id: int,
+    items_data: List[OrderItemCreate],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Agregar items a una orden existente"""
+    # Verificar que el usuario sea mesero
+    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo los meseros pueden agregar items a órdenes"
+        )
+    
+    # Obtener la orden
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Orden no encontrada"
+        )
+    
+    # Verificar que la orden no esté completada o cancelada
+    if order.status in ["servido", "cancelado"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se pueden agregar items a una orden completada o cancelada"
+        )
+    
+    # Verificar permisos
+    if current_user.role == UserRole.MESERO and order.waiter_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para modificar esta orden"
+        )
+    
+    try:
+        for item_data in items_data:
+            # Verificar que el producto existe
+            product = db.query(Product).filter(Product.id == item_data.product_id).first()
+            if not product:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Producto {item_data.product_id} no encontrado"
+                )
+            
+            # Verificar stock
+            if product.stock < item_data.quantity:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Stock insuficiente para {product.name}"
+                )
+            
+            # Crear el item
+            order_item = OrderItem(
+                order_id=order_id,
+                product_id=item_data.product_id,
+                quantity=item_data.quantity,
+                unit_price=product.price,
+                subtotal=product.price * item_data.quantity,
+                status="pendiente"
+            )
+            
+            db.add(order_item)
+            
+            # Actualizar stock
+            product.stock -= item_data.quantity
+        
+        db.commit()
+        
+        return {"message": "Items agregados exitosamente"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error agregando items: {str(e)}"
+        )
+
+
+@router.post("/{order_id}/convert-to-sale")
+def convert_order_to_sale(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Convertir una orden completada en una venta"""
+    # Verificar que el usuario sea mesero
+    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo los meseros pueden convertir órdenes a ventas"
+        )
+    
+    # Obtener la orden
+    order = db.query(Order).options(
+        joinedload(Order.items).joinedload(OrderItem.product)
+    ).filter(Order.id == order_id).first()
+    
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Orden no encontrada"
+        )
+    
+    # Verificar que la orden esté lista para ser servida
+    if order.status != "listo":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Solo se pueden convertir órdenes que estén listas"
+        )
+    
+    # Verificar permisos
+    if current_user.role == UserRole.MESERO and order.waiter_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para convertir esta orden"
+        )
+    
+    try:
+        # Crear la venta
+        sale_number = generate_sale_number(db)
+        total_amount = sum(item.subtotal for item in order.items)
+        
+        sale = Sale(
+            sale_number=sale_number,
+            customer_id=None,  # Venta sin cliente específico
+            waiter_id=order.waiter_id,
+            table_id=order.table_id,
+            total_amount=total_amount,
+            payment_method="efectivo",  # Por defecto
+            status=SaleStatus.COMPLETADA,
+            notes=f"Convertida de orden {order.order_number}"
+        )
+        
+        db.add(sale)
+        db.flush()  # Para obtener el ID de la venta
+        
+        # Crear items de venta
+        for order_item in order.items:
+            sale_item = SaleItem(
+                sale_id=sale.id,
+                product_id=order_item.product_id,
+                quantity=order_item.quantity,
+                unit_price=order_item.unit_price,
+                subtotal=order_item.subtotal
+            )
+            db.add(sale_item)
+        
+        # Marcar orden como servida
+        order.status = "servido"
+        
+        # Liberar la mesa
+        if order.table:
+            order.table.status = TableStatus.FREE
+        
+        db.commit()
+        db.refresh(sale)
+        
+        return {
+            "message": "Orden convertida a venta exitosamente",
+            "sale_number": sale.sale_number,
+            "total_amount": float(sale.total_amount),
+            "sale_id": sale.id
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error convirtiendo orden a venta: {str(e)}"
         )

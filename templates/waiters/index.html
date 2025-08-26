@@ -165,6 +165,12 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="bi bi-person-badge"></i> Panel de Meseros</h2>
     <div>
+        <button class="btn btn-warning" onclick="showAddTableModal()">
+            <i class="bi bi-plus-circle"></i> Crear Mesa
+        </button>
+        <button class="btn btn-info" onclick="showMyOrders()">
+            <i class="bi bi-list-check"></i> Mis Pedidos
+        </button>
         <button class="btn btn-primary" onclick="refreshTables()">
             <i class="bi bi-arrow-clockwise"></i> Actualizar
         </button>
@@ -281,8 +287,121 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-warning" onclick="editOrder()">
+                    <i class="bi bi-pencil"></i> Editar Orden
+                </button>
                 <button type="button" class="btn btn-success" onclick="markAsServed()">
                     <i class="bi bi-check-circle"></i> Marcar como Servido
+                </button>
+                <button type="button" class="btn btn-primary" onclick="convertToSale()">
+                    <i class="bi bi-cart-check"></i> Convertir a Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear Mesa -->
+<div class="modal fade" id="addTableModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle"></i> Crear Nueva Mesa
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-table-form">
+                    <div class="mb-3">
+                        <label for="table-number" class="form-label">Número de Mesa</label>
+                        <input type="number" class="form-control" id="table-number" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="table-capacity" class="form-label">Capacidad</label>
+                        <input type="number" class="form-control" id="table-capacity" required min="1" max="20" value="4">
+                    </div>
+                    <div class="mb-3">
+                        <label for="table-name" class="form-label">Nombre (Opcional)</label>
+                        <input type="text" class="form-control" id="table-name" placeholder="Ej: Terraza, Interior, etc.">
+                    </div>
+                    <div class="mb-3">
+                        <label for="table-notes" class="form-label">Notas (Opcional)</label>
+                        <textarea class="form-control" id="table-notes" rows="3" placeholder="Notas adicionales sobre la mesa"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="submitAddTable()">
+                    <i class="bi bi-check-circle"></i> Crear Mesa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Mis Pedidos -->
+<div class="modal fade" id="myOrdersModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-list-check"></i> Mis Pedidos Activos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="my-orders-container">
+                    <!-- Los pedidos del mesero se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Editar Orden -->
+<div class="modal fade" id="editOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil"></i> Editar Orden #<span id="edit-order-number"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6>Agregar Más Productos</h6>
+                        <div id="edit-products-list">
+                            <!-- Los productos se cargarán aquí -->
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Orden Actual</h6>
+                        <div class="order-summary" id="edit-order-summary">
+                            <!-- El resumen se cargará aquí -->
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Notas para la cocina:</label>
+                            <textarea class="form-control" id="edit-order-notes" rows="3"></textarea>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Prioridad:</label>
+                            <select class="form-select" id="edit-order-priority">
+                                <option value="normal">Normal</option>
+                                <option value="alta">Alta</option>
+                                <option value="urgente">Urgente</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="submitEditOrder()">
+                    <i class="bi bi-check-circle"></i> Guardar Cambios
                 </button>
             </div>
         </div>
@@ -297,9 +416,14 @@
     let currentOrder = [];
     let selectedTableId = null;
     let selectedOrderId = null;
+    let currentUser = null;
+    let editingOrder = null;
+    let editingOrderItems = [];
+    let newOrderItems = [];
 
     // Inicializar
     document.addEventListener('DOMContentLoaded', function() {
+        loadCurrentUser();
         loadTables();
         loadProducts();
         updateStats();
@@ -310,6 +434,26 @@
             updateStats();
         }, 30000);
     });
+
+    // Cargar usuario actual
+    async function loadCurrentUser() {
+        try {
+            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+            const response = await fetch('/api/v1/auth/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                currentUser = await response.json();
+            } else {
+                console.error('Error cargando usuario');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
 
     // Cargar mesas
     async function loadTables() {
@@ -756,6 +900,498 @@
     function showError(message) {
         // Implementar toast de error
         alert('Error: ' + message);
+    }
+
+    // ===== FUNCIONES PARA CREAR MESAS =====
+    
+    // Mostrar modal de crear mesa
+    function showAddTableModal() {
+        // Limpiar formulario
+        document.getElementById('add-table-form').reset();
+        
+        // Auto-generar siguiente número de mesa
+        const nextNumber = Math.max(...currentTables.map(t => parseInt(t.table_number) || 0), 0) + 1;
+        document.getElementById('table-number').value = nextNumber;
+        
+        new bootstrap.Modal(document.getElementById('addTableModal')).show();
+    }
+
+    // Crear mesa
+    async function submitAddTable() {
+        const form = document.getElementById('add-table-form');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const tableData = {
+            table_number: document.getElementById('table-number').value.toString(),
+            capacity: parseInt(document.getElementById('table-capacity').value),
+            name: document.getElementById('table-name').value || null,
+            notes: document.getElementById('table-notes').value || null
+        };
+
+        try {
+            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+            const response = await fetch('/api/v1/tables/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(tableData)
+            });
+
+            if (response.ok) {
+                showSuccess('Mesa creada exitosamente');
+                bootstrap.Modal.getInstance(document.getElementById('addTableModal')).hide();
+                loadTables();
+            } else {
+                const error = await response.json();
+                showError(error.detail || 'Error creando mesa');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Error de conexión');
+        }
+    }
+
+    // ===== FUNCIONES PARA MIS PEDIDOS =====
+    
+    // Mostrar mis pedidos
+    async function showMyOrders() {
+        if (!currentUser) {
+            showError('Usuario no cargado');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+            const response = await fetch(`/api/v1/orders/?waiter_id=${currentUser.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const orders = await response.json();
+                renderMyOrders(orders);
+                new bootstrap.Modal(document.getElementById('myOrdersModal')).show();
+            } else {
+                showError('Error cargando pedidos');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Error de conexión');
+        }
+    }
+
+    // Renderizar mis pedidos
+    function renderMyOrders(orders) {
+        const container = document.getElementById('my-orders-container');
+        
+        if (orders.length === 0) {
+            container.innerHTML = '<p class="text-center text-muted">No tienes pedidos activos</p>';
+            return;
+        }
+
+        let html = '';
+        orders.forEach(order => {
+            const statusClass = `status-${order.status}`;
+            const statusText = getStatusText(order.status);
+            
+            html += `
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Orden #${order.order_number}</strong> - Mesa ${order.table ? order.table.table_number : 'N/A'}
+                        </div>
+                        <div>
+                            <span class="kitchen-status ${statusClass}">${statusText}</span>
+                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="editOrderFromList(${order.id})">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
+                            ${order.status === 'listo' ? `
+                                <button class="btn btn-sm btn-success ms-2" onclick="markAsServed(${order.id})">
+                                    <i class="bi bi-check-circle"></i> Servir
+                                </button>
+                                <button class="btn btn-sm btn-primary ms-2" onclick="convertOrderToSale(${order.id})">
+                                    <i class="bi bi-cart-check"></i> Vender
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6>Productos:</h6>
+                                <ul class="list-unstyled">
+                                    ${order.items.map(item => `
+                                        <li>
+                                            <strong>${item.quantity}x</strong> ${item.product ? item.product.name : 'Producto no encontrado'}
+                                            ${item.special_instructions ? `<br><small class="text-warning">${item.special_instructions}</small>` : ''}
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Información:</h6>
+                                <p><strong>Prioridad:</strong> ${order.priority}</p>
+                                <p><strong>Estado:</strong> ${statusText}</p>
+                                <p><strong>Creado:</strong> ${formatTime(order.created_at)}</p>
+                                ${order.notes ? `<p><strong>Notas:</strong> ${order.notes}</p>` : ''}
+                                ${order.kitchen_notes ? `<p><strong>Notas de cocina:</strong> ${order.kitchen_notes}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    // ===== FUNCIONES PARA EDITAR ÓRDENES =====
+    
+    // Editar orden desde lista de órdenes de mesa
+    function editOrder() {
+        if (!selectedOrderId) {
+            showError('Debe seleccionar una orden');
+            return;
+        }
+        editOrderFromList(selectedOrderId);
+    }
+
+    // Editar orden desde lista de mis pedidos
+    async function editOrderFromList(orderId) {
+        try {
+            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+            const response = await fetch(`/api/v1/orders/${orderId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                editingOrder = await response.json();
+                editingOrderItems = [...editingOrder.items];
+                newOrderItems = [];
+                
+                // Llenar el modal con los datos de la orden
+                document.getElementById('edit-order-number').textContent = editingOrder.order_number;
+                document.getElementById('edit-order-notes').value = editingOrder.notes || '';
+                document.getElementById('edit-order-priority').value = editingOrder.priority;
+                
+                // Renderizar productos y resumen
+                renderEditProducts();
+                updateEditOrderSummary();
+                
+                // Mostrar modal
+                new bootstrap.Modal(document.getElementById('editOrderModal')).show();
+            } else {
+                showError('Error cargando orden');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Error de conexión');
+        }
+    }
+
+    // Renderizar productos para edición
+    function renderEditProducts() {
+        const container = document.getElementById('edit-products-list');
+        container.innerHTML = '';
+
+        currentProducts.forEach(product => {
+            const productItem = document.createElement('div');
+            productItem.className = 'product-item';
+            productItem.onclick = () => addToEditOrder(product);
+
+            productItem.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${product.name}</strong>
+                        <br>
+                        <small class="text-muted">${product.description || 'Sin descripción'}</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">$${product.price}</div>
+                        <div class="quantity-control">
+                            <button class="quantity-btn" onclick="event.stopPropagation(); decreaseEditQuantity(${product.id})">-</button>
+                            <span id="edit-qty-${product.id}">0</span>
+                            <button class="quantity-btn" onclick="event.stopPropagation(); increaseEditQuantity(${product.id})">+</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(productItem);
+        });
+    }
+
+    // Agregar producto a orden en edición
+    function addToEditOrder(product) {
+        const existingItem = newOrderItems.find(item => item.product_id === product.id);
+        
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            newOrderItems.push({
+                product_id: product.id,
+                product_name: product.name,
+                price: product.price,
+                quantity: 1
+            });
+        }
+        
+        updateEditOrderSummary();
+        updateEditProductQuantities();
+    }
+
+    // Aumentar cantidad en edición
+    function increaseEditQuantity(productId) {
+        const existingItem = newOrderItems.find(item => item.product_id === productId);
+        
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            const product = currentProducts.find(p => p.id === productId);
+            if (product) {
+                newOrderItems.push({
+                    product_id: product.id,
+                    product_name: product.name,
+                    price: product.price,
+                    quantity: 1
+                });
+            }
+        }
+        
+        updateEditOrderSummary();
+        updateEditProductQuantities();
+    }
+
+    // Disminuir cantidad en edición
+    function decreaseEditQuantity(productId) {
+        const existingItem = newOrderItems.find(item => item.product_id === productId);
+        
+        if (existingItem) {
+            existingItem.quantity -= 1;
+            if (existingItem.quantity <= 0) {
+                newOrderItems = newOrderItems.filter(item => item.product_id !== productId);
+            }
+        }
+        
+        updateEditOrderSummary();
+        updateEditProductQuantities();
+    }
+
+    // Actualizar resumen de orden en edición
+    function updateEditOrderSummary() {
+        const container = document.getElementById('edit-order-summary');
+        
+        let html = '';
+        let total = 0;
+
+        // Mostrar items actuales
+        if (editingOrderItems.length > 0) {
+            html += '<h6 class="text-muted">Items Actuales:</h6>';
+            editingOrderItems.forEach(item => {
+                const subtotal = item.unit_price * item.quantity;
+                total += subtotal;
+                
+                html += `
+                    <div class="order-item">
+                        <div>
+                            <strong>${item.product ? item.product.name : 'Producto'}</strong>
+                            <br>
+                            <small class="text-muted">$${item.unit_price} x ${item.quantity}</small>
+                        </div>
+                        <div class="text-end">
+                            <strong>$${subtotal.toFixed(2)}</strong>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Mostrar nuevos items
+        if (newOrderItems.length > 0) {
+            html += '<h6 class="text-success mt-3">Nuevos Items:</h6>';
+            newOrderItems.forEach(item => {
+                const subtotal = item.price * item.quantity;
+                total += subtotal;
+                
+                html += `
+                    <div class="order-item">
+                        <div>
+                            <strong class="text-success">${item.product_name}</strong>
+                            <br>
+                            <small class="text-muted">$${item.price} x ${item.quantity}</small>
+                        </div>
+                        <div class="text-end">
+                            <strong class="text-success">$${subtotal.toFixed(2)}</strong>
+                            <br>
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeFromEditOrder(${item.product_id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        html += `
+            <hr>
+            <div class="order-item">
+                <strong>Total:</strong>
+                <strong>$${total.toFixed(2)}</strong>
+            </div>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    // Actualizar cantidades mostradas en edición
+    function updateEditProductQuantities() {
+        newOrderItems.forEach(item => {
+            const qtyElement = document.getElementById(`edit-qty-${item.product_id}`);
+            if (qtyElement) {
+                qtyElement.textContent = item.quantity;
+            }
+        });
+    }
+
+    // Remover de orden en edición
+    function removeFromEditOrder(productId) {
+        newOrderItems = newOrderItems.filter(item => item.product_id !== productId);
+        updateEditOrderSummary();
+        updateEditProductQuantities();
+    }
+
+    // Guardar cambios de orden
+    async function submitEditOrder() {
+        if (!editingOrder) return;
+
+        try {
+            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+            
+            // Actualizar información básica de la orden
+            const orderUpdate = {
+                notes: document.getElementById('edit-order-notes').value,
+                priority: document.getElementById('edit-order-priority').value
+            };
+
+            const updateResponse = await fetch(`/api/v1/orders/${editingOrder.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(orderUpdate)
+            });
+
+            if (!updateResponse.ok) {
+                showError('Error actualizando orden');
+                return;
+            }
+
+            // Agregar nuevos items si hay
+            if (newOrderItems.length > 0) {
+                const itemsData = newOrderItems.map(item => ({
+                    product_id: item.product_id,
+                    quantity: item.quantity
+                }));
+
+                const addResponse = await fetch(`/api/v1/orders/${editingOrder.id}/add-items`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(itemsData)
+                });
+
+                if (!addResponse.ok) {
+                    showError('Error agregando items');
+                    return;
+                }
+            }
+
+            showSuccess('Orden actualizada exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('editOrderModal')).hide();
+            loadTables();
+            updateStats();
+        } catch (error) {
+            console.error('Error:', error);
+            showError('Error de conexión');
+        }
+    }
+
+    // ===== FUNCIONES PARA CONVERTIR A VENTA =====
+    
+    // Convertir orden a venta
+    async function convertToSale() {
+        if (!selectedOrderId) {
+            showError('Debe seleccionar una orden');
+            return;
+        }
+
+        if (confirm('¿Convertir esta orden en una venta? Esta acción no se puede deshacer.')) {
+            try {
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+                const response = await fetch(`/api/v1/orders/${selectedOrderId}/convert-to-sale`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const sale = await response.json();
+                    showSuccess(`Orden convertida a venta exitosamente. Venta #${sale.sale_number}`);
+                    bootstrap.Modal.getInstance(document.getElementById('tableOrdersModal')).hide();
+                    loadTables();
+                    updateStats();
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Error convirtiendo a venta');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error de conexión');
+            }
+        }
+    }
+
+    // Convertir orden específica a venta (desde mis pedidos)
+    async function convertOrderToSale(orderId) {
+        if (confirm('¿Convertir esta orden en una venta? Esta acción no se puede deshacer.')) {
+            try {
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+                const response = await fetch(`/api/v1/orders/${orderId}/convert-to-sale`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const sale = await response.json();
+                    showSuccess(`Orden convertida a venta exitosamente. Venta #${sale.sale_number}`);
+                    showMyOrders(); // Refrescar la lista
+                    loadTables();
+                    updateStats();
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Error convirtiendo a venta');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error de conexión');
+            }
+        }
     }
 </script>
 {% endblock %}
