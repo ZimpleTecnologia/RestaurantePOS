@@ -1294,3 +1294,45 @@ def convert_order_to_sale(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error convirtiendo orden a venta: {str(e)}"
         )
+
+
+@router.get("/waiter-notifications")
+def get_waiter_notifications(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Obtener órdenes listas para notificar a meseros"""
+    # Verificar permisos
+    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo los meseros pueden ver notificaciones"
+        )
+    
+    try:
+        # Obtener órdenes listas de todas las mesas activas
+        ready_orders = db.query(Order).options(
+            joinedload(Order.table),
+            joinedload(Order.items)
+        ).filter(
+            Order.status == "listo"
+        ).order_by(Order.kitchen_end_time.desc()).all()
+        
+        notifications = []
+        for order in ready_orders:
+            notification = {
+                "id": order.id,
+                "order_number": order.order_number,
+                "table_number": order.table.table_number if order.table else "N/A",
+                "ready_time": order.kitchen_end_time.isoformat() if order.kitchen_end_time else None,
+                "items_count": len(order.items),
+                "priority": order.priority,
+                "notes": order.notes,
+                "kitchen_notes": order.kitchen_notes
+            }
+            notifications.append(notification)
+        
+        return notifications
+    except Exception as e:
+        print(f"Error en get_waiter_notifications: {e}")
+        return []

@@ -41,21 +41,27 @@ def get_tables(
     # Agregar información de órdenes activas para cada mesa
     for table in tables:
         try:
+            # Obtener órdenes activas
             active_orders = db.query(Order).filter(
                 Order.table_id == table.id,
                 Order.status.in_(["pendiente", "en_preparacion", "listo"])
-            ).count()
+            ).all()
             
-            # Agregar como atributo dinámico
-            table.active_orders = active_orders
+            # Contar órdenes activas
+            table.active_orders = len(active_orders)
+            
+            # Obtener estados de órdenes para determinar el color
+            order_statuses = [order.status for order in active_orders]
+            table.order_statuses = order_statuses
             
             # Si tiene órdenes activas, marcar como ocupada
-            if active_orders > 0 and table.status == TableStatus.LIBRE:
+            if table.active_orders > 0 and table.status == TableStatus.LIBRE:
                 table.status = TableStatus.OCUPADA
                 db.commit()
         except Exception as e:
             # Si hay error, establecer en 0
             table.active_orders = 0
+            table.order_statuses = []
     
     return tables
 
@@ -92,6 +98,8 @@ def create_table(
     current_user: User = Depends(get_current_user)
 ):
     """Crear nueva mesa (admin y meseros)"""
+    print(f"DEBUG: Recibiendo datos de mesa: {table_data}")
+    
     if current_user.role not in [UserRole.ADMIN, UserRole.MESERO]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -100,8 +108,10 @@ def create_table(
     
     # Si no se proporciona location_id, usar la primera ubicación disponible
     if not table_data.location_id:
+        print("DEBUG: No se proporcionó location_id, buscando ubicación por defecto")
         location = db.query(Location).first()
         if not location:
+            print("DEBUG: No hay ubicaciones, creando una por defecto")
             # Crear una ubicación por defecto si no existe ninguna
             location = Location(
                 name="Restaurante Principal",
@@ -112,7 +122,9 @@ def create_table(
             db.commit()
             db.refresh(location)
         table_data.location_id = location.id
+        print(f"DEBUG: Asignando location_id: {location.id}")
     else:
+        print(f"DEBUG: Usando location_id proporcionado: {table_data.location_id}")
         # Verificar que la ubicación existe
         location = db.query(Location).filter(Location.id == table_data.location_id).first()
         if not location:
@@ -134,11 +146,15 @@ def create_table(
         )
     
     # Crear la mesa
-    db_table = Table(**table_data.model_dump())
+    table_dict = table_data.model_dump()
+    print(f"DEBUG: Datos para crear mesa: {table_dict}")
+    
+    db_table = Table(**table_dict)
     db.add(db_table)
     db.commit()
     db.refresh(db_table)
     
+    print(f"DEBUG: Mesa creada exitosamente con ID: {db_table.id}")
     return db_table
 
 

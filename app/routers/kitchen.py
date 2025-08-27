@@ -47,6 +47,7 @@ def get_kitchen_orders(
         for item in order.items:
             item_data = {
                 "id": item.id,
+                "order_id": item.order_id,  # Agregar el campo order_id que falta
                 "product_id": item.product_id,
                 "quantity": item.quantity,
                 "unit_price": float(item.unit_price),

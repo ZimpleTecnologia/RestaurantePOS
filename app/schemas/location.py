@@ -52,7 +52,7 @@ class LocationResponse(LocationBase):
 
 class TableBase(BaseModel):
     """Esquema base para mesas"""
-    location_id: int
+    location_id: Optional[int] = None
     table_number: str
     name: Optional[str] = None
     capacity: int = 4
