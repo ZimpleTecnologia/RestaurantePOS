@@ -1,5 +1,5 @@
 """
-Esquemas Pydantic para Ventas
+Esquemas Pydantic para Ventas - Simplificados
 """
 from pydantic import BaseModel
 from typing import Optional, List
@@ -24,7 +24,7 @@ class SaleCreate(BaseModel):
 
 class SaleUpdate(BaseModel):
     """Esquema para actualizar venta"""
-    status: Optional[Literal["pendiente", "completada", "cancelada", "devuelta"]] = None
+    customer_id: Optional[int] = None
     total: Optional[Decimal] = None
 
 
@@ -49,8 +49,6 @@ class SaleResponse(BaseModel):
     user_id: int
     total: Decimal
     status: Literal["pendiente", "completada", "cancelada", "devuelta"]
-    created_at: datetime
-    completed_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -59,4 +57,7 @@ class SaleResponse(BaseModel):
 class SaleWithDetails(SaleResponse):
     """Esquema de venta con detalles"""
     items: List[SaleItemResponse] = []
-    customer_name: Optional[str] = None 
+    customer_name: Optional[str] = None
+    
+    class Config:
+        from_attributes = True 

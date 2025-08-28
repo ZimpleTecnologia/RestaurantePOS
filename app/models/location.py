@@ -1,5 +1,5 @@
 """
-Modelos de Ubicaciones y Mesas
+Modelos de Ubicaciones y Mesas - Simplificados
 """
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Enum
 from sqlalchemy.sql import func
@@ -27,7 +27,7 @@ class TableStatus(str, enum.Enum):
 
 
 class Location(Base):
-    """Modelo de Ubicación"""
+    """Modelo de Ubicación - Simplificado"""
     __tablename__ = "locations"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -47,14 +47,13 @@ class Location(Base):
     
     # Relaciones
     tables = relationship("Table", back_populates="location")
-    sales = relationship("Sale", back_populates="location")
     
     def __repr__(self):
         return f"<Location(id={self.id}, name='{self.name}', type='{self.location_type}')>"
 
 
 class Table(Base):
-    """Modelo de Mesa"""
+    """Modelo de Mesa - Simplificado"""
     __tablename__ = "tables"
     
     id = Column(Integer, primary_key=True, index=True)
@@ -71,7 +70,6 @@ class Table(Base):
     
     # Relaciones
     location = relationship("Location", back_populates="tables")
-    sales = relationship("Sale", back_populates="table")
     orders = relationship("Order", back_populates="table")
     
     def __repr__(self):

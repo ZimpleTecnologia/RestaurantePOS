@@ -1,5 +1,5 @@
 """
-Modelos para Órdenes de Restaurante
+Modelos para Órdenes de Restaurante - Simplificados
 """
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, Numeric
 from sqlalchemy.sql import func
@@ -26,14 +26,13 @@ class OrderPriority(str, enum.Enum):
 
 
 class Order(Base):
-    """Modelo de Orden de Restaurante"""
+    """Modelo de Orden de Restaurante - Simplificado"""
     __tablename__ = "orders"
     
     id = Column(Integer, primary_key=True, index=True)
     order_number = Column(String(50), unique=True, index=True, nullable=False)
     table_id = Column(Integer, ForeignKey("tables.id"), nullable=False)
     waiter_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    sale_id = Column(Integer, ForeignKey("sales.id"), nullable=True)
     
     # Información de la orden
     people_count = Column(Integer, default=1)
@@ -55,7 +54,6 @@ class Order(Base):
     table = relationship("Table", back_populates="orders")
     waiter = relationship("User", foreign_keys=[waiter_id])
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
-    sale = relationship("Sale", back_populates="order", uselist=False)
     
     def __repr__(self):
         return f"<Order(id={self.id}, number='{self.order_number}', status='{self.status}')>"

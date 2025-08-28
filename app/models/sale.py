@@ -1,11 +1,10 @@
 """
-Modelos de Ventas, Items de Venta y Métodos de Pago
+Modelos para Ventas
 """
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text, ForeignKey, Numeric
-from sqlalchemy.sql import func
+import enum
+from sqlalchemy import Column, Integer, String, Numeric, Text, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.orm import relationship
 from app.database import Base
-import enum
 
 
 class SaleStatus(str, enum.Enum):
@@ -32,16 +31,15 @@ class PaymentMethodType(str, enum.Enum):
 
 
 class Sale(Base):
-    """Modelo de Venta"""
+    """Modelo de Venta - Simplificado"""
     __tablename__ = "sales"
     
     id = Column(Integer, primary_key=True, index=True)
     sale_number = Column(String(50), unique=True, index=True, nullable=False)
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    location_id = Column(Integer, ForeignKey("locations.id"), nullable=True)
-    table_id = Column(Integer, ForeignKey("tables.id"), nullable=True)
     
+    # Campos de cálculo
     subtotal = Column(Numeric(10, 2), default=0)
     tax = Column(Numeric(10, 2), default=0)
     discount = Column(Numeric(10, 2), default=0)
@@ -49,24 +47,14 @@ class Sale(Base):
     tip = Column(Numeric(10, 2), default=0)
     commission = Column(Numeric(10, 2), default=0)
     
-    status = Column(String(20), default="pendiente")
-    notes = Column(Text, nullable=True)
-    is_delivery = Column(Boolean, default=False)
-    delivery_address = Column(Text, nullable=True)
-    delivery_fee = Column(Numeric(10, 2), default=0)
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    completed_at = Column(DateTime(timezone=True), nullable=True)
+    # Estado
+    status = Column(String(10), default="pendiente")
     
     # Relaciones
     customer = relationship("Customer", back_populates="sales")
     user = relationship("User", back_populates="sales")
-    location = relationship("Location", back_populates="sales")
-    table = relationship("Table", back_populates="sales")
     items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
     payments = relationship("PaymentMethod", back_populates="sale", cascade="all, delete-orphan")
-    order = relationship("Order", back_populates="sale", uselist=False)
     
     def __repr__(self):
         return f"<Sale(id={self.id}, sale_number='{self.sale_number}', total={self.total})>"
