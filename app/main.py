@@ -10,7 +10,7 @@ import os
 
 from app.config import settings
 from app.database import create_tables
-from app.routers import auth, products, sales, customers, inventory, cash_register, settings, orders, tables, notifications, reports, kitchen
+from app.routers import auth, products, sales, customers, inventory, cash_register, settings, orders, tables, notifications, reports, kitchen, caja_ventas
 from app.models import *  # Importar todos los modelos para crear las tablas
 
 # Crear aplicación FastAPI
@@ -45,6 +45,7 @@ app.include_router(sales.router, prefix="/api/v1")
 app.include_router(customers.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
 app.include_router(cash_register.router, prefix="/api/v1")
+app.include_router(caja_ventas.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
 app.include_router(orders.router, prefix="/api/v1")
 app.include_router(tables.router, prefix="/api/v1")
@@ -65,7 +66,7 @@ async def startup_event():
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     """Página principal"""
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -98,6 +99,12 @@ async def inventory_page(request: Request):
     return templates.TemplateResponse("inventory.html", {"request": request})
 
 
+@app.get("/debug-frontend", response_class=HTMLResponse)
+async def debug_frontend_page(request: Request):
+    """Página de debug del frontend"""
+    return templates.TemplateResponse("verificar_frontend.html", {"request": request})
+
+
 @app.get("/reports", response_class=HTMLResponse)
 async def reports_page(request: Request):
     """Página de reportes"""
@@ -114,6 +121,17 @@ async def settings_page(request: Request):
 async def cash_register_page(request: Request):
     """Página del sistema de caja"""
     return templates.TemplateResponse("cash-register.html", {"request": request})
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Página de login"""
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.get("/caja-ventas", response_class=HTMLResponse)
+async def caja_ventas_page(request: Request):
+    """Página del módulo unificado Caja y Ventas"""
+    return templates.TemplateResponse("caja-ventas.html", {"request": request})
 
 
 @app.get("/waiters", response_class=HTMLResponse)

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación Frontend - Caja y Ventas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>🔍 Verificación Frontend - Caja y Ventas</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="status"></div>
+                        
+                        <hr>
+                        
+                        <h5>Información del Token:</h5>
+                        <div id="token-info"></div>
+                        
+                        <hr>
+                        
+                        <h5>Prueba de Endpoints:</h5>
+                        <div id="endpoint-tests"></div>
+                        
+                        <hr>
+                        
+                        <h5>Acciones:</h5>
+                        <button class="btn btn-primary" onclick="testLogin()">Probar Login</button>
+                        <button class="btn btn-success" onclick="testEstado()">Probar Estado</button>
+                        <button class="btn btn-warning" onclick="testAbrirCaja()">Probar Abrir Caja</button>
+                        <button class="btn btn-danger" onclick="clearStorage()">Limpiar Storage</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verificar estado inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            checkStatus();
+        });
+
+        function checkStatus() {
+            const statusDiv = document.getElementById('status');
+            const tokenInfoDiv = document.getElementById('token-info');
+            
+            // Verificar token
+            const token = localStorage.getItem('auth_token');
+            const userInfo = localStorage.getItem('user_info');
+            const tokenType = localStorage.getItem('token_type');
+            
+            if (token) {
+                statusDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <h6>✅ Token encontrado en localStorage</h6>
+                        <p>El token está disponible para las peticiones.</p>
+                    </div>
+                `;
+                
+                tokenInfoDiv.innerHTML = `
+                    <table class="table table-sm">
+                        <tr><td><strong>Token:</strong></td><td><code>${token.substring(0, 30)}...</code></td></tr>
+                        <tr><td><strong>Longitud:</strong></td><td>${token.length} caracteres</td></tr>
+                        <tr><td><strong>Tipo:</strong></td><td>${tokenType || 'No especificado'}</td></tr>
+                        <tr><td><strong>Usuario:</strong></td><td>${userInfo ? JSON.parse(userInfo).username : 'No disponible'}</td></tr>
+                    </table>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <h6>⚠️ No hay token en localStorage</h6>
+                        <p>Necesitas hacer login primero.</p>
+                    </div>
+                `;
+                
+                tokenInfoDiv.innerHTML = `
+                    <div class="text-muted">No hay información de token disponible</div>
+                `;
+            }
+        }
+
+        async function testLogin() {
+            const endpointDiv = document.getElementById('endpoint-tests');
+            endpointDiv.innerHTML = '<div class="text-info">🔄 Probando login...</div>';
+            
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'username=admin&password=admin123'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Guardar token
+                    localStorage.setItem('auth_token', data.access_token);
+                    localStorage.setItem('token_type', data.token_type);
+                    if (data.user) {
+                        localStorage.setItem('user_info', JSON.stringify(data.user));
+                    }
+                    
+                    endpointDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6>✅ Login exitoso</h6>
+                            <p>Token guardado en localStorage</p>
+                        </div>
+                    `;
+                    
+                    checkStatus();
+                } else {
+                    endpointDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6>❌ Error en login</h6>
+                            <p>${data.detail || 'Error desconocido'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                endpointDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6>❌ Error de conexión</h6>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testEstado() {
+            const endpointDiv = document.getElementById('endpoint-tests');
+            const token = localStorage.getItem('auth_token');
+            
+            if (!token) {
+                endpointDiv.innerHTML = '<div class="alert alert-warning">⚠️ No hay token. Haz login primero.</div>';
+                return;
+            }
+            
+            endpointDiv.innerHTML = '<div class="text-info">🔄 Probando estado de caja...</div>';
+            
+            try {
+                const response = await fetch('/api/v1/caja-ventas/estado', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    endpointDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6>✅ Estado obtenido</h6>
+                            <p>Sesión activa: ${data.sesion_activa}</p>
+                            <p>Puede vender: ${data.puede_vender}</p>
+                        </div>
+                    `;
+                } else {
+                    endpointDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6>❌ Error obteniendo estado</h6>
+                            <p>Status: ${response.status}</p>
+                            <p>${data.detail || 'Error desconocido'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                endpointDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6>❌ Error de conexión</h6>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAbrirCaja() {
+            const endpointDiv = document.getElementById('endpoint-tests');
+            const token = localStorage.getItem('auth_token');
+            
+            if (!token) {
+                endpointDiv.innerHTML = '<div class="alert alert-warning">⚠️ No hay token. Haz login primero.</div>';
+                return;
+            }
+            
+            endpointDiv.innerHTML = '<div class="text-info">🔄 Probando apertura de caja...</div>';
+            
+            try {
+                const response = await fetch('/api/v1/caja-ventas/abrir-caja', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        password: '1234',
+                        fondo_inicial: 50000.00,
+                        notas_apertura: 'Prueba desde frontend'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    endpointDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h6>✅ Caja abierta exitosamente</h6>
+                            <p>Sesión: ${data.sesion.session_number}</p>
+                            <p>Fondo inicial: $${data.sesion.fondo_inicial}</p>
+                        </div>
+                    `;
+                } else {
+                    endpointDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6>❌ Error abriendo caja</h6>
+                            <p>Status: ${response.status}</p>
+                            <p>${data.detail || 'Error desconocido'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                endpointDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6>❌ Error de conexión</h6>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function clearStorage() {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_info');
+            localStorage.removeItem('token_type');
+            
+            document.getElementById('endpoint-tests').innerHTML = `
+                <div class="alert alert-info">
+                    <h6>🧹 Storage limpiado</h6>
+                    <p>Se han eliminado todos los datos de autenticación.</p>
+                </div>
+            `;
+            
+            checkStatus();
+        }
+    </script>
+</body>
+</html>

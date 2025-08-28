@@ -1,42 +1,40 @@
 """
-Modelo de Configuración del Sistema
+Modelo para configuraciones del sistema
 """
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime
 from sqlalchemy.sql import func
 from app.database import Base
 
 
 class SystemSettings(Base):
-    """Modelo de Configuración del Sistema"""
+    """Modelo para configuraciones del sistema"""
     __tablename__ = "system_settings"
     
     id = Column(Integer, primary_key=True, index=True)
-    
-    # Configuración General
-    company_name = Column(String(200), default="Sistema POS")
-    currency = Column(String(10), default="USD")
-    timezone = Column(String(50), default="UTC-5")
-    
-    # Configuración de Tema
-    primary_color = Column(String(7), default="#667eea")  # Color primario
-    secondary_color = Column(String(7), default="#764ba2")  # Color secundario
-    accent_color = Column(String(7), default="#28a745")  # Color de acento
-    sidebar_color = Column(String(7), default="#667eea")  # Color del sidebar
-    
-    # Configuración de la Aplicación
-    app_title = Column(String(100), default="Sistema POS")
-    app_subtitle = Column(String(100), default="Punto de Venta")
-    
-    # Configuración de Impresión
-    print_header = Column(Text, nullable=True)
-    print_footer = Column(Text, nullable=True)
-    
-    # Configuración de Notificaciones
-    enable_notifications = Column(Boolean, default=True)
-    low_stock_threshold = Column(Integer, default=10)
-    
+    setting_key = Column(String(100), unique=True, index=True, nullable=False)
+    setting_value = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     def __repr__(self):
-        return f"<SystemSettings(id={self.id}, company='{self.company_name}')>"
+        return f"<SystemSettings(key='{self.setting_key}', value='{self.setting_value}')>"
+
+
+# Configuraciones por defecto
+DEFAULT_SETTINGS = {
+    "cash_register_password": "1234",  # Contraseña por defecto de caja
+    "cash_register_name": "Caja Principal",
+    "tax_rate": "19.0",  # IVA por defecto
+    "currency": "COP",
+    "business_name": "Mi Restaurante",
+    "business_address": "",
+    "business_phone": "",
+    "business_email": "",
+    "receipt_footer": "¡Gracias por su visita!",
+    "auto_backup": "true",
+    "session_timeout": "30",  # minutos
+    "max_discount": "20.0",  # porcentaje máximo de descuento
+    "require_cash_register": "true",  # si requiere caja abierta para ventas
+}

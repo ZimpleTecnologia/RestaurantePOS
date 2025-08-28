@@ -1,128 +1,175 @@
 """
-Router para Configuración del Sistema
+Router para configuraciones del sistema
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy.orm import Session
-from typing import List
+from pydantic import BaseModel
+from datetime import datetime
+
 from app.database import get_db
-from app.models.settings import SystemSettings
-from app.schemas.settings import (
-    SystemSettingsCreate,
-    SystemSettingsUpdate,
-    SystemSettingsResponse,
-    CurrencyOption,
-    ThemeOption
-)
-
-router = APIRouter(prefix="/settings", tags=["settings"])
+from app.models.user import User
+from app.auth.dependencies import get_current_active_user
+from app.services.settings_service import SettingsService
 
 
-# Datos predefinidos para monedas y temas
-CURRENCIES = [
-    CurrencyOption(code="USD", name="Dólar Estadounidense", symbol="$", decimal_places=2),
-    CurrencyOption(code="EUR", name="Euro", symbol="€", decimal_places=2),
-    CurrencyOption(code="MXN", name="Peso Mexicano", symbol="$", decimal_places=2),
-    CurrencyOption(code="COP", name="Peso Colombiano", symbol="$", decimal_places=0),
-    CurrencyOption(code="ARS", name="Peso Argentino", symbol="$", decimal_places=2),
-    CurrencyOption(code="CLP", name="Peso Chileno", symbol="$", decimal_places=0),
-    CurrencyOption(code="PEN", name="Sol Peruano", symbol="S/", decimal_places=2),
-    CurrencyOption(code="BRL", name="Real Brasileño", symbol="R$", decimal_places=2),
-]
-
-THEMES = [
-    ThemeOption(
-        name="Azul Clásico",
-        primary_color="#667eea",
-        secondary_color="#764ba2",
-        accent_color="#28a745",
-        sidebar_color="#667eea"
-    ),
-    ThemeOption(
-        name="Verde Naturaleza",
-        primary_color="#28a745",
-        secondary_color="#20c997",
-        accent_color="#ffc107",
-        sidebar_color="#28a745"
-    ),
-    ThemeOption(
-        name="Naranja Energía",
-        primary_color="#fd7e14",
-        secondary_color="#e83e8c",
-        accent_color="#6f42c1",
-        sidebar_color="#fd7e14"
-    ),
-    ThemeOption(
-        name="Rojo Pasión",
-        primary_color="#dc3545",
-        secondary_color="#fd7e14",
-        accent_color="#ffc107",
-        sidebar_color="#dc3545"
-    ),
-    ThemeOption(
-        name="Púrpura Elegante",
-        primary_color="#6f42c1",
-        secondary_color="#e83e8c",
-        accent_color="#28a745",
-        sidebar_color="#6f42c1"
-    ),
-]
+class SettingUpdate(BaseModel):
+    """Modelo para actualizar configuración"""
+    value: str
+    description: str = None
 
 
-@router.get("/", response_model=SystemSettingsResponse)
-async def get_settings(db: Session = Depends(get_db)):
-    """Obtener configuración actual del sistema"""
-    settings = db.query(SystemSettings).first()
-    if not settings:
-        # Crear configuración por defecto si no existe
-        settings = SystemSettings()
-        db.add(settings)
-        db.commit()
-        db.refresh(settings)
-    return settings
+router = APIRouter(prefix="/settings", tags=["configuración"])
 
 
-@router.put("/", response_model=SystemSettingsResponse)
-async def update_settings(
-    settings_update: SystemSettingsUpdate,
-    db: Session = Depends(get_db)
+@router.get("/")
+def get_all_settings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Actualizar configuración del sistema"""
-    settings = db.query(SystemSettings).first()
-    if not settings:
-        settings = SystemSettings()
-        db.add(settings)
+    """Obtener todas las configuraciones del sistema"""
+    settings = SettingsService.get_all_settings(db)
     
-    # Actualizar solo los campos proporcionados
-    update_data = settings_update.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(settings, field, value)
+    # Agregar descripciones para las configuraciones principales
+    descriptions = {
+        "cash_register_password": "Contraseña para acceso al módulo de caja",
+        "cash_register_name": "Nombre de la caja registradora",
+        "tax_rate": "Porcentaje de impuestos (IVA)",
+        "currency": "Moneda del sistema",
+        "business_name": "Nombre del negocio",
+        "business_address": "Dirección del negocio",
+        "business_phone": "Teléfono del negocio",
+        "business_email": "Email del negocio",
+        "receipt_footer": "Pie de página para recibos",
+        "auto_backup": "Respaldo automático (true/false)",
+        "session_timeout": "Tiempo de sesión en minutos",
+        "max_discount": "Descuento máximo permitido (%)",
+        "require_cash_register": "Requiere caja abierta para ventas (true/false)"
+    }
     
-    db.commit()
-    db.refresh(settings)
-    return settings
-
-
-@router.get("/currencies", response_model=List[CurrencyOption])
-async def get_currencies():
-    """Obtener lista de monedas disponibles"""
-    return CURRENCIES
-
-
-@router.get("/themes", response_model=List[ThemeOption])
-async def get_themes():
-    """Obtener lista de temas disponibles"""
-    return THEMES
-
-
-@router.post("/reset", response_model=SystemSettingsResponse)
-async def reset_settings(db: Session = Depends(get_db)):
-    """Restablecer configuración a valores por defecto"""
-    settings = db.query(SystemSettings).first()
-    if settings:
-        db.delete(settings)
+    result = []
+    for key, value in settings.items():
+        result.append({
+            "key": key,
+            "value": value,
+            "description": descriptions.get(key, "Configuración del sistema")
+        })
     
-    settings = SystemSettings()
-    db.add(settings)
-    db.commit()
-    db.refresh(settings)
-    return settings
+    return result
+
+
+@router.get("/business-info")
+def get_business_info(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener información del negocio"""
+    return SettingsService.get_business_info(db)
+
+
+@router.post("/update")
+def update_setting(
+    key: str = Form(...),
+    value: str = Form(...),
+    description: str = Form(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Actualizar una configuración específica"""
+    try:
+        setting = SettingsService.set_setting(db, key, value, description)
+        
+        return {
+            "message": "Configuración actualizada exitosamente",
+            "setting": {
+                "key": setting.setting_key,
+                "value": setting.setting_value,
+                "description": setting.description
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error actualizando configuración: {str(e)}"
+        )
+
+
+@router.post("/change-cash-password")
+def change_cash_register_password(
+    current_password: str = Form(...),
+    new_password: str = Form(...),
+    confirm_password: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Cambiar contraseña de caja desde configuración"""
+    # Verificar contraseña actual
+    if not SettingsService.verify_cash_register_password(db, current_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Contraseña actual incorrecta"
+        )
+    
+    # Verificar que las nuevas contraseñas coincidan
+    if new_password != confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Las contraseñas nuevas no coinciden"
+        )
+    
+    # Verificar longitud mínima
+    if len(new_password) < 4:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña debe tener al menos 4 caracteres"
+        )
+    
+    try:
+        # Cambiar contraseña
+        SettingsService.set_cash_register_password(db, new_password)
+        
+        return {
+            "message": "Contraseña de caja cambiada exitosamente",
+            "timestamp": datetime.now()
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error cambiando contraseña: {str(e)}"
+        )
+
+
+@router.post("/initialize")
+def initialize_settings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Inicializar configuraciones por defecto"""
+    try:
+        SettingsService.initialize_default_settings(db)
+        
+        return {
+            "message": "Configuraciones inicializadas exitosamente",
+            "settings_count": len(SettingsService.get_all_settings(db))
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error inicializando configuraciones: {str(e)}"
+        )
+
+
+@router.get("/cash-register-config")
+def get_cash_register_config(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener configuración específica de caja"""
+    return {
+        "require_cash_register": SettingsService.require_cash_register(db),
+        "cash_register_name": SettingsService.get_setting(db, "cash_register_name", "Caja Principal"),
+        "has_password": bool(SettingsService.get_cash_register_password(db))
+    }

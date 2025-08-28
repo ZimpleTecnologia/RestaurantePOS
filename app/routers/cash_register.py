@@ -1,409 +1,394 @@
 """
-Router para el sistema de caja
+Módulo Unificado de Caja - Con Autenticación y Protección
 """
 from typing import List, Optional
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from decimal import Decimal
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Form
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
 
 from app.database import get_db
 from app.models.user import User
-from app.models.cash_register import (
-    CashRegister, CashSession, CashMovement, 
-    CASH_REGISTER_STATUS, CASH_MOVEMENT_TYPE
-)
+from app.models.cash_register import CashRegister, CashSession, CashMovement, CashStatus, MovementType
 from app.auth.dependencies import get_current_active_user
-from app.schemas.cash_register import (
-    CashRegisterCreate, CashRegisterUpdate, CashRegisterResponse,
-    CashSessionCreate, CashSessionClose, CashSessionResponse,
-    CashMovementCreate, CashMovementResponse,
-    CashSessionSummary, CashRegisterReport
-)
+from app.services.cash_service import CashService
+from app.services.settings_service import SettingsService
 
 router = APIRouter(prefix="/cash-register", tags=["caja"])
 
 
-def generate_session_number(db: Session, cash_register_id: int) -> str:
-    """Generar número único de sesión"""
-    today = date.today()
-    prefix = f"S{today.strftime('%Y%m%d')}"
-    
-    # Contar sesiones del día para esta caja
-    count = db.query(func.count(CashSession.id)).filter(
-        and_(
-            func.date(CashSession.opened_at) == today,
-            CashSession.cash_register_id == cash_register_id
+# ============================================================================
+# AUTENTICACIÓN DE CAJA
+# ============================================================================
+
+@router.post("/auth")
+def authenticate_cash_register(
+    password: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Autenticar acceso al módulo de caja"""
+    if not SettingsService.verify_cash_register_password(db, password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Contraseña de caja incorrecta"
         )
-    ).scalar()
     
-    return f"{prefix}-{cash_register_id:02d}-{count + 1:04d}"
+    return {
+        "message": "Autenticación exitosa",
+        "user": current_user.full_name,
+        "timestamp": datetime.now()
+    }
 
 
-# Endpoints para CashRegister
-@router.get("/registers", response_model=List[CashRegisterResponse])
+# ============================================================================
+# ESTADO Y CONTROL DE CAJA
+# ============================================================================
+
+@router.get("/registers")
 def get_cash_registers(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Obtener lista de cajas registradoras"""
-    registers = db.query(CashRegister).filter(CashRegister.is_active == True).all()
-    return registers
-
-
-@router.post("/registers", response_model=CashRegisterResponse)
-def create_cash_register(
-    register_data: CashRegisterCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Crear nueva caja registradora"""
-    # Verificar que el número de caja no exista
-    existing = db.query(CashRegister).filter(
-        CashRegister.register_number == register_data.register_number
-    ).first()
+    """Obtener todas las cajas registradoras"""
+    cash_registers = db.query(CashRegister).filter(CashRegister.is_active == True).all()
     
-    if existing:
-        raise HTTPException(
-            status_code=400, 
-            detail="Ya existe una caja con ese número"
-        )
-    
-    db_register = CashRegister(**register_data.dict())
-    db.add(db_register)
-    db.commit()
-    db.refresh(db_register)
-    return db_register
-
-
-@router.get("/registers/{register_id}", response_model=CashRegisterResponse)
-def get_cash_register(
-    register_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Obtener caja registradora por ID"""
-    register = db.query(CashRegister).filter(CashRegister.id == register_id).first()
-    if not register:
-        raise HTTPException(status_code=404, detail="Caja no encontrada")
-    return register
-
-
-# Endpoints para CashSession
-@router.get("/sessions", response_model=List[CashSessionResponse])
-def get_cash_sessions(
-    skip: int = 0,
-    limit: int = 100,
-    register_id: Optional[int] = Query(None),
-    status: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Obtener lista de sesiones de caja"""
-    query = db.query(CashSession)
-    
-    if register_id:
-        query = query.filter(CashSession.cash_register_id == register_id)
-    
-    if status:
-        query = query.filter(CashSession.status == status)
-    
-    sessions = query.order_by(CashSession.opened_at.desc()).offset(skip).limit(limit).all()
-    
-    # Agregar información adicional
     result = []
-    for session in sessions:
-        session_dict = session.__dict__.copy()
-        session_dict['user_name'] = session.user.full_name
-        session_dict['cash_register_name'] = session.cash_register.name
-        result.append(session_dict)
+    for register in cash_registers:
+        # Obtener sesión activa para cada caja
+        active_session = CashService.get_active_session(db, register.id)
+        
+        register_data = {
+            "id": register.id,
+            "name": register.name,
+            "register_number": register.register_number,
+            "description": register.description,
+            "is_active": register.is_active,
+            "created_at": register.created_at,
+            "has_active_session": active_session is not None,
+            "active_session": {
+                "id": active_session.id,
+                "session_number": active_session.session_number,
+                "opened_at": active_session.opened_at,
+                "opening_amount": active_session.opening_amount,
+                "user_name": active_session.user.full_name
+            } if active_session else None
+        }
+        result.append(register_data)
     
     return result
 
 
-@router.post("/sessions", response_model=CashSessionResponse)
-def open_cash_session(
-    session_data: CashSessionCreate,
+@router.get("/status")
+def get_cash_register_status(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Abrir nueva sesión de caja"""
-    # Verificar que la caja existe
-    register = db.query(CashRegister).filter(
-        CashRegister.id == session_data.cash_register_id
-    ).first()
+    """Obtener estado completo de la caja"""
+    # Verificar que existe la caja principal
+    cash_register = CashService.get_main_cash_register(db)
+    if not cash_register:
+        cash_register = CashService.create_main_cash_register(db)
     
-    if not register:
-        raise HTTPException(status_code=404, detail="Caja no encontrada")
+    # Obtener sesión activa
+    active_session = CashService.get_active_session(db, cash_register.id)
+    today_session = CashService.get_today_session(db, cash_register.id)
     
-    # Verificar que no hay sesiones abiertas para esta caja
-    open_session = db.query(CashSession).filter(
-        and_(
-            CashSession.cash_register_id == session_data.cash_register_id,
-            CashSession.status == CASH_REGISTER_STATUS['OPEN']
-        )
-    ).first()
+    # Obtener información del negocio
+    business_info = SettingsService.get_business_info(db)
     
-    if open_session:
+    return {
+        "cash_register": {
+            "id": cash_register.id,
+            "name": cash_register.name,
+            "register_number": cash_register.register_number
+        },
+        "business_info": business_info,
+        "has_active_session": active_session is not None,
+        "has_today_session": today_session is not None,
+        "can_create_sales": active_session is not None,
+        "require_cash_register": SettingsService.require_cash_register(db),
+        "active_session": {
+            "id": active_session.id,
+            "session_number": active_session.session_number,
+            "opened_at": active_session.opened_at,
+            "opening_amount": active_session.opening_amount,
+            "opening_notes": active_session.opening_notes,
+            "user_name": active_session.user.full_name,
+            "total_sales": active_session.total_sales,
+            "total_expenses": active_session.total_expenses,
+            "expected_amount": active_session.expected_amount
+        } if active_session else None,
+        "today_session": {
+            "id": today_session.id,
+            "session_number": today_session.session_number,
+            "status": today_session.status,
+            "opened_at": today_session.opened_at,
+            "closed_at": today_session.closed_at,
+            "opening_amount": today_session.opening_amount,
+            "closing_amount": today_session.closing_amount,
+            "user_name": today_session.user.full_name
+        } if today_session else None
+    }
+
+
+# ============================================================================
+# APERTURA Y CIERRE DE CAJA
+# ============================================================================
+
+@router.post("/open")
+def open_cash_register(
+    password: str = Form(...),
+    opening_amount: Decimal = Form(0),
+    opening_notes: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Abrir caja registradora - Requiere autenticación"""
+    # Verificar contraseña
+    if not SettingsService.verify_cash_register_password(db, password):
         raise HTTPException(
-            status_code=400, 
-            detail="Ya existe una sesión abierta para esta caja"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Contraseña de caja incorrecta"
         )
     
-    # Generar número de sesión
-    session_number = generate_session_number(db, session_data.cash_register_id)
-    
-    # Crear sesión
-    db_session = CashSession(
-        **session_data.dict(),
+    try:
+        # Obtener o crear caja principal
+        cash_register = CashService.get_main_cash_register(db)
+        if not cash_register:
+            cash_register = CashService.create_main_cash_register(db)
+        
+        # Abrir sesión
+        session = CashService.open_session(
+            db=db,
+            cash_register_id=cash_register.id,
         user_id=current_user.id,
-        session_number=session_number
-    )
-    db.add(db_session)
-    db.flush()  # Esto genera el ID de la sesión
-    
-    # Crear movimiento de apertura
-    opening_movement = CashMovement(
-        session_id=db_session.id,
-        movement_type=CASH_MOVEMENT_TYPE['OPENING'],
-        amount=session_data.opening_amount,
-        description="Apertura de caja",
-        notes=session_data.opening_notes
-    )
-    db.add(opening_movement)
-    
-    db.commit()
-    db.refresh(db_session)
-    
-    # Agregar información adicional
-    session_dict = db_session.__dict__.copy()
-    session_dict['user_name'] = db_session.user.full_name
-    session_dict['cash_register_name'] = db_session.cash_register.name
-    
-    return session_dict
+            opening_amount=opening_amount,
+            opening_notes=opening_notes
+        )
+        
+        return {
+            "message": "Caja abierta exitosamente",
+            "session": {
+                "id": session.id,
+                "session_number": session.session_number,
+                "opened_at": session.opened_at,
+                "opening_amount": session.opening_amount,
+                "user_name": session.user.full_name
+            }
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error abriendo caja: {str(e)}")
 
 
-@router.post("/sessions/{session_id}/close", response_model=CashSessionResponse)
-def close_cash_session(
-    session_id: int,
-    close_data: CashSessionClose,
+@router.post("/close")
+def close_cash_register(
+    password: str = Form(...),
+    closing_amount: Decimal = Form(...),
+    closing_notes: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Cerrar sesión de caja"""
-    session = db.query(CashSession).filter(CashSession.id == session_id).first()
-    
-    if not session:
-        raise HTTPException(status_code=404, detail="Sesión no encontrada")
-    
-    if session.status == CASH_REGISTER_STATUS['CLOSED']:
+    """Cerrar caja registradora - Requiere autenticación"""
+    # Verificar contraseña
+    if not SettingsService.verify_cash_register_password(db, password):
         raise HTTPException(
-            status_code=400, 
-            detail="La sesión ya está cerrada"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Contraseña de caja incorrecta"
         )
     
-    # Actualizar sesión
-    session.closing_amount = close_data.closing_amount
-    session.closing_notes = close_data.closing_notes
-    session.closed_at = datetime.now()
-    session.status = CASH_REGISTER_STATUS['CLOSED']
-    
-    # Crear movimiento de cierre
-    closing_movement = CashMovement(
-        session_id=session.id,
-        movement_type=CASH_MOVEMENT_TYPE['CLOSING'],
-        amount=close_data.closing_amount,
-        description="Cierre de caja",
-        notes=close_data.closing_notes
-    )
-    db.add(closing_movement)
-    
-    db.commit()
-    db.refresh(session)
-    
-    # Agregar información adicional
-    session_dict = session.__dict__.copy()
-    session_dict['user_name'] = session.user.full_name
-    session_dict['cash_register_name'] = session.cash_register.name
-    
-    return session_dict
-
-
-@router.get("/sessions/{session_id}", response_model=CashSessionResponse)
-def get_cash_session(
-    session_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Obtener sesión de caja por ID"""
-    session = db.query(CashSession).filter(CashSession.id == session_id).first()
-    
-    if not session:
-        raise HTTPException(status_code=404, detail="Sesión no encontrada")
-    
-    # Agregar información adicional
-    session_dict = session.__dict__.copy()
-    session_dict['user_name'] = session.user.full_name
-    session_dict['cash_register_name'] = session.cash_register.name
-    
-    return session_dict
-
-
-# Endpoints para CashMovement
-@router.get("/sessions/{session_id}/movements", response_model=List[CashMovementResponse])
-def get_session_movements(
-    session_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Obtener movimientos de una sesión"""
-    movements = db.query(CashMovement).filter(
-        CashMovement.session_id == session_id
-    ).order_by(CashMovement.created_at.desc()).all()
-    
-    return movements
-
-
-@router.post("/movements", response_model=CashMovementResponse)
-def create_movement(
-    movement_data: CashMovementCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Crear nuevo movimiento de caja"""
-    # Verificar que la sesión existe y está abierta
-    session = db.query(CashSession).filter(CashSession.id == movement_data.session_id).first()
-    
-    if not session:
-        raise HTTPException(status_code=404, detail="Sesión no encontrada")
-    
-    if session.status == CASH_REGISTER_STATUS['CLOSED']:
-        raise HTTPException(
-            status_code=400, 
-            detail="No se pueden agregar movimientos a una sesión cerrada"
+    try:
+        # Obtener caja principal
+        cash_register = CashService.get_main_cash_register(db)
+        if not cash_register:
+            raise HTTPException(status_code=404, detail="No hay caja registrada")
+        
+        # Obtener sesión activa
+        active_session = CashService.get_active_session(db, cash_register.id)
+        if not active_session:
+            raise HTTPException(status_code=400, detail="No hay sesión activa para cerrar")
+        
+        # Cerrar sesión
+        session = CashService.close_session(
+            db=db,
+            session_id=active_session.id,
+            closing_amount=closing_amount,
+            closing_notes=closing_notes
         )
-    
-    db_movement = CashMovement(**movement_data.dict())
-    db.add(db_movement)
-    db.commit()
-    db.refresh(db_movement)
-    return db_movement
+        
+        # Obtener resumen final
+        summary = CashService.get_session_summary(db, session.id)
+        
+        return {
+            "message": "Caja cerrada exitosamente",
+            "session": {
+                "id": session.id,
+                "session_number": session.session_number,
+                "closed_at": session.closed_at,
+                "closing_amount": session.closing_amount,
+                "user_name": session.user.full_name
+            },
+            "summary": summary
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error cerrando caja: {str(e)}")
 
 
-# Endpoints para reportes
-@router.get("/sessions/{session_id}/summary", response_model=CashSessionSummary)
-def get_session_summary(
-    session_id: int,
+# ============================================================================
+# REPORTES Y CONSULTAS
+# ============================================================================
+
+@router.get("/sessions")
+def get_cash_sessions(
+    skip: int = 0,
+    limit: int = 50,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Obtener resumen de una sesión de caja"""
-    session = db.query(CashSession).filter(CashSession.id == session_id).first()
+    """Obtener historial de sesiones de caja"""
+    cash_register = CashService.get_main_cash_register(db)
+    if not cash_register:
+        return []
     
-    if not session:
-        raise HTTPException(status_code=404, detail="Sesión no encontrada")
-    
-    # Calcular totales por tipo de movimiento
-    movements = db.query(
-        CashMovement.movement_type,
-        func.sum(CashMovement.amount).label('total')
-    ).filter(CashMovement.session_id == session_id).group_by(CashMovement.movement_type).all()
-    
-    totals = {mov.movement_type: mov.total for mov in movements}
-    
-    # Calcular montos esperados
-    total_sales = totals.get(CASH_MOVEMENT_TYPE['SALE'], Decimal('0'))
-    total_refunds = totals.get(CASH_MOVEMENT_TYPE['REFUND'], Decimal('0'))
-    total_expenses = totals.get(CASH_MOVEMENT_TYPE['EXPENSE'], Decimal('0'))
-    total_withdrawals = totals.get(CASH_MOVEMENT_TYPE['WITHDRAWAL'], Decimal('0'))
-    total_deposits = totals.get(CASH_MOVEMENT_TYPE['DEPOSIT'], Decimal('0'))
-    
-    expected_amount = (
-        session.opening_amount + 
-        total_sales + 
-        total_deposits - 
-        total_refunds - 
-        total_expenses - 
-        total_withdrawals
-    )
-    
-    difference = None
-    if session.closing_amount:
-        difference = session.closing_amount - expected_amount
-    
-    return {
-        "session_id": session.id,
-        "session_number": session.session_number,
-        "opened_at": session.opened_at,
-        "closed_at": session.closed_at,
-        "opening_amount": session.opening_amount,
-        "closing_amount": session.closing_amount,
-        "total_sales": total_sales,
-        "total_refunds": total_refunds,
-        "total_expenses": total_expenses,
-        "total_withdrawals": total_withdrawals,
-        "total_deposits": total_deposits,
-        "expected_amount": expected_amount,
-        "difference": difference,
-        "status": session.status,
-        "user_name": session.user.full_name,
-        "cash_register_name": session.cash_register.name
-    }
-
-
-@router.get("/registers/{register_id}/report", response_model=CashRegisterReport)
-def get_register_report(
-    register_id: int,
-    start_date: date = Query(default_factory=lambda: date.today() - timedelta(days=30)),
-    end_date: date = Query(default_factory=date.today),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Obtener reporte de una caja registradora"""
-    register = db.query(CashRegister).filter(CashRegister.id == register_id).first()
-    
-    if not register:
-        raise HTTPException(status_code=404, detail="Caja no encontrada")
-    
-    # Obtener sesiones del período
     sessions = db.query(CashSession).filter(
-        and_(
-            CashSession.cash_register_id == register_id,
-            func.date(CashSession.opened_at) >= start_date,
-            func.date(CashSession.opened_at) <= end_date
+        CashSession.cash_register_id == cash_register.id
+    ).order_by(CashSession.opened_at.desc()).offset(skip).limit(limit).all()
+    
+    result = []
+    for session in sessions:
+        session_data = {
+            "id": session.id,
+            "session_number": session.session_number,
+            "opened_at": session.opened_at,
+            "closed_at": session.closed_at,
+            "opening_amount": session.opening_amount,
+            "closing_amount": session.closing_amount,
+            "status": session.status,
+            "user_name": session.user.full_name,
+            "total_sales": session.total_sales,
+            "total_expenses": session.total_expenses,
+            "expected_amount": session.expected_amount
+        }
+        result.append(session_data)
+    
+    return result
+
+
+@router.get("/sessions/{session_id}")
+def get_cash_session_detail(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener detalles de una sesión de caja"""
+    summary = CashService.get_session_summary(db, session_id)
+    if not summary:
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
+    
+    return summary
+
+
+@router.get("/report/daily")
+def get_daily_cash_report(
+    report_date: date = Query(default_factory=date.today),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener reporte diario de caja"""
+    return CashService.get_daily_report(db, report_date)
+
+
+@router.get("/movements")
+def get_cash_movements(
+    session_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener movimientos de caja"""
+    query = db.query(CashMovement)
+    
+    if session_id:
+        query = query.filter(CashMovement.session_id == session_id)
+    else:
+        # Si no se especifica sesión, obtener movimientos de la sesión activa
+        cash_register = CashService.get_main_cash_register(db)
+        if cash_register:
+            active_session = CashService.get_active_session(db, cash_register.id)
+            if active_session:
+                query = query.filter(CashMovement.session_id == active_session.id)
+    
+    movements = query.order_by(CashMovement.created_at.desc()).offset(skip).limit(limit).all()
+    
+    result = []
+    for movement in movements:
+        movement_data = {
+            "id": movement.id,
+            "movement_type": movement.movement_type,
+            "amount": movement.amount,
+            "description": movement.description,
+            "reference": movement.reference,
+            "notes": movement.notes,
+            "created_at": movement.created_at,
+            "session_number": movement.session.session_number
+        }
+        result.append(movement_data)
+    
+    return result
+
+
+# ============================================================================
+# CONFIGURACIÓN DE CAJA
+# ============================================================================
+
+@router.post("/change-password")
+def change_cash_register_password(
+    current_password: str = Form(...),
+    new_password: str = Form(...),
+    confirm_password: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Cambiar contraseña de caja"""
+    # Verificar contraseña actual
+    if not SettingsService.verify_cash_register_password(db, current_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Contraseña actual incorrecta"
         )
-    ).all()
     
-    # Calcular estadísticas
-    total_sessions = len(sessions)
-    open_sessions = len([s for s in sessions if s.status == CASH_REGISTER_STATUS['OPEN']])
-    closed_sessions = total_sessions - open_sessions
+    # Verificar que las nuevas contraseñas coincidan
+    if new_password != confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Las contraseñas nuevas no coinciden"
+        )
     
-    # Calcular totales de movimientos
-    session_ids = [s.id for s in sessions]
-    movements = db.query(
-        CashMovement.movement_type,
-        func.sum(CashMovement.amount).label('total')
-    ).filter(
-        CashMovement.session_id.in_(session_ids)
-    ).group_by(CashMovement.movement_type).all()
+    # Verificar longitud mínima
+    if len(new_password) < 4:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña debe tener al menos 4 caracteres"
+        )
     
-    totals = {mov.movement_type: mov.total for mov in movements}
-    
-    total_amount = totals.get(CASH_MOVEMENT_TYPE['SALE'], Decimal('0'))
-    total_sales = totals.get(CASH_MOVEMENT_TYPE['SALE'], Decimal('0'))
-    total_expenses = totals.get(CASH_MOVEMENT_TYPE['EXPENSE'], Decimal('0'))
-    
-    return {
-        "cash_register_id": register.id,
-        "cash_register_name": register.name,
-        "total_sessions": total_sessions,
-        "open_sessions": open_sessions,
-        "closed_sessions": closed_sessions,
-        "total_amount": total_amount,
-        "total_sales": total_sales,
-        "total_expenses": total_expenses,
-        "period_start": datetime.combine(start_date, datetime.min.time()),
-        "period_end": datetime.combine(end_date, datetime.max.time())
-    }
+    try:
+        # Cambiar contraseña
+        SettingsService.set_cash_register_password(db, new_password)
+        
+        return {
+            "message": "Contraseña de caja cambiada exitosamente",
+            "timestamp": datetime.now()
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error cambiando contraseña: {str(e)}"
+        )

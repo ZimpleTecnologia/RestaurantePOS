@@ -117,6 +117,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="/caja-ventas">
+                                <i class="bi bi-cash-register"></i> Caja y Ventas
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="/reports">
                                 <i class="bi bi-graph-up"></i> Reportes
                             </a>
@@ -183,18 +188,12 @@
     <script>
         // Función para cerrar sesión
         function logout() {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('token_type');
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_info');
             window.location.href = '/login';
         }
 
-        // Verificar autenticación
-        function checkAuth() {
-            const token = localStorage.getItem('access_token');
-            if (!token && window.location.pathname !== '/login') {
-                window.location.href = '/login';
-            }
-        }
+
 
         // Marcar enlace activo
         function setActiveNav() {
@@ -579,7 +578,6 @@
 
         // Inicializar
         $(document).ready(function() {
-            checkAuth();
             setActiveNav();
             loadThemeSettings();
             checkForThemeUpdates();

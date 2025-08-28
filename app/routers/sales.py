@@ -1,5 +1,5 @@
 """
-Router de ventas - Simplificado
+Router de ventas - Integrado con Sistema de Caja Protegido
 """
 from typing import List, Optional
 from datetime import datetime, date
@@ -16,6 +16,8 @@ from app.schemas.sale import (
     SaleCreate, SaleUpdate, SaleResponse, SaleWithDetails,
     SaleItemCreate, SaleItemResponse
 )
+from app.services.cash_service import CashService
+from app.services.settings_service import SettingsService
 
 router = APIRouter(prefix="/sales", tags=["ventas"])
 
@@ -31,6 +33,34 @@ def generate_sale_number(db: Session) -> str:
     ).scalar()
     
     return f"{prefix}-{count + 1:04d}"
+
+
+def check_cash_register_status(db: Session) -> dict:
+    """Verificar estado de la caja antes de crear ventas"""
+    # Verificar si se requiere caja abierta para ventas
+    require_cash_register = SettingsService.require_cash_register(db)
+    
+    if not require_cash_register:
+        return {
+            "cash_register": None,
+            "active_session": None,
+            "can_create_sale": True,
+            "require_cash_register": False
+        }
+    
+    cash_register = CashService.get_main_cash_register(db)
+    if not cash_register:
+        # Crear caja principal si no existe
+        cash_register = CashService.create_main_cash_register(db)
+    
+    active_session = CashService.get_active_session(db, cash_register.id)
+    
+    return {
+        "cash_register": cash_register,
+        "active_session": active_session,
+        "can_create_sale": active_session is not None,
+        "require_cash_register": True
+    }
 
 
 @router.get("/", response_model=List[SaleWithDetails])
@@ -82,13 +112,47 @@ def get_sales(
     return result
 
 
+@router.get("/cash-status")
+def get_cash_status(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener estado actual de la caja para ventas"""
+    cash_status = check_cash_register_status(db)
+    
+    return {
+        "cash_register_id": cash_status["cash_register"].id if cash_status["cash_register"] else None,
+        "cash_register_name": cash_status["cash_register"].name if cash_status["cash_register"] else None,
+        "has_active_session": cash_status["active_session"] is not None,
+        "can_create_sale": cash_status["can_create_sale"],
+        "require_cash_register": cash_status["require_cash_register"],
+        "active_session": {
+            "id": cash_status["active_session"].id,
+            "session_number": cash_status["active_session"].session_number,
+            "opened_at": cash_status["active_session"].opened_at,
+            "opening_amount": cash_status["active_session"].opening_amount,
+            "user_name": cash_status["active_session"].user.full_name
+        } if cash_status["active_session"] else None
+    }
+
+
 @router.post("/", response_model=SaleResponse)
 def create_sale(
     sale_data: SaleCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Crear nueva venta"""
+    """Crear nueva venta - Solo si la caja está abierta (si se requiere)"""
+    
+    # Verificar estado de la caja
+    cash_status = check_cash_register_status(db)
+    
+    if not cash_status["can_create_sale"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se puede crear una venta. La caja debe estar abierta. Abra una sesión de caja primero."
+        )
+    
     # Generar número de venta
     sale_number = generate_sale_number(db)
     
@@ -131,6 +195,24 @@ def create_sale(
         
         # Actualizar stock
         product.stock -= item_data.quantity
+    
+    # Registrar movimiento en caja (solo si hay caja activa)
+    if cash_status["active_session"]:
+        try:
+            CashService.register_sale_movement(
+                db=db,
+                session_id=cash_status["active_session"].id,
+                sale_id=db_sale.id,
+                amount=sale_data.total,
+                description=f"Venta {sale_number}"
+            )
+        except Exception as e:
+            # Si falla el registro en caja, hacer rollback de la venta
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error registrando venta en caja: {str(e)}"
+            )
     
     db.commit()
     db.refresh(db_sale)
@@ -199,10 +281,17 @@ def get_daily_report(
     total_sales = len(sales)
     total_amount = sum(sale.total for sale in sales)
     
+    # Obtener reporte de caja del día (solo si se requiere caja)
+    cash_report = None
+    if SettingsService.require_cash_register(db):
+        cash_report = CashService.get_daily_report(db, report_date)
+    
     return {
         "date": report_date,
         "total_sales": total_sales,
-        "total_amount": total_amount
+        "total_amount": total_amount,
+        "cash_report": cash_report,
+        "require_cash_register": SettingsService.require_cash_register(db)
     }
 
 

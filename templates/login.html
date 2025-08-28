@@ -4,248 +4,286 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Sistema POS</title>
-    
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --primary-color: #667eea;
             --secondary-color: #764ba2;
-            --accent-color: #28a745;
-            --sidebar-color: #667eea;
+            --accent-color: #f093fb;
+            --success-color: #4facfe;
+            --warning-color: #43e97b;
+            --danger-color: #fa709a;
         }
-        
+
         body {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .login-card {
-            background: white;
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            max-width: 400px;
+            padding: 3rem;
             width: 100%;
+            max-width: 400px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
+
         .login-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            padding: 2rem;
             text-align: center;
-            transition: all 0.3s ease;
+            margin-bottom: 2rem;
         }
-        .login-body {
-            padding: 2rem;
+
+        .login-header .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 2rem;
         }
+
+        .login-header h2 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .login-header p {
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .form-floating {
+            margin-bottom: 1rem;
+        }
+
         .form-control {
             border-radius: 10px;
             border: 2px solid #e9ecef;
-            padding: 12px 15px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
         }
+
         .form-control:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
         }
+
         .btn-login {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             border: none;
             border-radius: 10px;
-            padding: 12px;
+            padding: 0.75rem;
             font-weight: 600;
-            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             transition: all 0.3s ease;
+            width: 100%;
         }
+
         .btn-login:hover {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            filter: brightness(0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
+
         .alert {
             border-radius: 10px;
+            border: none;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .input-group-text {
+            background: transparent;
+            border: 2px solid #e9ecef;
+            border-right: none;
+            border-radius: 10px 0 0 10px;
+        }
+
+        .input-group .form-control {
+            border-left: none;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .input-group .form-control:focus + .input-group-text,
+        .input-group .form-control:focus {
+            border-color: var(--primary-color);
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 2rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 576px) {
+            .login-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-card">
+    <div class="login-container">
         <div class="login-header">
-            <h3><i class="bi bi-shop"></i> <span id="app-title">Sistema POS</span></h3>
-            <p class="mb-0">Iniciar Sesión</p>
-        </div>
-        
-        <div class="login-body">
-            <div id="alert-container"></div>
-            
-            <form id="loginForm">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Usuario</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" id="username" name="username" required>
-                    </div>
-                </div>
-                
-                <div class="mb-4">
-                    <label for="password" class="form-label">Contraseña</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" class="form-control" id="password" name="password" required>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn btn-primary btn-login">
-                    <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
-                </button>
-            </form>
-            
-            <div class="text-center mt-3">
-                <small class="text-muted">
-                    Credenciales por defecto: admin / admin123
-                </small>
+            <div class="logo">
+                <i class="fas fa-cash-register"></i>
             </div>
+            <h2>Sistema POS</h2>
+            <p>Inicia sesión para continuar</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="alert alert-danger" id="errorAlert" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="errorMessage"></span>
+            </div>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text">
+                    <i class="fas fa-user"></i>
+                </span>
+                <input type="text" class="form-control" id="username" placeholder="Usuario" required>
+            </div>
+
+            <div class="input-group mb-4">
+                <span class="input-group-text">
+                    <i class="fas fa-lock"></i>
+                </span>
+                <input type="password" class="form-control" id="password" placeholder="Contraseña" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-login" id="loginBtn">
+                <span class="normal">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                </span>
+                <span class="loading">
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    Iniciando sesión...
+                </span>
+            </button>
+        </form>
+
+        <div class="mt-3 text-center">
+            <small class="text-muted">
+                <i class="fas fa-info-circle"></i>
+                Usuario: <strong>admin</strong> | Contraseña: <strong>admin123</strong>
+            </small>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // Cargar configuración del tema
-        async function loadThemeSettings() {
-            try {
-                const response = await fetch('/api/v1/settings/');
-                if (response.ok) {
-                    const settings = await response.json();
-                    applyThemeSettings(settings);
-                }
-            } catch (error) {
-                console.error('Error cargando configuración del tema:', error);
-                // Usar configuración por defecto si hay error
-                applyThemeSettings({
-                    primary_color: '#667eea',
-                    secondary_color: '#764ba2',
-                    accent_color: '#28a745',
-                    sidebar_color: '#667eea',
-                    app_title: 'Sistema POS'
-                });
-            }
-        }
-        
-        // Aplicar configuración del tema
-        function applyThemeSettings(settings) {
-            if (settings.primary_color) {
-                document.documentElement.style.setProperty('--primary-color', settings.primary_color);
-            }
-            if (settings.secondary_color) {
-                document.documentElement.style.setProperty('--secondary-color', settings.secondary_color);
-            }
-            if (settings.accent_color) {
-                document.documentElement.style.setProperty('--accent-color', settings.accent_color);
-            }
-            if (settings.sidebar_color) {
-                document.documentElement.style.setProperty('--sidebar-color', settings.sidebar_color);
-            }
-            
-            // Actualizar título de la aplicación
-            if (settings.app_title) {
-                const appTitle = document.getElementById('app-title');
-                if (appTitle) {
-                    appTitle.textContent = settings.app_title;
-                }
-            }
-        }
+    <div class="footer-text">
+        <p>&copy; 2024 Sistema POS. Todos los derechos reservados.</p>
+    </div>
 
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            // Mostrar loading
-            const submitBtn = document.querySelector('.btn-login');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Iniciando...';
-            submitBtn.disabled = true;
-            
-            try {
-                const formData = new FormData();
-                formData.append('username', username);
-                formData.append('password', password);
-                
-                const response = await fetch('/api/v1/auth/login', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Login exitoso:', data);
-                    
-                    // Guardar token en localStorage
-                    localStorage.setItem('access_token', data.access_token);
-                    localStorage.setItem('token_type', data.token_type);
-                    
-                    console.log('Token guardado, redirigiendo...');
-                    // Redirigir al dashboard
-                    window.location.href = '/';
-                } else {
-                    const errorData = await response.json();
-                    showAlert('error', errorData.detail || 'Error al iniciar sesión');
-                }
-            } catch (error) {
-                console.error('Error en login:', error);
-                showAlert('error', 'Error de conexión. Verifica que el servidor esté funcionando.');
-            } finally {
-                // Restaurar botón
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }
-        });
-        
-        function showAlert(type, message) {
-            const alertContainer = document.getElementById('alert-container');
-            const alertClass = type === 'error' ? 'alert-danger' : 'alert-success';
-            
-            alertContainer.innerHTML = `
-                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                    <i class="bi bi-exclamation-triangle"></i> ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-        }
-        
-        // Verificar si ya hay un token válido
-        window.addEventListener('load', function() {
-            // Cargar configuración del tema al cargar la página
-            loadThemeSettings();
-            
-            const token = localStorage.getItem('access_token');
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMessage = document.getElementById('errorMessage');
+            const loginBtn = document.getElementById('loginBtn');
+            const normalText = loginBtn.querySelector('.normal');
+            const loadingText = loginBtn.querySelector('.loading');
+
+            // Verificar si ya está logueado
+            const token = localStorage.getItem('auth_token');
             if (token) {
-                // Verificar si el token es válido
-                fetch('/api/v1/auth/me', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                }).then(response => {
+                window.location.href = '/';
+                return;
+            }
+
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                if (!username || !password) {
+                    showError('Por favor complete todos los campos');
+                    return;
+                }
+
+                // Mostrar loading
+                setLoading(true);
+
+                try {
+                    const response = await fetch('/api/v1/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                    });
+
+                    const data = await response.json();
+
                     if (response.ok) {
-                        // Token válido, redirigir al dashboard
+                        // Guardar token
+                        localStorage.setItem('auth_token', data.access_token);
+                        localStorage.setItem('token_type', data.token_type);
+                        
+                        // Guardar información del usuario si está disponible
+                        if (data.user) {
+                            localStorage.setItem('user_info', JSON.stringify(data.user));
+                        }
+
+                        // Redirigir al dashboard
                         window.location.href = '/';
                     } else {
-                        // Token inválido, limpiar localStorage
-                        localStorage.removeItem('access_token');
-                        localStorage.removeItem('token_type');
+                        showError(data.detail || 'Error de autenticación');
                     }
-                }).catch(() => {
-                    // Error de conexión, limpiar localStorage
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('token_type');
-                });
+                } catch (error) {
+                    console.error('Error:', error);
+                    showError('Error de conexión. Verifique su conexión a internet.');
+                } finally {
+                    setLoading(false);
+                }
+            });
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorAlert.style.display = 'block';
+                setTimeout(() => {
+                    errorAlert.style.display = 'none';
+                }, 5000);
             }
+
+            function setLoading(loading) {
+                if (loading) {
+                    normalText.style.display = 'none';
+                    loadingText.style.display = 'inline-block';
+                    loginBtn.disabled = true;
+                } else {
+                    normalText.style.display = 'inline-block';
+                    loadingText.style.display = 'none';
+                    loginBtn.disabled = false;
+                }
+            }
+
+            // Auto-focus en el campo de usuario
+            document.getElementById('username').focus();
         });
     </script>
 </body>
