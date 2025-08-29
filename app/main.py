@@ -99,6 +99,12 @@ async def inventory_page(request: Request):
     return templates.TemplateResponse("inventory.html", {"request": request})
 
 
+@app.get("/tables", response_class=HTMLResponse)
+async def tables_page(request: Request):
+    """Página de gestión de mesas"""
+    return templates.TemplateResponse("tables.html", {"request": request})
+
+
 @app.get("/debug-frontend", response_class=HTMLResponse)
 async def debug_frontend_page(request: Request):
     """Página de debug del frontend"""
@@ -123,11 +129,6 @@ async def cash_register_page(request: Request):
     return templates.TemplateResponse("cash-register.html", {"request": request})
 
 
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    """Página de login"""
-    return templates.TemplateResponse("login.html", {"request": request})
-
 @app.get("/caja-ventas", response_class=HTMLResponse)
 async def caja_ventas_page(request: Request):
     """Página del módulo unificado Caja y Ventas"""
@@ -138,6 +139,12 @@ async def caja_ventas_page(request: Request):
 async def waiters_page(request: Request):
     """Página para meseros"""
     return templates.TemplateResponse("waiters/index.html", {"request": request})
+
+
+@app.get("/waiters/orders", response_class=HTMLResponse)
+async def waiters_orders_page(request: Request):
+    """Página de pedidos para meseros"""
+    return templates.TemplateResponse("waiters/orders.html", {"request": request})
 
 
 @app.get("/kitchen", response_class=HTMLResponse)

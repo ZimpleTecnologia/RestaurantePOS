@@ -1,310 +1,244 @@
 """
-Router para gestión de mesas
+Router para el manejo de mesas del restaurante
 """
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from pydantic import BaseModel
 
 from app.database import get_db
-from app.models.user import User, UserRole
-from app.models.location import Table, TableStatus, Location, LocationType
-from app.models.order import Order
-from app.schemas.location import TableCreate, TableUpdate, TableResponse
-from app.auth.dependencies import get_current_user
+from app.models.user import User
+from app.auth import get_current_active_user
+from app.services.table_service import TableService
+from app.models.location import TableStatus
 
-router = APIRouter(prefix="/tables", tags=["mesas"])
+router = APIRouter(prefix="/tables", tags=["tables"])
 
+
+# ============================================================================
+# MODELOS PYDANTIC
+# ============================================================================
+
+class TableCreate(BaseModel):
+    table_number: str
+    name: str
+    capacity: int = 4
+    location: Optional[str] = None
+    description: Optional[str] = None
+
+class TableUpdate(BaseModel):
+    name: Optional[str] = None
+    capacity: Optional[int] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[TableStatus] = None
+
+class TableResponse(BaseModel):
+    id: int
+    table_number: str
+    name: str
+    capacity: int
+    status: TableStatus
+    location: Optional[str] = None
+    description: Optional[str] = None
+    is_available: bool
+    has_active_order: bool
+
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# ENDPOINTS DE MESAS
+# ============================================================================
 
 @router.get("/", response_model=List[TableResponse])
-def get_tables(
-    location_id: Optional[int] = None,
-    status: Optional[TableStatus] = None,
-    skip: int = 0,
-    limit: int = 100,
+def get_all_tables(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Obtener lista de mesas"""
-    query = db.query(Table)
-    
-    if location_id:
-        query = query.filter(Table.location_id == location_id)
-    
-    if status:
-        query = query.filter(Table.status == status)
-    
-    # Obtener mesas activas
-    query = query.filter(Table.is_active == True)
-    
-    tables = query.order_by(Table.table_number).offset(skip).limit(limit).all()
-    
-    # Agregar información de órdenes activas para cada mesa
-    for table in tables:
-        try:
-            # Obtener órdenes activas
-            active_orders = db.query(Order).filter(
-                Order.table_id == table.id,
-                Order.status.in_(["pendiente", "en_preparacion", "listo"])
-            ).all()
-            
-            # Contar órdenes activas
-            table.active_orders = len(active_orders)
-            
-            # Obtener estados de órdenes para determinar el color
-            order_statuses = [order.status for order in active_orders]
-            table.order_statuses = order_statuses
-            
-            # Si tiene órdenes activas, marcar como ocupada
-            if table.active_orders > 0 and table.status == TableStatus.LIBRE:
-                table.status = TableStatus.OCUPADA
-                db.commit()
-        except Exception as e:
-            # Si hay error, establecer en 0
-            table.active_orders = 0
-            table.order_statuses = []
-    
+    """Obtener todas las mesas"""
+    tables = TableService.get_all_tables(db)
     return tables
 
+@router.get("/available", response_model=List[TableResponse])
+def get_available_tables(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener mesas disponibles"""
+    tables = TableService.get_available_tables(db)
+    return tables
+
+@router.get("/occupied", response_model=List[TableResponse])
+def get_occupied_tables(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener mesas ocupadas"""
+    tables = TableService.get_occupied_tables(db)
+    return tables
 
 @router.get("/{table_id}", response_model=TableResponse)
 def get_table(
     table_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     """Obtener mesa específica"""
-    table = db.query(Table).filter(Table.id == table_id).first()
+    table = TableService.get_table_by_id(db, table_id)
     if not table:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Mesa no encontrada"
         )
-    
-    # Agregar información de órdenes activas
-    active_orders = db.query(Order).filter(
-        Order.table_id == table.id,
-        Order.status.in_(["pendiente", "en_preparacion", "listo"])
-    ).count()
-    
-    table.active_orders = active_orders
-    
     return table
-
 
 @router.post("/", response_model=TableResponse)
 def create_table(
     table_data: TableCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Crear nueva mesa (admin y meseros)"""
-    print(f"DEBUG: Recibiendo datos de mesa: {table_data}")
-    
-    if current_user.role not in [UserRole.ADMIN, UserRole.MESERO]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo administradores y meseros pueden crear mesas"
-        )
-    
-    # Si no se proporciona location_id, usar la primera ubicación disponible
-    if not table_data.location_id:
-        print("DEBUG: No se proporcionó location_id, buscando ubicación por defecto")
-        location = db.query(Location).first()
-        if not location:
-            print("DEBUG: No hay ubicaciones, creando una por defecto")
-            # Crear una ubicación por defecto si no existe ninguna
-            location = Location(
-                name="Restaurante Principal",
-                description="Ubicación principal del restaurante",
-                location_type=LocationType.RESTAURANTE
-            )
-            db.add(location)
-            db.commit()
-            db.refresh(location)
-        table_data.location_id = location.id
-        print(f"DEBUG: Asignando location_id: {location.id}")
-    else:
-        print(f"DEBUG: Usando location_id proporcionado: {table_data.location_id}")
-        # Verificar que la ubicación existe
-        location = db.query(Location).filter(Location.id == table_data.location_id).first()
-        if not location:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Ubicación no encontrada"
-            )
-    
-    # Verificar que el número de mesa no existe en esa ubicación
-    existing_table = db.query(Table).filter(
-        Table.location_id == table_data.location_id,
-        Table.table_number == table_data.table_number
-    ).first()
-    
+    """Crear una nueva mesa"""
+    # Verificar que el número de mesa no exista
+    existing_table = TableService.get_table_by_number(db, table_data.table_number)
     if existing_table:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ya existe una mesa con ese número en esta ubicación"
+            detail="Ya existe una mesa con ese número"
         )
     
-    # Crear la mesa
-    table_dict = table_data.model_dump()
-    print(f"DEBUG: Datos para crear mesa: {table_dict}")
-    
-    db_table = Table(**table_dict)
-    db.add(db_table)
-    db.commit()
-    db.refresh(db_table)
-    
-    print(f"DEBUG: Mesa creada exitosamente con ID: {db_table.id}")
-    return db_table
-
+    table = TableService.create_table(
+        db=db,
+        table_number=table_data.table_number,
+        name=table_data.name,
+        capacity=table_data.capacity,
+        location=table_data.location,
+        description=table_data.description
+    )
+    return table
 
 @router.put("/{table_id}", response_model=TableResponse)
 def update_table(
     table_id: int,
-    table_update: TableUpdate,
+    table_data: TableUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
     """Actualizar mesa"""
-    table = db.query(Table).filter(Table.id == table_id).first()
+    table = TableService.get_table_by_id(db, table_id)
     if not table:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Mesa no encontrada"
         )
     
-    # Solo admin puede modificar mesas, meseros solo pueden cambiar estado
-    if current_user.role not in [UserRole.ADMIN, UserRole.MESERO]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permiso para modificar mesas"
-        )
-    
-    # Si es mesero, solo puede cambiar el estado
-    if current_user.role == UserRole.MESERO:
-        if table_update.status:
-            table.status = table_update.status
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Los meseros solo pueden cambiar el estado de la mesa"
-            )
-    else:
-        # Admin puede modificar todo
-        update_data = table_update.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(table, field, value)
+    # Actualizar campos
+    if table_data.name is not None:
+        table.name = table_data.name
+    if table_data.capacity is not None:
+        table.capacity = table_data.capacity
+    if table_data.location is not None:
+        table.location = table_data.location
+    if table_data.description is not None:
+        table.description = table_data.description
+    if table_data.status is not None:
+        table.status = table_data.status
     
     db.commit()
     db.refresh(table)
-    
     return table
 
-
-@router.put("/{table_id}/status", response_model=TableResponse)
-def update_table_status(
+@router.post("/{table_id}/occupy")
+def occupy_table(
     table_id: int,
-    new_status: TableStatus,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Actualizar solo el estado de la mesa"""
-    table = db.query(Table).filter(Table.id == table_id).first()
+    """Ocupar una mesa"""
+    table = TableService.occupy_table(db, table_id)
     if not table:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Mesa no encontrada"
         )
     
-    # Verificar permisos según el nuevo estado
-    if new_status == TableStatus.MANTENIMIENTO:
-        if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Solo administradores y supervisores pueden poner mesas en mantenimiento"
-            )
-    
-    # Verificar que no haya órdenes activas si se quiere liberar
-    if new_status == TableStatus.LIBRE:
-        active_orders = db.query(Order).filter(
-            Order.table_id == table.id,
-            Order.status.in_(["pendiente", "en_preparacion", "listo"])
-        ).count()
-        
-        if active_orders > 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No se puede liberar una mesa con órdenes activas"
-            )
-    
-    table.status = new_status
-    db.commit()
-    db.refresh(table)
-    
-    return table
+    return {
+        "message": f"Mesa {table.name} ocupada exitosamente",
+        "table": {
+            "id": table.id,
+            "table_number": table.table_number,
+            "name": table.name,
+            "status": table.status
+        }
+    }
 
-
-@router.get("/{table_id}/orders")
-def get_table_orders(
+@router.post("/{table_id}/free")
+def free_table(
     table_id: int,
-    active_only: bool = True,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Obtener órdenes de una mesa"""
-    table = db.query(Table).filter(Table.id == table_id).first()
+    """Liberar una mesa"""
+    table = TableService.free_table(db, table_id)
     if not table:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Mesa no encontrada"
         )
     
-    query = db.query(Order).filter(Order.table_id == table_id)
-    
-    if active_only:
-        query = query.filter(
-            Order.status.in_(["pendiente", "en_preparacion", "listo"])
-        )
-    
-    orders = query.order_by(Order.created_at.desc()).all()
-    
-    return orders
+    return {
+        "message": f"Mesa {table.name} liberada exitosamente",
+        "table": {
+            "id": table.id,
+            "table_number": table.table_number,
+            "name": table.name,
+            "status": table.status
+        }
+    }
 
-
-@router.delete("/{table_id}")
-def delete_table(
+@router.get("/{table_id}/with-order")
+def get_table_with_order(
     table_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Eliminar mesa (solo admin)"""
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo los administradores pueden eliminar mesas"
-        )
-    
-    table = db.query(Table).filter(Table.id == table_id).first()
-    if not table:
+    """Obtener mesa con su pedido activo"""
+    table_data = TableService.get_table_with_active_order(db, table_id)
+    if not table_data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Mesa no encontrada"
         )
-    
-    # Verificar que no tenga órdenes activas
-    active_orders = db.query(Order).filter(
-        Order.table_id == table.id,
-        Order.status.in_(["pendiente", "en_preparacion", "listo"])
-    ).count()
-    
-    if active_orders > 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No se puede eliminar una mesa con órdenes activas"
-        )
-    
-    # Marcar como inactiva en lugar de eliminar físicamente
-    table.is_active = False
-    db.commit()
-    
-    return {"message": "Mesa eliminada exitosamente"}
+    return table_data
+
+@router.get("/status/summary")
+def get_tables_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener resumen del estado de las mesas"""
+    summary = TableService.get_table_status_summary(db)
+    return summary
+
+@router.post("/initialize")
+def initialize_default_tables(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Inicializar mesas por defecto"""
+    created_tables = TableService.initialize_default_tables(db)
+    return {
+        "message": f"Se crearon {len(created_tables)} mesas por defecto",
+        "tables": [
+            {
+                "id": table.id,
+                "table_number": table.table_number,
+                "name": table.name,
+                "capacity": table.capacity,
+                "location": table.location
+            }
+            for table in created_tables
+        ]
+    }

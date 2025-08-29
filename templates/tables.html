@@ -1,0 +1,488 @@
+{% extends "base_role.html" %}
+
+{% block title %}Gestión de Mesas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header simplificado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-chair"></i> Mesas del Restaurante
+            </h1>
+            <p class="text-muted">Estado en tiempo real</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="refreshTables()">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+            <button class="btn btn-primary" onclick="quickAddTable()">
+                <i class="fas fa-plus"></i> Agregar Mesa
+            </button>
+        </div>
+    </div>
+
+    <!-- Estadísticas simplificadas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Disponibles
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="mesas-disponibles">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Ocupadas
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="mesas-ocupadas">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Con Pedidos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="mesas-con-pedidos">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total-mesas">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chair fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista de mesas simplificada -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-table"></i> Estado de Mesas
+            </h6>
+        </div>
+        <div class="card-body">
+            <div id="mesas-grid" class="row g-3">
+                <!-- Las mesas se cargarán dinámicamente aquí -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal simplificado para nueva mesa -->
+<div class="modal fade" id="nuevaMesaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Mesa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="nuevaMesaForm">
+                    <div class="mb-3">
+                        <label for="tableNumber" class="form-label">Número de Mesa</label>
+                        <input type="number" class="form-control" id="tableNumber" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="tableName" class="form-label">Nombre (opcional)</label>
+                        <input type="text" class="form-control" id="tableName" placeholder="Ej: Terraza 1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="tableCapacity" class="form-label">Capacidad</label>
+                        <select class="form-select" id="tableCapacity" required>
+                            <option value="2">2 personas</option>
+                            <option value="4" selected>4 personas</option>
+                            <option value="6">6 personas</option>
+                            <option value="8">8 personas</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="createTable()">Crear Mesa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de acciones rápidas -->
+<div class="modal fade" id="mesaActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mesaActionsTitle">Acciones de Mesa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="mesaActionsContent">
+                    <!-- Contenido dinámico -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let mesas = [];
+let currentMesaId = null;
+
+// Cargar mesas al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    loadTables();
+    // Auto-refresh cada 30 segundos
+    setInterval(loadTables, 30000);
+});
+
+async function loadTables() {
+    try {
+        const response = await fetch('/api/v1/tables/');
+        const data = await response.json();
+        mesas = data;
+        renderTables();
+        updateStats();
+    } catch (error) {
+        console.error('Error cargando mesas:', error);
+        showAlert('Error cargando mesas', 'error');
+    }
+}
+
+function renderTables() {
+    const grid = document.getElementById('mesas-grid');
+    grid.innerHTML = '';
+
+    mesas.forEach(mesa => {
+        const mesaCard = createMesaCard(mesa);
+        grid.appendChild(mesaCard);
+    });
+}
+
+function createMesaCard(mesa) {
+    const card = document.createElement('div');
+    card.className = 'col-md-3 col-sm-6 col-lg-2';
+    
+    const statusClass = getStatusClass(mesa.status);
+    const statusIcon = getStatusIcon(mesa.status);
+    const statusText = getStatusText(mesa.status);
+    
+    card.innerHTML = `
+        <div class="card mesa-card ${statusClass} h-100" onclick="showMesaActions(${mesa.id})">
+            <div class="card-body text-center p-3">
+                <div class="mesa-number mb-2">
+                    <h4 class="mb-0">${mesa.table_number}</h4>
+                    <small class="text-muted">${mesa.name || 'Mesa'}</small>
+                </div>
+                <div class="mesa-status">
+                    <i class="${statusIcon} fa-2x mb-2"></i>
+                    <p class="mb-0 small">${statusText}</p>
+                </div>
+                ${mesa.capacity ? `<small class="text-muted">${mesa.capacity} personas</small>` : ''}
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function getStatusClass(status) {
+    switch(status) {
+        case 'AVAILABLE': return 'border-success';
+        case 'OCCUPIED': return 'border-warning';
+        case 'RESERVED': return 'border-info';
+        case 'MAINTENANCE': return 'border-danger';
+        default: return 'border-secondary';
+    }
+}
+
+function getStatusIcon(status) {
+    switch(status) {
+        case 'AVAILABLE': return 'fas fa-check-circle text-success';
+        case 'OCCUPIED': return 'fas fa-users text-warning';
+        case 'RESERVED': return 'fas fa-calendar-check text-info';
+        case 'MAINTENANCE': return 'fas fa-tools text-danger';
+        default: return 'fas fa-question-circle text-secondary';
+    }
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'AVAILABLE': return 'Disponible';
+        case 'OCCUPIED': return 'Ocupada';
+        case 'RESERVED': return 'Reservada';
+        case 'MAINTENANCE': return 'Mantenimiento';
+        default: return 'Desconocido';
+    }
+}
+
+function showMesaActions(mesaId) {
+    currentMesaId = mesaId;
+    const mesa = mesas.find(m => m.id === mesaId);
+    
+    if (!mesa) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('mesaActionsModal'));
+    const title = document.getElementById('mesaActionsTitle');
+    const content = document.getElementById('mesaActionsContent');
+    
+    title.textContent = `Mesa ${mesa.table_number} - Acciones`;
+    
+    let actionsHtml = '';
+    
+    if (mesa.status === 'AVAILABLE') {
+        actionsHtml = `
+            <div class="d-grid gap-2">
+                <button class="btn btn-warning" onclick="occupyTable(${mesa.id})">
+                    <i class="fas fa-users"></i> Ocupar Mesa
+                </button>
+                <button class="btn btn-info" onclick="reserveTable(${mesa.id})">
+                    <i class="fas fa-calendar-plus"></i> Reservar
+                </button>
+                <button class="btn btn-secondary" onclick="editTable(${mesa.id})">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+            </div>
+        `;
+    } else if (mesa.status === 'OCCUPIED') {
+        actionsHtml = `
+            <div class="d-grid gap-2">
+                <button class="btn btn-success" onclick="freeTable(${mesa.id})">
+                    <i class="fas fa-check"></i> Liberar Mesa
+                </button>
+                <button class="btn btn-primary" onclick="viewOrders(${mesa.id})">
+                    <i class="fas fa-clipboard-list"></i> Ver Pedidos
+                </button>
+                <button class="btn btn-info" onclick="addOrder(${mesa.id})">
+                    <i class="fas fa-plus"></i> Agregar Pedido
+                </button>
+            </div>
+        `;
+    } else {
+        actionsHtml = `
+            <div class="d-grid gap-2">
+                <button class="btn btn-success" onclick="freeTable(${mesa.id})">
+                    <i class="fas fa-check"></i> Liberar Mesa
+                </button>
+                <button class="btn btn-secondary" onclick="editTable(${mesa.id})">
+                    <i class="fas fa-edit"></i> Editar
+                </button>
+            </div>
+        `;
+    }
+    
+    content.innerHTML = actionsHtml;
+    modal.show();
+}
+
+async function occupyTable(mesaId) {
+    try {
+        const response = await fetch(`/api/v1/tables/${mesaId}/occupy`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            showAlert('Mesa ocupada exitosamente', 'success');
+            loadTables();
+            bootstrap.Modal.getInstance(document.getElementById('mesaActionsModal')).hide();
+        } else {
+            showAlert('Error ocupando mesa', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error ocupando mesa', 'error');
+    }
+}
+
+async function freeTable(mesaId) {
+    try {
+        const response = await fetch(`/api/v1/tables/${mesaId}/free`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            showAlert('Mesa liberada exitosamente', 'success');
+            loadTables();
+            bootstrap.Modal.getInstance(document.getElementById('mesaActionsModal')).hide();
+        } else {
+            showAlert('Error liberando mesa', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error liberando mesa', 'error');
+    }
+}
+
+function quickAddTable() {
+    const modal = new bootstrap.Modal(document.getElementById('nuevaMesaModal'));
+    modal.show();
+}
+
+async function createTable() {
+    const tableNumber = document.getElementById('tableNumber').value;
+    const tableName = document.getElementById('tableName').value;
+    const capacity = document.getElementById('tableCapacity').value;
+    
+    if (!tableNumber) {
+        showAlert('El número de mesa es requerido', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/v1/tables/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                table_number: parseInt(tableNumber),
+                name: tableName || `Mesa ${tableNumber}`,
+                capacity: parseInt(capacity),
+                status: 'AVAILABLE'
+            })
+        });
+        
+        if (response.ok) {
+            showAlert('Mesa creada exitosamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('nuevaMesaModal')).hide();
+            document.getElementById('nuevaMesaForm').reset();
+            loadTables();
+        } else {
+            showAlert('Error creando mesa', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error creando mesa', 'error');
+    }
+}
+
+function updateStats() {
+    const total = mesas.length;
+    const disponibles = mesas.filter(m => m.status === 'AVAILABLE').length;
+    const ocupadas = mesas.filter(m => m.status === 'OCCUPIED').length;
+    const conPedidos = mesas.filter(m => m.status === 'OCCUPIED' && m.has_orders).length;
+    
+    document.getElementById('total-mesas').textContent = total;
+    document.getElementById('mesas-disponibles').textContent = disponibles;
+    document.getElementById('mesas-ocupadas').textContent = ocupadas;
+    document.getElementById('mesas-con-pedidos').textContent = conPedidos;
+}
+
+function refreshTables() {
+    loadTables();
+}
+
+function showAlert(message, type) {
+    // Implementar sistema de alertas
+    console.log(`${type}: ${message}`);
+}
+
+// Funciones adicionales para completar el flujo
+function reserveTable(mesaId) {
+    // Implementar reserva
+    showAlert('Función de reserva en desarrollo', 'info');
+}
+
+function editTable(mesaId) {
+    // Implementar edición
+    showAlert('Función de edición en desarrollo', 'info');
+}
+
+function viewOrders(mesaId) {
+    // Redirigir a pedidos
+    window.location.href = `/waiters/orders?table=${mesaId}`;
+}
+
+function addOrder(mesaId) {
+    // Redirigir a nuevo pedido
+    window.location.href = `/waiters/orders?table=${mesaId}&new=true`;
+}
+</script>
+
+<style>
+.mesa-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-width: 2px;
+}
+
+.mesa-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.mesa-card.border-success {
+    background-color: #f8fff9;
+}
+
+.mesa-card.border-warning {
+    background-color: #fffbf0;
+}
+
+.mesa-card.border-info {
+    background-color: #f0f8ff;
+}
+
+.mesa-card.border-danger {
+    background-color: #fff5f5;
+}
+
+.mesa-number h4 {
+    font-weight: bold;
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .col-md-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media (max-width: 576px) {
+    .col-md-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+</style>
+{% endblock %}
+

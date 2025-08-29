@@ -1,715 +1,547 @@
-{% extends "base.html" %}
+{% extends "base_role.html" %}
 
-{% block title %}Panel de Cocina - Sistema POS{% endblock %}
-
-{% block extra_css %}
-<style>
-    .kitchen-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 20px;
-        padding: 20px;
-    }
-    
-    .order-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        border-left: 5px solid var(--primary-color);
-    }
-    
-    .order-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-    }
-    
-    .order-card.pendiente {
-        border-left-color: var(--warning-color);
-        background-color: #fff8e1;
-    }
-    
-    .order-card.en_preparacion {
-        border-left-color: var(--primary-color);
-        background-color: #e3f2fd;
-    }
-    
-    .order-card.listo {
-        border-left-color: var(--accent-color);
-        background-color: #e8f5e8;
-    }
-    
-    .order-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #dee2e6;
-    }
-    
-    .order-number {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: var(--primary-color);
-    }
-    
-    .order-status {
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        font-weight: bold;
-        text-transform: uppercase;
-    }
-    
-    .status-pendiente {
-        background-color: var(--warning-color);
-        color: black;
-    }
-    
-    .status-en_preparacion {
-        background-color: var(--primary-color);
-        color: white;
-    }
-    
-    .status-listo {
-        background-color: var(--accent-color);
-        color: white;
-    }
-    
-    .order-info {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin-bottom: 15px;
-    }
-    
-    .info-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .info-item i {
-        color: var(--primary-color);
-        width: 20px;
-    }
-    
-    .order-items {
-        margin-bottom: 15px;
-    }
-    
-    .order-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px solid #f0f0f0;
-    }
-    
-    .order-item:last-child {
-        border-bottom: none;
-    }
-    
-    .item-quantity {
-        background-color: var(--primary-color);
-        color: white;
-        border-radius: 50%;
-        width: 25px;
-        height: 25px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 0.8rem;
-    }
-    
-    .order-actions {
-        display: flex;
-        gap: 10px;
-        margin-top: 15px;
-    }
-    
-    .btn-action {
-        flex: 1;
-        padding: 8px 12px;
-        border-radius: 8px;
-        border: none;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-start {
-        background-color: var(--primary-color);
-        color: white;
-    }
-    
-    .btn-start:hover {
-        background-color: var(--secondary-color);
-    }
-    
-    .btn-ready {
-        background-color: var(--accent-color);
-        color: white;
-    }
-    
-    .btn-ready:hover {
-        background-color: #218838;
-    }
-    
-    .btn-notes {
-        background-color: var(--warning-color);
-        color: black;
-    }
-    
-    .btn-notes:hover {
-        background-color: #e0a800;
-    }
-    
-    .priority-badge {
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        margin-left: 10px;
-    }
-    
-    .priority-normal {
-        background-color: #6c757d;
-        color: white;
-    }
-    
-    .priority-alta {
-        background-color: var(--warning-color);
-        color: black;
-    }
-    
-    .priority-urgente {
-        background-color: var(--danger-color);
-        color: white;
-    }
-    
-    .kitchen-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid var(--primary-color);
-    }
-    
-    .stat-number {
-        font-size: 2rem;
-        font-weight: bold;
-        color: var(--primary-color);
-    }
-    
-    .stat-label {
-        color: #6c757d;
-        font-size: 0.9rem;
-        margin-top: 5px;
-    }
-    
-    .kitchen-controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding: 15px;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    
-    .sound-toggle {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 60px;
-        height: 34px;
-    }
-    
-    .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-    
-    .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #ccc;
-        transition: .4s;
-        border-radius: 34px;
-    }
-    
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 26px;
-        width: 26px;
-        left: 4px;
-        bottom: 4px;
-        background-color: white;
-        transition: .4s;
-        border-radius: 50%;
-    }
-    
-    input:checked + .slider {
-        background-color: var(--accent-color);
-    }
-    
-    input:checked + .slider:before {
-        transform: translateX(26px);
-    }
-    
-    .last-update {
-        color: #6c757d;
-        font-size: 0.9rem;
-    }
-    
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #6c757d;
-    }
-    
-    .empty-state i {
-        font-size: 4rem;
-        margin-bottom: 20px;
-        color: #dee2e6;
-    }
-</style>
-{% endblock %}
+{% block title %}Cocina - Gestión de Pedidos{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-fire"></i> Panel de Cocina</h2>
-    <div>
-        <button class="btn btn-primary" onclick="refreshOrders()">
-            <i class="bi bi-arrow-clockwise"></i> Actualizar
-        </button>
-        <button class="btn btn-success" onclick="viewWaitersPanel()">
-            <i class="bi bi-person-badge"></i> Ver Meseros
-        </button>
+<div class="container-fluid">
+    <!-- Header simplificado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="bi bi-fire text-danger"></i>
+                Cocina - Gestión de Pedidos
+            </h1>
+            <p class="text-muted mb-0">Panel de control para cocina</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="refreshOrders()">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+            <button class="btn btn-success" onclick="markAllReady()">
+                <i class="bi bi-check-all"></i> Marcar Todo Listo
+            </button>
+        </div>
     </div>
-</div>
 
-<!-- Estadísticas de Cocina -->
-<div class="kitchen-stats">
-    <div class="stat-card">
-        <div class="stat-number" id="total-orders">0</div>
-        <div class="stat-label">Total Órdenes</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-number" id="pending-orders">0</div>
-        <div class="stat-label">Pendientes</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-number" id="preparing-orders">0</div>
-        <div class="stat-label">En Preparación</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-number" id="ready-orders">0</div>
-        <div class="stat-label">Listas</div>
-    </div>
-</div>
-
-<!-- Controles de Cocina -->
-<div class="kitchen-controls">
-    <div class="sound-toggle">
-        <label class="toggle-switch">
-            <input type="checkbox" id="sound-toggle" checked>
-            <span class="slider"></span>
-        </label>
-        <span>Notificaciones de Sonido</span>
-    </div>
-    <div class="last-update">
-        Última actualización: <span id="last-update-time">--</span>
-    </div>
-</div>
-
-<!-- Grid de Órdenes -->
-<div class="kitchen-grid" id="orders-grid">
-    <!-- Las órdenes se cargarán dinámicamente aquí -->
-</div>
-
-<!-- Estado vacío -->
-<div class="empty-state" id="empty-state" style="display: none;">
-    <i class="bi bi-fire"></i>
-    <h4>No hay órdenes pendientes</h4>
-    <p>Las órdenes aparecerán aquí cuando los meseros las envíen</p>
-</div>
-
-<!-- Modal para Notas de Cocina -->
-<div class="modal fade" id="kitchenNotesModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="bi bi-pencil"></i> Notas de Cocina - Orden #<span id="notes-order-number"></span>
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Notas actuales:</label>
-                    <textarea class="form-control" id="kitchen-notes" rows="4" 
-                              placeholder="Agregar notas sobre la preparación..."></textarea>
+    <!-- Estadísticas rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title" id="pendingCount">0</h3>
+                    <p class="card-text">Pendientes</p>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="saveKitchenNotes()">
-                    <i class="bi bi-check-circle"></i> Guardar Notas
-                </button>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title" id="preparingCount">0</h3>
+                    <p class="card-text">En Preparación</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title" id="readyCount">0</h3>
+                    <p class="card-text">Listos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title" id="totalCount">0</h3>
+                    <p class="card-text">Total Hoy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y controles -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-funnel"></i> Filtros
+                    </h5>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary active" data-filter="all">
+                            Todos
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" data-filter="pending">
+                            Pendientes
+                        </button>
+                        <button type="button" class="btn btn-outline-info" data-filter="preparing">
+                            Preparando
+                        </button>
+                        <button type="button" class="btn btn-outline-success" data-filter="ready">
+                            Listos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de pedidos -->
+    <div class="row" id="ordersContainer">
+        <!-- Los pedidos se cargarán dinámicamente aquí -->
+    </div>
+</div>
+
+<!-- Modal para ver detalles del pedido -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailTitle">Detalles del Pedido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetailContent">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-footer" id="orderDetailActions">
+                <!-- Acciones dinámicas -->
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-    let orders = [];
-    let lastOrderCount = 0;
-    let soundEnabled = true;
-    let selectedOrderId = null;
+let orders = [];
+let currentFilter = 'all';
 
-    // Inicializar
-    document.addEventListener('DOMContentLoaded', function() {
-        loadOrders();
-        updateStats();
-        
-        // Auto-refresh cada 30 segundos
-        setInterval(() => {
-            loadOrders();
-            updateStats();
-        }, 30000);
-        
-        // Configurar toggle de sonido
-        document.getElementById('sound-toggle').addEventListener('change', function() {
-            soundEnabled = this.checked;
-        });
-    });
+// Cargar pedidos al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    loadOrders();
+    // Auto-refresh cada 30 segundos
+    setInterval(loadOrders, 30000);
+});
 
-    // Cargar órdenes
-    async function loadOrders() {
-        try {
-            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-            const response = await fetch('/api/v1/kitchen/orders', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.ok) {
-                const newOrders = await response.json();
-                
-                // Verificar nuevas órdenes y reproducir sonido
-                if (soundEnabled && newOrders.length > lastOrderCount) {
-                    playNotificationSound();
-                }
-                
-                lastOrderCount = newOrders.length;
-                orders = newOrders;
-                updateStats();
-                renderOrders();
-                updateLastUpdateTime();
-            } else {
-                console.error('Error cargando órdenes');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
+async function loadOrders() {
+    try {
+        const response = await fetch('/api/v1/orders/active');
+        orders = await response.json();
+        updateStatistics();
+        renderOrders();
+    } catch (error) {
+        console.error('Error cargando pedidos:', error);
+        showAlert('Error cargando pedidos', 'error');
     }
+}
 
-    // Renderizar órdenes
-    function renderOrders() {
-        const grid = document.getElementById('orders-grid');
-        const emptyState = document.getElementById('empty-state');
-        
-        if (orders.length === 0) {
-            grid.style.display = 'none';
-            emptyState.style.display = 'block';
-            return;
-        }
-        
-        grid.style.display = 'grid';
-        emptyState.style.display = 'none';
-        grid.innerHTML = '';
+function updateStatistics() {
+    const pending = orders.filter(o => o.status === 'PENDING').length;
+    const preparing = orders.filter(o => o.status === 'PREPARING').length;
+    const ready = orders.filter(o => o.status === 'READY').length;
+    const total = orders.length;
+    
+    document.getElementById('pendingCount').textContent = pending;
+    document.getElementById('preparingCount').textContent = preparing;
+    document.getElementById('readyCount').textContent = ready;
+    document.getElementById('totalCount').textContent = total;
+}
 
-        orders.forEach(order => {
-            const orderCard = document.createElement('div');
-            orderCard.className = `order-card ${order.status}`;
-
-            const priorityClass = `priority-${order.priority}`;
-            const priorityText = getPriorityText(order.priority);
-
-            orderCard.innerHTML = `
-                <div class="order-header">
-                    <div class="order-number">
-                        #${order.order_number}
-                        <span class="priority-badge ${priorityClass}">${priorityText}</span>
-                    </div>
-                    <div class="order-status status-${order.status}">${getStatusText(order.status)}</div>
+function renderOrders() {
+    const container = document.getElementById('ordersContainer');
+    
+    if (orders.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="bi bi-clipboard-x fs-1 text-muted"></i>
+                    <h5 class="text-muted mt-3">No hay pedidos activos</h5>
+                    <p class="text-muted">Los pedidos aparecerán aquí cuando los meseros los creen</p>
                 </div>
-                
-                <div class="order-info">
-                    <div class="info-item">
-                        <i class="bi bi-table"></i>
-                        <span>Mesa ${order.table_number}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="bi bi-person"></i>
-                        <span>${order.waiter_name}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="bi bi-people"></i>
-                        <span>${order.people_count} personas</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="bi bi-clock"></i>
-                        <span>${formatTime(order.created_at)}</span>
+            </div>
+        `;
+        return;
+    }
+    
+    // Filtrar pedidos según el filtro actual
+    let filteredOrders = orders;
+    if (currentFilter !== 'all') {
+        filteredOrders = orders.filter(order => {
+            switch(currentFilter) {
+                case 'pending': return order.status === 'PENDING';
+                case 'preparing': return order.status === 'PREPARING';
+                case 'ready': return order.status === 'READY';
+                default: return true;
+            }
+        });
+    }
+    
+    // Ordenar por prioridad y tiempo
+    filteredOrders.sort((a, b) => {
+        // Primero por estado (pendiente > preparando > listo)
+        const statusOrder = { 'PENDING': 0, 'PREPARING': 1, 'READY': 2 };
+        const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+        if (statusDiff !== 0) return statusDiff;
+        
+        // Luego por tiempo de creación (más antiguo primero)
+        return new Date(a.created_at) - new Date(b.created_at);
+    });
+    
+    container.innerHTML = filteredOrders.map(order => `
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card order-card ${getOrderStatusClass(order.status)}" onclick="viewOrderDetail(${order.id})">
+                <div class="card-header ${getOrderHeaderClass(order.status)}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-clipboard"></i> #${order.order_number}
+                        </h6>
+                        <span class="badge ${getStatusBadgeClass(order.status)}">
+                            ${getStatusText(order.status)}
+                        </span>
                     </div>
                 </div>
-                
-                <div class="order-items">
-                    <h6>Productos:</h6>
-                    ${order.items.map(item => `
-                        <div class="order-item">
-                            <div class="d-flex align-items-center">
-                                <div class="item-quantity">${item.quantity}</div>
-                                <span class="ms-2">${item.product ? item.product.name : 'Producto no encontrado'}</span>
-                            </div>
-                            ${item.special_instructions ? 
-                                `<small class="text-warning">${item.special_instructions}</small>` : ''
-                            }
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Mesa ${order.table_number}</strong>
+                        ${order.customer_name ? `<br><small class="text-muted">${order.customer_name}</small>` : ''}
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> ${formatDateTime(order.created_at)}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <strong>Productos:</strong>
+                        <div class="mt-1">
+                            ${getMainItems(order.items).map(item => `
+                                <div class="d-flex justify-content-between">
+                                    <span>${item.quantity}x ${item.product_name}</span>
+                                </div>
+                            `).join('')}
+                            ${order.items.length > 3 ? `<small class="text-muted">+${order.items.length - 3} más...</small>` : ''}
                         </div>
-                    `).join('')}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong class="text-primary">$${order.total_amount}</strong>
+                        <small class="text-muted">${order.items.length} items</small>
+                    </div>
+                    
+                    ${order.notes ? `
+                        <div class="mt-2 p-2 bg-light rounded">
+                            <small><strong>Notas:</strong> ${order.notes}</small>
+                        </div>
+                    ` : ''}
                 </div>
-                
-                ${order.notes ? `
-                    <div class="mb-3">
-                        <strong>Notas del mesero:</strong>
-                        <p class="text-muted mb-0">${order.notes}</p>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid gap-1">
+                        ${getOrderActions(order)}
                     </div>
-                ` : ''}
-                
-                ${order.kitchen_notes ? `
-                    <div class="mb-3">
-                        <strong>Notas de cocina:</strong>
-                        <p class="text-info mb-0">${order.kitchen_notes}</p>
-                    </div>
-                ` : ''}
-                
-                <div class="order-actions">
-                    ${order.status === 'pendiente' ? `
-                        <button class="btn-action btn-start" onclick="startPreparation(${order.id})">
-                            <i class="bi bi-play-circle"></i> Iniciar
-                        </button>
-                    ` : ''}
-                    
-                    ${order.status === 'en_preparacion' ? `
-                        <button class="btn-action btn-ready" onclick="markAsReady(${order.id})">
-                            <i class="bi bi-check-circle"></i> Listo
-                        </button>
-                    ` : ''}
-                    
-                    <button class="btn-action btn-notes" onclick="openKitchenNotes(${order.id})">
-                        <i class="bi bi-pencil"></i> Notas
-                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getOrderStatusClass(status) {
+    switch(status) {
+        case 'PENDING': return 'border-warning';
+        case 'PREPARING': return 'border-info';
+        case 'READY': return 'border-success';
+        default: return 'border-secondary';
+    }
+}
+
+function getOrderHeaderClass(status) {
+    switch(status) {
+        case 'PENDING': return 'bg-warning text-white';
+        case 'PREPARING': return 'bg-info text-white';
+        case 'READY': return 'bg-success text-white';
+        default: return 'bg-secondary text-white';
+    }
+}
+
+function getStatusBadgeClass(status) {
+    switch(status) {
+        case 'PENDING': return 'bg-warning';
+        case 'PREPARING': return 'bg-info';
+        case 'READY': return 'bg-success';
+        default: return 'bg-secondary';
+    }
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'PENDING': return 'Pendiente';
+        case 'PREPARING': return 'Preparando';
+        case 'READY': return 'Listo';
+        default: return 'Desconocido';
+    }
+}
+
+function getMainItems(items) {
+    return items.slice(0, 3);
+}
+
+function getOrderActions(order) {
+    switch(order.status) {
+        case 'PENDING':
+            return `
+                <button class="btn btn-info btn-sm" onclick="markOrderPreparing(${order.id}); event.stopPropagation();">
+                    <i class="bi bi-play-fill"></i> Iniciar Preparación
+                </button>
+            `;
+        case 'PREPARING':
+            return `
+                <button class="btn btn-success btn-sm" onclick="markOrderReady(${order.id}); event.stopPropagation();">
+                    <i class="bi bi-check-lg"></i> Marcar Listo
+                </button>
+            `;
+        case 'READY':
+            return `
+                <div class="text-success">
+                    <i class="bi bi-check-circle"></i> Listo para servir
                 </div>
             `;
+        default:
+            return '';
+    }
+}
 
-            grid.appendChild(orderCard);
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+}
+
+function viewOrderDetail(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!order) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+    const title = document.getElementById('orderDetailTitle');
+    const content = document.getElementById('orderDetailContent');
+    const actions = document.getElementById('orderDetailActions');
+    
+    title.textContent = `Pedido #${order.order_number} - Mesa ${order.table_number}`;
+    
+    content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Información del Pedido</h6>
+                <p><strong>Número:</strong> #${order.order_number}</p>
+                <p><strong>Mesa:</strong> ${order.table_number}</p>
+                <p><strong>Cliente:</strong> ${order.customer_name || 'No especificado'}</p>
+                <p><strong>Estado:</strong> <span class="badge ${getStatusBadgeClass(order.status)}">${getStatusText(order.status)}</span></p>
+                <p><strong>Fecha:</strong> ${formatDateTime(order.created_at)}</p>
+                ${order.notes ? `<p><strong>Notas:</strong> ${order.notes}</p>` : ''}
+            </div>
+            <div class="col-md-6">
+                <h6>Productos</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cant.</th>
+                                <th>Precio</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${order.items.map(item => `
+                                <tr>
+                                    <td>${item.product_name}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>$${item.unit_price}</td>
+                                    <td>$${item.total_price}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3">Total</th>
+                                <th>$${order.total_amount}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    let actionsHtml = '';
+    switch(order.status) {
+        case 'PENDING':
+            actionsHtml = `
+                <button class="btn btn-info" onclick="markOrderPreparing(${order.id})">
+                    <i class="bi bi-play-fill"></i> Iniciar Preparación
+                </button>
+            `;
+            break;
+        case 'PREPARING':
+            actionsHtml = `
+                <button class="btn btn-success" onclick="markOrderReady(${order.id})">
+                    <i class="bi bi-check-lg"></i> Marcar Listo
+                </button>
+            `;
+            break;
+        case 'READY':
+            actionsHtml = `
+                <div class="text-success">
+                    <i class="bi bi-check-circle"></i> Pedido listo para servir
+                </div>
+            `;
+            break;
+    }
+    
+    actions.innerHTML = actionsHtml;
+    modal.show();
+}
+
+async function markOrderPreparing(orderId) {
+    try {
+        const response = await fetch(`/api/v1/orders/${orderId}/preparing`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
         });
-    }
-
-    // Iniciar preparación
-    async function startPreparation(orderId) {
-        try {
-            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-            const response = await fetch(`/api/v1/kitchen/orders/${orderId}/start`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                showSuccess('Orden iniciada en preparación');
-                refreshOrders();
-            } else {
-                const error = await response.json();
-                showError(error.detail || 'Error iniciando preparación');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showError('Error de conexión');
-        }
-    }
-
-    // Marcar como listo
-    async function markAsReady(orderId) {
-        try {
-            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-            const response = await fetch(`/api/v1/kitchen/orders/${orderId}/complete`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                showSuccess('Orden marcada como lista');
-                playNotificationSound(); // Notificar a meseros
-                refreshOrders();
-            } else {
-                const error = await response.json();
-                showError(error.detail || 'Error completando orden');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showError('Error de conexión');
-        }
-    }
-
-    // Abrir notas de cocina
-    function openKitchenNotes(orderId) {
-        selectedOrderId = orderId;
-        const order = orders.find(o => o.id === orderId);
         
-        if (order) {
-            document.getElementById('notes-order-number').textContent = order.order_number;
-            document.getElementById('kitchen-notes').value = order.kitchen_notes || '';
-            new bootstrap.Modal(document.getElementById('kitchenNotesModal')).show();
+        if (response.ok) {
+            showAlert('Pedido marcado en preparación', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('orderDetailModal')).hide();
+            loadOrders();
+        } else {
+            showAlert('Error actualizando pedido', 'error');
         }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error actualizando pedido', 'error');
     }
+}
 
-    // Guardar notas de cocina
-    async function saveKitchenNotes() {
-        if (!selectedOrderId) return;
-
-        const notes = document.getElementById('kitchen-notes').value;
-
-        try {
-            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-            const response = await fetch(`/api/v1/kitchen/orders/${selectedOrderId}/notes`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ kitchen_notes: notes })
-            });
-
-            if (response.ok) {
-                showSuccess('Notas guardadas');
-                bootstrap.Modal.getInstance(document.getElementById('kitchenNotesModal')).hide();
-                refreshOrders();
-            } else {
-                const error = await response.json();
-                showError(error.detail || 'Error guardando notas');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showError('Error de conexión');
-        }
-    }
-
-    // Ver panel de meseros
-    function viewWaitersPanel() {
-        window.location.href = '/waiters';
-    }
-
-    // Actualizar estadísticas
-    function updateStats() {
-        document.getElementById('total-orders').textContent = orders.length;
-        document.getElementById('pending-orders').textContent = 
-            orders.filter(o => o.status === 'pendiente').length;
-        document.getElementById('preparing-orders').textContent = 
-            orders.filter(o => o.status === 'en_preparacion').length;
-        document.getElementById('ready-orders').textContent = 
-            orders.filter(o => o.status === 'listo').length;
-    }
-
-    // Refrescar órdenes
-    function refreshOrders() {
-        loadOrders();
-        updateStats();
-    }
-
-    // Actualizar tiempo de última actualización
-    function updateLastUpdateTime() {
-        const now = new Date();
-        document.getElementById('last-update-time').textContent = 
-            now.toLocaleTimeString('es-ES');
-    }
-
-    // Reproducir sonido de notificación
-    function playNotificationSound() {
-        // Crear un audio simple para notificación
-        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
-        audio.play().catch(e => console.log('No se pudo reproducir el sonido'));
-    }
-
-    // Utilidades
-    function getStatusText(status) {
-        const statusMap = {
-            'pendiente': 'Pendiente',
-            'en_preparacion': 'En Preparación',
-            'listo': 'Listo',
-            'servido': 'Servido'
-        };
-        return statusMap[status] || status;
-    }
-
-    function getPriorityText(priority) {
-        const priorityMap = {
-            'normal': 'Normal',
-            'alta': 'Alta',
-            'urgente': 'Urgente'
-        };
-        return priorityMap[priority] || priority;
-    }
-
-    function formatTime(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString('es-ES', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+async function markOrderReady(orderId) {
+    try {
+        const response = await fetch(`/api/v1/orders/${orderId}/ready`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
         });
+        
+        if (response.ok) {
+            showAlert('Pedido marcado como listo', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('orderDetailModal')).hide();
+            loadOrders();
+        } else {
+            showAlert('Error actualizando pedido', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error actualizando pedido', 'error');
     }
+}
 
-    function showSuccess(message) {
-        // Implementar toast de éxito
-        alert(message);
+async function markAllReady() {
+    const preparingOrders = orders.filter(o => o.status === 'PREPARING');
+    
+    if (preparingOrders.length === 0) {
+        showAlert('No hay pedidos en preparación', 'info');
+        return;
     }
+    
+    if (!confirm(`¿Marcar todos los ${preparingOrders.length} pedidos en preparación como listos?`)) {
+        return;
+    }
+    
+    try {
+        const promises = preparingOrders.map(order => 
+            fetch(`/api/v1/orders/${order.id}/ready`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' }
+            })
+        );
+        
+        await Promise.all(promises);
+        showAlert(`${preparingOrders.length} pedidos marcados como listos`, 'success');
+        loadOrders();
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error marcando pedidos como listos', 'error');
+    }
+}
 
-    function showError(message) {
-        // Implementar toast de error
-        alert('Error: ' + message);
-    }
+function refreshOrders() {
+    loadOrders();
+}
+
+function showAlert(message, type) {
+    // Implementar sistema de alertas
+    console.log(`${type}: ${message}`);
+}
+
+// Configurar filtros
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remover clase active de todos los botones
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Agregar clase active al botón clickeado
+            this.classList.add('active');
+            
+            // Actualizar filtro y renderizar
+            currentFilter = this.dataset.filter;
+            renderOrders();
+        });
+    });
+});
 </script>
+
+<style>
+.order-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-width: 2px;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.order-card.border-warning {
+    background-color: #fffbf0;
+}
+
+.order-card.border-info {
+    background-color: #f0f8ff;
+}
+
+.order-card.border-success {
+    background-color: #f8fff9;
+}
+
+@media (max-width: 768px) {
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.375rem !important;
+        margin-bottom: 0.25rem;
+    }
+}
+</style>
 {% endblock %}

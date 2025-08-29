@@ -1,0 +1,716 @@
+{% extends "base_role.html" %}
+
+{% block title %}Pedidos - Meseros{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header simplificado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="bi bi-clipboard-check text-primary"></i>
+                Gestión de Pedidos
+            </h1>
+            <p class="text-muted mb-0">Panel para meseros</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="refreshData()">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+            <button class="btn btn-primary" onclick="showNewOrderModal()">
+                <i class="bi bi-plus-lg"></i> Nuevo Pedido
+            </button>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Mesas Ocupadas</h6>
+                            <h3 class="mb-0" id="occupied-tables-count">0</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-table fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Pendientes</h6>
+                            <h3 class="mb-0" id="pending-orders-count">0</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-clock fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Listos</h6>
+                            <h3 class="mb-0" id="ready-orders-count">0</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-check-circle fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Pendientes Pago</h6>
+                            <h3 class="mb-0" id="pending-payment-count">0</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-credit-card fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista principal simplificada -->
+    <div class="row">
+        <!-- Mesas disponibles -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-table"></i> Mesas Disponibles
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="available-tables" class="row g-2">
+                        <!-- Mesas disponibles se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pedidos activos -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clipboard"></i> Pedidos Activos
+                    </h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary active" data-filter="all">
+                            Todos
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" data-filter="pending">
+                            Pendientes
+                        </button>
+                        <button type="button" class="btn btn-outline-success" data-filter="ready">
+                            Listos
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="active-orders-list">
+                        <!-- Pedidos activos se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para nuevo pedido -->
+<div class="modal fade" id="newOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nuevo Pedido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newOrderForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="orderTable" class="form-label">Mesa *</label>
+                                <select class="form-select" id="orderTable" required>
+                                    <option value="">Seleccionar mesa...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="orderCustomer" class="form-label">Cliente (opcional)</label>
+                                <input type="text" class="form-control" id="orderCustomer" placeholder="Nombre del cliente">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Productos</label>
+                        <div id="orderItems">
+                            <div class="order-item row g-2 mb-2">
+                                <div class="col-md-6">
+                                    <select class="form-select product-select" required>
+                                        <option value="">Seleccionar producto...</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" class="form-control quantity-input" placeholder="Cant." min="1" value="1" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <input type="text" class="form-control price-display" placeholder="Precio" readonly>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-outline-danger btn-sm remove-item">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addOrderItem()">
+                            <i class="bi bi-plus"></i> Agregar Producto
+                        </button>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="orderNotes" class="form-label">Notas especiales</label>
+                        <textarea class="form-control" id="orderNotes" rows="2" placeholder="Instrucciones especiales, alergias, etc."></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="orderPriority" class="form-label">Prioridad</label>
+                                <select class="form-select" id="orderPriority">
+                                    <option value="normal">Normal</option>
+                                    <option value="high">Alta</option>
+                                    <option value="urgent">Urgente</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Total</label>
+                                <h4 class="text-primary" id="orderTotal">$0.00</h4>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="createOrder()">
+                    <i class="bi bi-check-lg"></i> Crear Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver detalles del pedido -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailTitle">Detalles del Pedido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetailContent">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-footer" id="orderDetailActions">
+                <!-- Acciones dinámicas -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let tables = [];
+let products = [];
+let activeOrders = [];
+let currentOrderId = null;
+
+// Cargar datos al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    loadData();
+    // Auto-refresh cada 30 segundos
+    setInterval(loadData, 30000);
+});
+
+async function loadData() {
+    await Promise.all([
+        loadTables(),
+        loadProducts(),
+        loadActiveOrders()
+    ]);
+    updateStats();
+}
+
+async function loadTables() {
+    try {
+        const response = await fetch('/api/v1/tables/');
+        tables = await response.json();
+        renderAvailableTables();
+    } catch (error) {
+        console.error('Error cargando mesas:', error);
+    }
+}
+
+async function loadProducts() {
+    try {
+        const response = await fetch('/api/v1/products/');
+        const data = await response.json();
+        products = data.items || data;
+        populateProductSelects();
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+    }
+}
+
+async function loadActiveOrders() {
+    try {
+        const response = await fetch('/api/v1/orders/active');
+        activeOrders = await response.json();
+        renderActiveOrders();
+    } catch (error) {
+        console.error('Error cargando pedidos:', error);
+    }
+}
+
+function renderAvailableTables() {
+    const container = document.getElementById('available-tables');
+    const availableTables = tables.filter(t => t.status === 'OCCUPIED');
+    
+    container.innerHTML = '';
+    
+    if (availableTables.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center text-muted">No hay mesas ocupadas</div>';
+        return;
+    }
+    
+    availableTables.forEach(table => {
+        const tableCard = document.createElement('div');
+        tableCard.className = 'col-6';
+        tableCard.innerHTML = `
+            <div class="card table-card" onclick="selectTableForOrder(${table.id})">
+                <div class="card-body text-center p-2">
+                    <h6 class="mb-1">Mesa ${table.table_number}</h6>
+                    <small class="text-muted">${table.name || 'Mesa'}</small>
+                    <br>
+                    <small class="text-warning">Ocupada</small>
+                </div>
+            </div>
+        `;
+        container.appendChild(tableCard);
+    });
+}
+
+function renderActiveOrders() {
+    const container = document.getElementById('active-orders-list');
+    
+    if (activeOrders.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-4">No hay pedidos activos</div>';
+        return;
+    }
+    
+    container.innerHTML = activeOrders.map(order => `
+        <div class="order-card mb-3 ${getOrderStatusClass(order.status)}" onclick="viewOrderDetail(${order.id})">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <h6 class="mb-1">Mesa ${order.table_number}</h6>
+                            <small class="text-muted">#${order.order_number}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge ${getStatusBadgeClass(order.status)}">
+                                ${getStatusText(order.status)}
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">
+                                ${formatDateTime(order.created_at)}
+                            </small>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <h6 class="mb-0">$${order.total_amount}</h6>
+                            <small class="text-muted">${order.items_count} items</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getOrderStatusClass(status) {
+    switch(status) {
+        case 'PENDING': return 'border-warning';
+        case 'PREPARING': return 'border-info';
+        case 'READY': return 'border-success';
+        case 'SERVED': return 'border-primary';
+        default: return 'border-secondary';
+    }
+}
+
+function getStatusBadgeClass(status) {
+    switch(status) {
+        case 'PENDING': return 'bg-warning';
+        case 'PREPARING': return 'bg-info';
+        case 'READY': return 'bg-success';
+        case 'SERVED': return 'bg-primary';
+        default: return 'bg-secondary';
+    }
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'PENDING': return 'Pendiente';
+        case 'PREPARING': return 'Preparando';
+        case 'READY': return 'Listo';
+        case 'SERVED': return 'Servido';
+        default: return 'Desconocido';
+    }
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+}
+
+function updateStats() {
+    const occupiedTables = tables.filter(t => t.status === 'OCCUPIED').length;
+    const pendingOrders = activeOrders.filter(o => o.status === 'PENDING').length;
+    const readyOrders = activeOrders.filter(o => o.status === 'READY').length;
+    const pendingPayment = activeOrders.filter(o => o.status === 'SERVED').length;
+    
+    document.getElementById('occupied-tables-count').textContent = occupiedTables;
+    document.getElementById('pending-orders-count').textContent = pendingOrders;
+    document.getElementById('ready-orders-count').textContent = readyOrders;
+    document.getElementById('pending-payment-count').textContent = pendingPayment;
+}
+
+function showNewOrderModal() {
+    const modal = new bootstrap.Modal(document.getElementById('newOrderModal'));
+    populateTableSelect();
+    modal.show();
+}
+
+function populateTableSelect() {
+    const select = document.getElementById('orderTable');
+    const occupiedTables = tables.filter(t => t.status === 'OCCUPIED');
+    
+    select.innerHTML = '<option value="">Seleccionar mesa...</option>';
+    occupiedTables.forEach(table => {
+        const option = document.createElement('option');
+        option.value = table.id;
+        option.textContent = `Mesa ${table.table_number} - ${table.name || 'Mesa'}`;
+        select.appendChild(option);
+    });
+}
+
+function populateProductSelects() {
+    const selects = document.querySelectorAll('.product-select');
+    selects.forEach(select => {
+        select.innerHTML = '<option value="">Seleccionar producto...</option>';
+        products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.id;
+            option.textContent = `${product.name} - $${product.price}`;
+            option.dataset.price = product.price;
+            select.appendChild(option);
+        });
+    });
+}
+
+function addOrderItem() {
+    const container = document.getElementById('orderItems');
+    const newItem = document.createElement('div');
+    newItem.className = 'order-item row g-2 mb-2';
+    newItem.innerHTML = `
+        <div class="col-md-6">
+            <select class="form-select product-select" required>
+                <option value="">Seleccionar producto...</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="number" class="form-control quantity-input" placeholder="Cant." min="1" value="1" required>
+        </div>
+        <div class="col-md-2">
+            <input type="text" class="form-control price-display" placeholder="Precio" readonly>
+        </div>
+        <div class="col-md-1">
+            <button type="button" class="btn btn-outline-danger btn-sm remove-item">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(newItem);
+    populateProductSelects();
+    setupItemListeners(newItem);
+}
+
+function setupItemListeners(itemElement) {
+    const select = itemElement.querySelector('.product-select');
+    const quantity = itemElement.querySelector('.quantity-input');
+    const priceDisplay = itemElement.querySelector('.price-display');
+    const removeBtn = itemElement.querySelector('.remove-item');
+    
+    select.addEventListener('change', () => updateItemPrice(itemElement));
+    quantity.addEventListener('input', () => updateItemPrice(itemElement));
+    removeBtn.addEventListener('click', () => itemElement.remove());
+}
+
+function updateItemPrice(itemElement) {
+    const select = itemElement.querySelector('.product-select');
+    const quantity = itemElement.querySelector('.quantity-input');
+    const priceDisplay = itemElement.querySelector('.price-display');
+    
+    if (select.value && quantity.value) {
+        const product = products.find(p => p.id == select.value);
+        const total = product.price * quantity.value;
+        priceDisplay.value = `$${total.toFixed(2)}`;
+    } else {
+        priceDisplay.value = '';
+    }
+    
+    updateOrderTotal();
+}
+
+function updateOrderTotal() {
+    const items = document.querySelectorAll('.order-item');
+    let total = 0;
+    
+    items.forEach(item => {
+        const priceDisplay = item.querySelector('.price-display');
+        const price = parseFloat(priceDisplay.value.replace('$', '')) || 0;
+        total += price;
+    });
+    
+    document.getElementById('orderTotal').textContent = `$${total.toFixed(2)}`;
+}
+
+async function createOrder() {
+    const form = document.getElementById('newOrderForm');
+    const formData = new FormData(form);
+    
+    const items = [];
+    document.querySelectorAll('.order-item').forEach(item => {
+        const productId = item.querySelector('.product-select').value;
+        const quantity = item.querySelector('.quantity-input').value;
+        
+        if (productId && quantity) {
+            items.push({
+                product_id: parseInt(productId),
+                quantity: parseInt(quantity)
+            });
+        }
+    });
+    
+    if (!formData.get('orderTable') || items.length === 0) {
+        showAlert('Por favor completa todos los campos requeridos', 'error');
+        return;
+    }
+    
+    const orderData = {
+        table_id: parseInt(formData.get('orderTable')),
+        customer_name: formData.get('orderCustomer') || null,
+        notes: formData.get('orderNotes') || null,
+        priority: formData.get('orderPriority') || 'normal',
+        items: items
+    };
+    
+    try {
+        const response = await fetch('/api/v1/orders/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData)
+        });
+        
+        if (response.ok) {
+            showAlert('Pedido creado exitosamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('newOrderModal')).hide();
+            form.reset();
+            loadData();
+        } else {
+            showAlert('Error creando pedido', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error creando pedido', 'error');
+    }
+}
+
+function selectTableForOrder(tableId) {
+    const modal = new bootstrap.Modal(document.getElementById('newOrderModal'));
+    document.getElementById('orderTable').value = tableId;
+    modal.show();
+}
+
+function viewOrderDetail(orderId) {
+    currentOrderId = orderId;
+    const order = activeOrders.find(o => o.id === orderId);
+    
+    if (!order) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+    const title = document.getElementById('orderDetailTitle');
+    const content = document.getElementById('orderDetailContent');
+    const actions = document.getElementById('orderDetailActions');
+    
+    title.textContent = `Pedido #${order.order_number} - Mesa ${order.table_number}`;
+    
+    content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Información del Pedido</h6>
+                <p><strong>Mesa:</strong> ${order.table_number}</p>
+                <p><strong>Cliente:</strong> ${order.customer_name || 'No especificado'}</p>
+                <p><strong>Estado:</strong> <span class="badge ${getStatusBadgeClass(order.status)}">${getStatusText(order.status)}</span></p>
+                <p><strong>Fecha:</strong> ${formatDateTime(order.created_at)}</p>
+                ${order.notes ? `<p><strong>Notas:</strong> ${order.notes}</p>` : ''}
+            </div>
+            <div class="col-md-6">
+                <h6>Productos</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cant.</th>
+                                <th>Precio</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${order.items.map(item => `
+                                <tr>
+                                    <td>${item.product_name}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>$${item.unit_price}</td>
+                                    <td>$${item.total_price}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3">Total</th>
+                                <th>$${order.total_amount}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    let actionsHtml = '';
+    if (order.status === 'READY') {
+        actionsHtml = `
+            <button class="btn btn-success" onclick="markOrderServed(${order.id})">
+                <i class="bi bi-check-lg"></i> Marcar como Servido
+            </button>
+        `;
+    }
+    
+    actions.innerHTML = actionsHtml;
+    modal.show();
+}
+
+async function markOrderServed(orderId) {
+    try {
+        const response = await fetch(`/api/v1/orders/${orderId}/served`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            showAlert('Pedido marcado como servido', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('orderDetailModal')).hide();
+            loadData();
+        } else {
+            showAlert('Error actualizando pedido', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error actualizando pedido', 'error');
+    }
+}
+
+function refreshData() {
+    loadData();
+}
+
+function showAlert(message, type) {
+    // Implementar sistema de alertas
+    console.log(`${type}: ${message}`);
+}
+
+// Configurar listeners para filtros
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+            // Implementar filtrado
+            console.log('Filtrar por:', filter);
+        });
+    });
+});
+</script>
+
+<style>
+.table-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.table-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.order-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.order-item {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .col-md-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+</style>
+{% endblock %}
