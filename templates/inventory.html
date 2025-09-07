@@ -187,6 +187,66 @@
         background: white;
         padding: 0 5px;
     }
+    
+    /* Estilos para pestañas */
+    .nav-tabs {
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        border-radius: 10px 10px 0 0;
+        margin-right: 5px;
+        color: #6c757d;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        border-color: transparent;
+        color: #667eea;
+        background-color: rgba(102, 126, 234, 0.1);
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #667eea;
+        background-color: white;
+        border-color: #e9ecef #e9ecef white;
+        border-bottom: 2px solid white;
+        font-weight: 600;
+    }
+    
+    /* Estilos para tabla de movimientos */
+    .table th {
+        background-color: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.4em 0.6em;
+    }
+    
+    /* Estilos para resumen de movimientos */
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
 </style>
 {% endblock %}
 
@@ -195,17 +255,17 @@
     <!-- Header con estadísticas -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="h3 mb-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
                         <i class="bi bi-archive text-primary"></i>
                         Gestión de Inventario
-                    </h1>
+            </h1>
                     <p class="text-muted mb-0">Control de stock y materias primas</p>
-                </div>
+        </div>
                 <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#productModal">
                     <i class="bi bi-plus-circle me-2"></i>Nuevo Producto
-                </button>
+            </button>
             </div>
         </div>
     </div>
@@ -216,8 +276,8 @@
             <div class="stats-card text-center">
                 <h3 class="stats-number" id="totalProducts">0</h3>
                 <p class="stats-label">Total Productos</p>
-            </div>
-        </div>
+                        </div>
+                        </div>
         <div class="col-md-3">
             <div class="stats-card text-center">
                 <h3 class="stats-number" id="lowStockProducts">0</h3>
@@ -234,34 +294,138 @@
             <div class="stats-card text-center">
                 <h3 class="stats-number" id="totalValue">$0</h3>
                 <p class="stats-label">Valor Total</p>
-            </div>
-        </div>
-    </div>
+                        </div>
+                        </div>
+                    </div>
 
-    <!-- Filtros y búsqueda -->
+    <!-- Pestañas de navegación -->
     <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="input-group">
-                <span class="input-group-text bg-white border-end-0">
-                    <i class="bi bi-search text-muted"></i>
-                </span>
-                <input type="text" class="form-control search-box border-start-0" id="searchInput" 
-                       placeholder="Buscar productos...">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="inventoryTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#products" type="button" role="tab">
+                        <i class="bi bi-box-seam me-2"></i>Productos
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
+                        <i class="bi bi-clock-history me-2"></i>Histórico de Movimientos
+                    </button>
+                </li>
+            </ul>
+                </div>
             </div>
+
+    <!-- Contenido de las pestañas -->
+    <div class="tab-content" id="inventoryTabContent">
+        <!-- Pestaña de Productos -->
+        <div class="tab-pane fade show active" id="products" role="tabpanel">
+            <!-- Filtros y búsqueda -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control search-box border-start-0" id="searchInput" 
+                               placeholder="Buscar productos...">
         </div>
-        <div class="col-md-6">
-            <div class="d-flex justify-content-end">
-                <button class="btn filter-btn active" data-filter="all">Todos</button>
-                <button class="btn filter-btn" data-filter="low-stock">Stock Bajo</button>
-                <button class="btn filter-btn" data-filter="out-of-stock">Sin Stock</button>
-                <button class="btn filter-btn" data-filter="categories">Categorías</button>
-            </div>
+                        </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-end">
+                        <button class="btn filter-btn active" data-filter="all">Todos</button>
+                        <button class="btn filter-btn" data-filter="low-stock">Stock Bajo</button>
+                        <button class="btn filter-btn" data-filter="out-of-stock">Sin Stock</button>
+                        <button class="btn filter-btn" data-filter="categories">Categorías</button>
+                        </div>
+                    </div>
+                </div>
+
+            <!-- Lista de productos -->
+            <div class="row" id="productsContainer">
+                <!-- Los productos se cargarán dinámicamente -->
         </div>
     </div>
 
-    <!-- Lista de productos -->
-    <div class="row" id="productsContainer">
-        <!-- Los productos se cargarán dinámicamente -->
+        <!-- Pestaña de Histórico -->
+        <div class="tab-pane fade" id="history" role="tabpanel">
+            <!-- Filtros del histórico -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Inicio</label>
+                    <input type="date" class="form-control" id="startDate">
+                    </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Fin</label>
+                    <input type="date" class="form-control" id="endDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Producto</label>
+                    <select class="form-select" id="historyProductFilter">
+                        <option value="">Todos los productos</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tipo de Movimiento</label>
+                    <select class="form-select" id="movementTypeFilter">
+                        <option value="">Todos los tipos</option>
+                        <option value="entrada">Entrada</option>
+                        <option value="salida">Salida</option>
+                        <option value="ajuste">Ajuste</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-12">
+                    <button class="btn btn-primary-custom" onclick="loadMovementHistory()">
+                        <i class="bi bi-search me-2"></i>Buscar Movimientos
+                    </button>
+                    <button class="btn btn-outline-secondary ms-2" onclick="exportMovementHistory()">
+                        <i class="bi bi-download me-2"></i>Exportar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Resumen del histórico -->
+            <div class="row mb-4" id="historySummary">
+                <!-- El resumen se cargará dinámicamente -->
+    </div>
+
+            <!-- Tabla de movimientos -->
+            <div class="row">
+                <div class="col-12">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                                <i class="bi bi-list-ul me-2"></i>Movimientos de Inventario
+            </h5>
+        </div>
+        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="movementsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Producto</th>
+                                            <th>Tipo</th>
+                                            <th>Cantidad</th>
+                                            <th>Stock Anterior</th>
+                                            <th>Stock Nuevo</th>
+                                            <th>Usuario</th>
+                                            <th>Motivo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="movementsTableBody">
+                                        <!-- Los movimientos se cargarán dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -284,25 +448,25 @@
                             <div class="floating-label">
                                 <input type="text" class="form-control" id="productName" placeholder=" " required>
                                 <label for="productName">Nombre del Producto *</label>
-                            </div>
-                        </div>
+                    </div>
+                    </div>
                         <div class="col-md-6">
                             <div class="floating-label">
                                 <input type="text" class="form-control" id="productCode" placeholder=" ">
                                 <label for="productCode">Código del Producto</label>
-                            </div>
-                        </div>
                     </div>
-                    
+    </div>
+</div>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="floating-label">
                                 <select class="form-select" id="productCategory" required>
                                     <option value="">Seleccionar categoría...</option>
-                                </select>
+                        </select>
                                 <label for="productCategory">Categoría *</label>
-                            </div>
-                        </div>
+                    </div>
+                    </div>
                         <div class="col-md-6">
                             <div class="floating-label">
                                 <select class="form-select" id="measurementType" required>
@@ -315,32 +479,32 @@
                                     <option value="botellas">Botellas</option>
                                     <option value="unidades">Unidades</option>
                                     <option value="paquetes">Paquetes</option>
-                                </select>
+                        </select>
                                 <label for="measurementType">Tipo de Medida *</label>
-                            </div>
-                        </div>
                     </div>
+                    </div>
+            </div>
                     
                     <div class="row">
                         <div class="col-md-4">
                             <div class="floating-label">
                                 <input type="number" class="form-control" id="currentStock" placeholder=" " min="0" step="0.01" required>
                                 <label for="currentStock">Stock Actual *</label>
-                            </div>
-                        </div>
+            </div>
+        </div>
                         <div class="col-md-4">
                             <div class="floating-label">
                                 <input type="number" class="form-control" id="minStock" placeholder=" " min="0" step="0.01" required>
                                 <label for="minStock">Stock Mínimo *</label>
-                            </div>
-                        </div>
+    </div>
+</div>
                         <div class="col-md-4">
                             <div class="floating-label">
                                 <input type="number" class="form-control" id="purchasePrice" placeholder=" " min="0" step="0.01">
                                 <label for="purchasePrice">Precio de Compra</label>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+            </div>
+            </div>
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -353,16 +517,16 @@
                             <div class="floating-label">
                                 <input type="text" class="form-control" id="barcode" placeholder=" ">
                                 <label for="barcode">Código de Barras</label>
-                            </div>
-                        </div>
-                    </div>
-                    
+        </div>
+    </div>
+</div>
+
                     <div class="floating-label">
                         <textarea class="form-control" id="productDescription" rows="3" placeholder=" "></textarea>
                         <label for="productDescription">Descripción</label>
-                    </div>
-                </form>
             </div>
+                </form>
+                </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary-custom" onclick="saveProduct()">
@@ -386,18 +550,18 @@
             <div class="modal-body">
                 <form id="stockForm">
                     <input type="hidden" id="stockProductId">
-                    
-                    <div class="mb-3">
+                
+                <div class="mb-3">
                         <label class="form-label">Producto</label>
                         <input type="text" class="form-control" id="stockProductName" readonly>
-                    </div>
-                    
-                    <div class="mb-3">
+                </div>
+                
+                <div class="mb-3">
                         <label class="form-label">Stock Actual</label>
                         <input type="text" class="form-control" id="currentStockDisplay" readonly>
-                    </div>
-                    
-                    <div class="mb-3">
+                </div>
+                
+                <div class="mb-3">
                         <label class="form-label">Tipo de Ajuste</label>
                         <select class="form-select" id="adjustmentType" required>
                             <option value="">Seleccionar tipo...</option>
@@ -405,17 +569,17 @@
                             <option value="salida">Salida (Quitar)</option>
                             <option value="ajuste">Ajuste (Corregir)</option>
                         </select>
-                    </div>
-                    
-                    <div class="mb-3">
+                </div>
+                
+                <div class="mb-3">
                         <label class="form-label">Cantidad</label>
                         <input type="number" class="form-control" id="adjustmentQuantity" min="0" step="0.01" required>
-                    </div>
-                    
+                </div>
+                
                     <div class="mb-3">
                         <label class="form-label">Motivo</label>
                         <textarea class="form-control" id="adjustmentReason" rows="2" placeholder="Ej: Compra de proveedor, Merma, Ajuste de inventario..."></textarea>
-                    </div>
+                </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -586,7 +750,7 @@ function createProductCard(product) {
                     <h6 class="mb-1 fw-bold">${product.name}</h6>
                     <p class="text-muted mb-1 small">${product.code || 'Sin código'}</p>
                     ${category ? `<span class="category-badge">${category.name}</span>` : ''}
-                </div>
+                            </div>
                 <div class="dropdown">
                     <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
                         <i class="bi bi-three-dots-vertical"></i>
@@ -603,23 +767,23 @@ function createProductCard(product) {
                             <i class="bi bi-trash me-2"></i>Eliminar
                         </a></li>
                     </ul>
-                </div>
-            </div>
+                        </div>
+                            </div>
             
             <div class="row mb-3">
                 <div class="col-6">
                     <div class="text-center">
                         <h5 class="mb-0 text-primary">${product.stock_quantity || 0}</h5>
                         <small class="text-muted">Stock Actual</small>
-                    </div>
-                </div>
+                        </div>
+                        </div>
                 <div class="col-6">
                     <div class="text-center">
                         <h5 class="mb-0 text-warning">${product.min_stock_level || 0}</h5>
                         <small class="text-muted">Stock Mínimo</small>
                     </div>
+                        </div>
                 </div>
-            </div>
             
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -628,7 +792,7 @@ function createProductCard(product) {
                     <small class="text-muted">
                         <span class="measurement-badge">${product.unit || 'unidad'}</span>
                     </small>
-                </div>
+                    </div>
                 <div class="text-end">
                     ${product.purchase_price ? `<small class="text-success fw-bold">$${product.purchase_price}</small>` : ''}
                 </div>
@@ -721,7 +885,7 @@ async function saveProduct() {
         showAlert('Por favor selecciona una categoría', 'warning');
         return;
     }
-
+    
     const productData = {
         name: document.getElementById('productName').value,
         code: document.getElementById('productCode').value,
@@ -796,9 +960,9 @@ async function editProduct(productId) {
         if (!token) {
             showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
             window.location.href = '/login';
-            return;
-        }
-
+        return;
+    }
+    
         const response = await fetch(`/api/v1/products/${productId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -837,9 +1001,9 @@ async function adjustStock(productId) {
         if (!token) {
             showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
             window.location.href = '/login';
-            return;
-        }
-
+        return;
+    }
+    
         const response = await fetch(`/api/v1/products/${productId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -857,7 +1021,7 @@ async function adjustStock(productId) {
         document.getElementById('currentStockDisplay').value = `${product.stock_quantity || 0} ${product.unit || 'unidad'}`;
         
         const modal = new bootstrap.Modal(document.getElementById('stockModal'));
-        modal.show();
+    modal.show();
     } catch (error) {
         console.error('Error cargando producto:', error);
         showAlert('Error cargando producto', 'danger');
@@ -889,7 +1053,7 @@ async function saveStockAdjustment() {
             return;
         }
 
-        const response = await fetch('/api/v1/inventory/adjust', {
+        const response = await fetch('/api/v1/products/inventory/adjust', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -969,6 +1133,282 @@ document.getElementById('productModal').addEventListener('hidden.bs.modal', func
     document.getElementById('productForm').reset();
     document.getElementById('productId').value = '';
     document.getElementById('productModalTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Nuevo Producto';
+});
+
+// ==================== FUNCIONES DEL HISTÓRICO DE MOVIMIENTOS ====================
+
+let movements = [];
+let movementSummary = {};
+
+// Cargar histórico de movimientos
+async function loadMovementHistory() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
+            window.location.href = '/login';
+            return;
+        }
+
+        // Obtener filtros
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const productId = document.getElementById('historyProductFilter').value;
+        const movementType = document.getElementById('movementTypeFilter').value;
+
+        // Construir URL con parámetros
+        let url = '/api/v1/products/inventory/movements?skip=0&limit=1000';
+        if (startDate) url += `&start_date=${startDate}`;
+        if (endDate) url += `&end_date=${endDate}`;
+        if (productId) url += `&product_id=${productId}`;
+        if (movementType) url += `&movement_type=${movementType}`;
+
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        movements = await response.json();
+        console.log('📊 Movimientos cargados:', movements);
+        
+        renderMovements();
+        loadMovementSummary();
+        
+    } catch (error) {
+        console.error('Error cargando movimientos:', error);
+        showAlert('Error cargando movimientos: ' + error.message, 'danger');
+    }
+}
+
+// Cargar resumen de movimientos
+async function loadMovementSummary() {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        let url = '/api/v1/products/inventory/movements/summary';
+        if (startDate) url += `?start_date=${startDate}`;
+        if (endDate) url += `${startDate ? '&' : '?'}end_date=${endDate}`;
+
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        movementSummary = data;
+        console.log('📈 Resumen de movimientos:', movementSummary);
+        
+        renderMovementSummary();
+        
+    } catch (error) {
+        console.error('Error cargando resumen:', error);
+    }
+}
+
+// Renderizar movimientos en la tabla
+function renderMovements() {
+    const tbody = document.getElementById('movementsTableBody');
+    tbody.innerHTML = '';
+
+    if (movements.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <i class="bi bi-inbox display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No se encontraron movimientos</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    movements.forEach(movement => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${formatDateTime(movement.created_at)}</td>
+            <td>
+                <div>
+                    <strong>${movement.product_name}</strong>
+                    <br>
+                    <small class="text-muted">${movement.product_code}</small>
+                </div>
+            </td>
+            <td>
+                <span class="badge ${getMovementTypeBadgeClass(movement.movement_type)}">
+                    ${getMovementTypeLabel(movement.movement_type)}
+                </span>
+            </td>
+            <td class="text-center">
+                <strong class="${getMovementQuantityClass(movement.movement_type)}">
+                    ${movement.movement_type === 'salida' ? '-' : '+'}${movement.quantity}
+                </strong>
+            </td>
+            <td class="text-center">${movement.previous_stock}</td>
+            <td class="text-center">
+                <strong class="text-primary">${movement.new_stock}</strong>
+            </td>
+            <td>${movement.user_name}</td>
+            <td>
+                <small class="text-muted">${movement.notes || movement.reason || 'Sin motivo'}</small>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Renderizar resumen de movimientos
+function renderMovementSummary() {
+    const container = document.getElementById('historySummary');
+    
+    if (!movementSummary.summary || movementSummary.summary.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let summaryHtml = '<div class="row">';
+    
+    // Resumen por día
+    movementSummary.summary.slice(0, 7).forEach(day => {
+        const date = new Date(day.date);
+        const dateStr = date.toLocaleDateString('es-ES', { 
+            weekday: 'short', 
+            day: 'numeric', 
+            month: 'short' 
+        });
+        
+        summaryHtml += `
+            <div class="col-md-3 col-lg-2 mb-3">
+                <div class="card text-center">
+                    <div class="card-body py-3">
+                        <h6 class="card-title text-muted mb-2">${dateStr}</h6>
+                        <h4 class="text-primary mb-1">${day.total_movements}</h4>
+                        <small class="text-muted">movimientos</small>
+                        <div class="mt-2">
+                            ${Object.entries(day.movements).map(([type, data]) => `
+                                <span class="badge ${getMovementTypeBadgeClass(type)} me-1">
+                                    ${getMovementTypeLabel(type)}: ${data.count}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    summaryHtml += '</div>';
+    container.innerHTML = summaryHtml;
+}
+
+// Obtener clase CSS para el tipo de movimiento
+function getMovementTypeBadgeClass(type) {
+    switch (type) {
+        case 'entrada': return 'bg-success';
+        case 'salida': return 'bg-danger';
+        case 'ajuste': return 'bg-warning text-dark';
+        default: return 'bg-secondary';
+    }
+}
+
+// Obtener etiqueta para el tipo de movimiento
+function getMovementTypeLabel(type) {
+    switch (type) {
+        case 'entrada': return 'Entrada';
+        case 'salida': return 'Salida';
+        case 'ajuste': return 'Ajuste';
+        default: return type;
+    }
+}
+
+// Obtener clase CSS para la cantidad
+function getMovementQuantityClass(type) {
+    switch (type) {
+        case 'entrada': return 'text-success';
+        case 'salida': return 'text-danger';
+        case 'ajuste': return 'text-warning';
+        default: return 'text-muted';
+    }
+}
+
+// Formatear fecha y hora
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Exportar histórico de movimientos
+function exportMovementHistory() {
+    if (movements.length === 0) {
+        showAlert('No hay movimientos para exportar', 'warning');
+        return;
+    }
+
+    // Crear CSV
+    let csv = 'Fecha,Producto,Código,Tipo,Cantidad,Stock Anterior,Stock Nuevo,Usuario,Motivo\n';
+    
+    movements.forEach(movement => {
+        csv += `"${formatDateTime(movement.created_at)}","${movement.product_name}","${movement.product_code}","${getMovementTypeLabel(movement.movement_type)}","${movement.quantity}","${movement.previous_stock}","${movement.new_stock}","${movement.user_name}","${movement.notes || movement.reason || ''}"\n`;
+    });
+
+    // Descargar archivo
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `movimientos_inventario_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showAlert('Histórico exportado exitosamente', 'success');
+}
+
+// Cargar productos en el filtro del histórico
+function loadProductsForHistoryFilter() {
+    const select = document.getElementById('historyProductFilter');
+    select.innerHTML = '<option value="">Todos los productos</option>';
+    
+    products.forEach(product => {
+        const option = new Option(`${product.name} (${product.code})`, product.id);
+        select.add(option);
+    });
+}
+
+// Configurar fechas por defecto
+function setupDefaultDates() {
+    const today = new Date();
+    const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    document.getElementById('endDate').value = today.toISOString().split('T')[0];
+    document.getElementById('startDate').value = lastWeek.toISOString().split('T')[0];
+}
+
+// Event listener para cuando se cambia a la pestaña de histórico
+document.getElementById('history-tab').addEventListener('click', function() {
+    loadProductsForHistoryFilter();
+    setupDefaultDates();
+    loadMovementHistory();
 });
 </script>
 {% endblock %}

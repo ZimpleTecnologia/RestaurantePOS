@@ -4,7 +4,7 @@ Router de productos
 import os
 import uuid
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.models.user import User
 from app.models.product import Product, Category, SubCategory, ProductType
+from app.models.inventory import InventoryMovement
 from app.schemas.product import (
     ProductCreate, ProductUpdate, ProductResponse, InventoryProductResponse,
     CategoryCreate, CategoryUpdate, CategoryResponse,
@@ -323,6 +324,22 @@ async def debug_create_product(
         db.commit()
         db.refresh(db_product)
         
+        # Crear movimiento de inventario si el producto tiene stock inicial
+        if db_product.stock_quantity and db_product.stock_quantity > 0:
+            movement = InventoryMovement(
+                product_id=db_product.id,
+                user_id=current_user.id,
+                adjustment_type="entrada",
+                reason="Creación de producto con stock inicial",
+                quantity=db_product.stock_quantity,
+                previous_stock=0,
+                new_stock=db_product.stock_quantity,
+                notes=f"Producto creado con stock inicial de {db_product.stock_quantity} {db_product.unit or 'unidades'}"
+            )
+            db.add(movement)
+            db.commit()
+            print("✅ Movimiento de inventario creado para producto:", db_product.id)
+        
         print("✅ Producto creado exitosamente:", db_product.id)
         return {"success": True, "product": db_product, "message": "Producto creado exitosamente"}
         
@@ -370,6 +387,22 @@ async def create_product(
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
+    
+    # Crear movimiento de inventario si el producto tiene stock inicial
+    if db_product.stock_quantity and db_product.stock_quantity > 0:
+        movement = InventoryMovement(
+            product_id=db_product.id,
+            user_id=current_user.id,
+            adjustment_type="entrada",
+            reason="Creación de producto con stock inicial",
+            quantity=db_product.stock_quantity,
+            previous_stock=0,
+            new_stock=db_product.stock_quantity,
+            notes=f"Producto creado con stock inicial de {db_product.stock_quantity} {db_product.unit or 'unidades'}"
+        )
+        db.add(movement)
+        db.commit()
+    
     return db_product
 
 # Estadísticas de productos
@@ -795,7 +828,6 @@ def adjust_inventory_stock(
         product.stock = new_stock  # Sincronizar campo alias
         
         # Crear movimiento de inventario
-        from app.models.inventory import InventoryMovement, MovementType, MovementReason
         
         movement = InventoryMovement(
             product_id=product.id,
@@ -827,4 +859,215 @@ def adjust_inventory_stock(
         raise
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error ajustando stock: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Error ajustando stock: {str(e)}")
+
+
+# Esquemas para histórico de movimientos
+class InventoryMovementResponse(BaseModel):
+    id: int
+    product_id: int
+    product_name: str
+    product_code: str
+    movement_type: str
+    reason: str
+    quantity: float
+    previous_stock: float
+    new_stock: float
+    unit_cost: Optional[float] = None
+    total_cost: Optional[float] = None
+    reference_type: Optional[str] = None
+    reference_id: Optional[int] = None
+    reference_number: Optional[str] = None
+    notes: Optional[str] = None
+    user_name: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/inventory/movements/debug")
+def debug_inventory_movements(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Debug endpoint para movimientos de inventario"""
+    try:
+        # Consulta simple sin JOINs
+        movements = db.query(InventoryMovement).limit(5).all()
+        
+        result = []
+        for movement in movements:
+            result.append({
+                "id": movement.id,
+                "product_id": movement.product_id,
+                "user_id": movement.user_id,
+                "adjustment_type": movement.adjustment_type,
+                "quantity": movement.quantity,
+                "previous_stock": movement.previous_stock,
+                "new_stock": movement.new_stock,
+                "reason": movement.reason,
+                "notes": movement.notes,
+                "created_at": movement.created_at.isoformat() if movement.created_at else None
+            })
+        
+        return {
+            "success": True,
+            "count": len(result),
+            "movements": result
+        }
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ Error en debug: {error_details}")
+        return {
+            "error": str(e),
+            "details": error_details
+        }
+
+@router.get("/inventory/movements", response_model=List[InventoryMovementResponse])
+def get_inventory_movements(
+    start_date: Optional[str] = Query(None, description="Fecha de inicio (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Fecha de fin (YYYY-MM-DD)"),
+    product_id: Optional[int] = Query(None, description="ID del producto"),
+    movement_type: Optional[str] = Query(None, description="Tipo de movimiento"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener histórico de movimientos de inventario"""
+    try:
+        
+        # Construir consulta base (sin JOIN con User por ahora)
+        query = db.query(InventoryMovement).join(Product)
+        
+        # Aplicar filtros
+        if start_date:
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(InventoryMovement.created_at >= start_datetime)
+        
+        if end_date:
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            query = query.filter(InventoryMovement.created_at < end_datetime)
+        
+        if product_id:
+            query = query.filter(InventoryMovement.product_id == product_id)
+        
+        if movement_type:
+            query = query.filter(InventoryMovement.adjustment_type == movement_type)
+        
+        # Ordenar por fecha más reciente primero
+        query = query.order_by(InventoryMovement.created_at.desc())
+        
+        # Aplicar paginación
+        movements = query.offset(skip).limit(limit).all()
+        
+        # Convertir a respuesta
+        result = []
+        for movement in movements:
+            result.append(InventoryMovementResponse(
+                id=movement.id,
+                product_id=movement.product_id,
+                product_name=movement.product.name,
+                product_code=movement.product.code,
+                movement_type=movement.adjustment_type,
+                reason=movement.reason,
+                quantity=float(movement.quantity),
+                previous_stock=float(movement.previous_stock),
+                new_stock=float(movement.new_stock),
+                unit_cost=None,  # No disponible en la estructura actual
+                total_cost=None,  # No disponible en la estructura actual
+                reference_type=None,  # No disponible en la estructura actual
+                reference_id=None,  # No disponible en la estructura actual
+                reference_number=None,  # No disponible en la estructura actual
+                notes=movement.notes,
+                user_name=f"Usuario {movement.user_id}",
+                created_at=movement.created_at
+            ))
+        
+        return result
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ Error obteniendo movimientos: {error_details}")
+        raise HTTPException(status_code=500, detail=f"Error obteniendo movimientos: {str(e)}")
+
+
+@router.get("/inventory/movements/summary")
+def get_inventory_movements_summary(
+    start_date: Optional[str] = Query(None, description="Fecha de inicio (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="Fecha de fin (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Obtener resumen de movimientos de inventario por día"""
+    try:
+        from sqlalchemy import func, cast, Date
+        
+        # Construir consulta base
+        query = db.query(
+            cast(InventoryMovement.created_at, Date).label('date'),
+            InventoryMovement.adjustment_type,
+            func.count(InventoryMovement.id).label('count'),
+            func.sum(InventoryMovement.quantity).label('total_quantity')
+        ).join(Product).filter(
+            Product.product_type == ProductType.INVENTORY
+        )
+        
+        # Aplicar filtros de fecha
+        if start_date:
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(InventoryMovement.created_at >= start_datetime)
+        
+        if end_date:
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            query = query.filter(InventoryMovement.created_at < end_datetime)
+        
+        # Agrupar por fecha y tipo de movimiento
+        query = query.group_by(
+            cast(InventoryMovement.created_at, Date),
+            InventoryMovement.adjustment_type
+        ).order_by(
+            cast(InventoryMovement.created_at, Date).desc(),
+            InventoryMovement.adjustment_type
+        )
+        
+        results = query.all()
+        
+        # Organizar datos por fecha
+        summary = {}
+        for result in results:
+            date_str = result.date.strftime("%Y-%m-%d")
+            if date_str not in summary:
+                summary[date_str] = {
+                    "date": date_str,
+                    "movements": {},
+                    "total_movements": 0,
+                    "total_quantity": 0,
+                    "total_cost": 0
+                }
+            
+            movement_type = result.adjustment_type
+            summary[date_str]["movements"][movement_type] = {
+                "count": result.count,
+                "quantity": float(result.total_quantity or 0),
+                "cost": 0  # No disponible en la estructura actual
+            }
+            summary[date_str]["total_movements"] += result.count
+            summary[date_str]["total_quantity"] += float(result.total_quantity or 0)
+            summary[date_str]["total_cost"] += 0  # No disponible en la estructura actual
+        
+        return {
+            "success": True,
+            "summary": list(summary.values()),
+            "total_days": len(summary)
+        }
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ Error obteniendo resumen: {error_details}")
+        raise HTTPException(status_code=500, detail=f"Error obteniendo resumen: {str(e)}") 

@@ -94,7 +94,6 @@ class InventoryLot(Base):
     product = relationship("Product", back_populates="inventory_lots")
     location = relationship("InventoryLocation", back_populates="inventory_lots")
     supplier = relationship("Supplier")
-    movements = relationship("InventoryMovement", back_populates="lot")
     
     # Índices para optimización
     __table_args__ = (
@@ -137,53 +136,29 @@ class InventoryMovement(Base):
     
     # Referencias
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
-    lot_id = Column(Integer, ForeignKey("inventory_lots.id"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    location_id = Column(Integer, ForeignKey("inventory_locations.id"), nullable=True)
     
-    # Datos del movimiento
-    movement_type = Column(Enum(MovementType), nullable=False)
-    reason = Column(Enum(MovementReason), nullable=False)
-    reason_detail = Column(String(200), nullable=True)
+    # Datos del movimiento (adaptado a la estructura real de la tabla)
+    adjustment_type = Column(String(20), nullable=False)  # 'entrada', 'salida', 'ajuste'
+    reason = Column(String(100), nullable=False)
     
     # Cantidades
     quantity = Column(Integer, nullable=False)
     previous_stock = Column(Integer, nullable=False)
     new_stock = Column(Integer, nullable=False)
     
-    # Costos
-    unit_cost = Column(Numeric(10, 2), nullable=True)
-    total_cost = Column(Numeric(10, 2), nullable=True)
-    
-    # Referencias externas
-    reference_type = Column(String(50), nullable=True)  # 'sale', 'purchase', 'transfer', etc.
-    reference_id = Column(Integer, nullable=True)
-    reference_number = Column(String(50), nullable=True)
-    
     # Metadatos
     notes = Column(Text, nullable=True)
-    tags = Column(String(200), nullable=True)  # Para categorización adicional
     
     # Auditoría
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relaciones
     product = relationship("Product")
-    lot = relationship("InventoryLot", back_populates="movements")
     user = relationship("User", back_populates="inventory_movements")
-    location = relationship("InventoryLocation")
-    
-    # Índices para optimización
-    __table_args__ = (
-        Index('idx_movement_product_date', 'product_id', 'created_at'),
-        Index('idx_movement_type_date', 'movement_type', 'created_at'),
-        Index('idx_movement_reference', 'reference_type', 'reference_id'),
-        Index('idx_movement_user_date', 'user_id', 'created_at'),
-    )
     
     def __repr__(self):
-        return f"<InventoryMovement(id={self.id}, type='{self.movement_type}', quantity={self.quantity})>"
+        return f"<InventoryMovement(id={self.id}, type='{self.adjustment_type}', quantity={self.quantity})>"
 
 
 class InventoryAlert(Base):
@@ -207,7 +182,6 @@ class InventoryAlert(Base):
     
     # Relaciones
     product = relationship("Product")
-    lot = relationship("InventoryLot")
     acknowledged_user = relationship("User")
     
     def __repr__(self):
@@ -258,7 +232,6 @@ class InventoryCountItem(Base):
     # Relaciones
     count = relationship("InventoryCount", back_populates="count_items")
     product = relationship("Product")
-    lot = relationship("InventoryLot")
     
     def __repr__(self):
         return f"<InventoryCountItem(id={self.id}, expected={self.expected_quantity}, actual={self.actual_quantity})>" 
