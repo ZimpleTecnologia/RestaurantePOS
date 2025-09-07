@@ -86,6 +86,7 @@ class ProductBase(BaseModel):
     product_type: ProductType = ProductType.SALES
     purchase_price: Optional[float] = None  # Para materias primas
     supplier_id: Optional[int] = None
+    supplier: Optional[str] = None  # Nombre del proveedor como string
     image_url: Optional[str] = None
     has_recipe: bool = False
     is_active: bool = True
@@ -115,6 +116,7 @@ class ProductUpdate(BaseModel):
     product_type: Optional[ProductType] = None
     purchase_price: Optional[float] = None
     supplier_id: Optional[int] = None
+    supplier: Optional[str] = None  # Nombre del proveedor como string
     image_url: Optional[str] = None
     has_recipe: Optional[bool] = None
     is_active: Optional[bool] = None
@@ -148,6 +150,7 @@ class InventoryProductResponse(BaseModel):
     unit: str = "unidad"
     purchase_price: Optional[float] = None
     supplier_id: Optional[int] = None
+    supplier: Optional[str] = None  # Nombre del proveedor como string
     barcode: Optional[str] = None
     is_active: bool = True
     created_at: datetime

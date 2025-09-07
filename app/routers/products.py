@@ -74,6 +74,7 @@ def get_inventory_products(
                 "unit": product.unit or "unidad",
                 "purchase_price": float(product.purchase_price) if product.purchase_price else None,
                 "supplier_id": product.supplier_id,
+                "supplier": product.supplier,
                 "barcode": product.barcode,
                 "is_active": bool(product.is_active),
                 "created_at": product.created_at.isoformat() if product.created_at else None,
@@ -201,8 +202,16 @@ def save_product_image(file: UploadFile) -> str:
 # Rutas para categorías
 @router.get("/categories", response_model=List[CategoryResponse])
 def get_categories(db: Session = Depends(get_db)):
-    """Obtener todas las categorías"""
-    return db.query(Category).filter(Category.is_active == True).all()
+    """Obtener todas las categorías (activas e inactivas)"""
+    return db.query(Category).all()
+
+@router.get("/categories/{category_id}", response_model=CategoryResponse)
+def get_category(category_id: int, db: Session = Depends(get_db)):
+    """Obtener categoría por ID"""
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if not category:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    return category
 
 @router.post("/categories", response_model=CategoryResponse)
 def create_category(
@@ -235,6 +244,31 @@ def update_category(
     db.commit()
     db.refresh(db_category)
     return db_category
+
+@router.delete("/categories/{category_id}")
+def delete_category(
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """Eliminar categoría (desactivar)"""
+    db_category = db.query(Category).filter(Category.id == category_id).first()
+    if not db_category:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    
+    # Verificar si la categoría tiene productos
+    products_count = db.query(Product).filter(Product.category_id == category_id).count()
+    if products_count > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"No se puede eliminar la categoría porque tiene {products_count} productos asignados"
+        )
+    
+    # Desactivar la categoría en lugar de eliminarla físicamente
+    db_category.is_active = False
+    db.commit()
+    
+    return {"message": "Categoría eliminada exitosamente"}
 
 # Rutas para subcategorías
 @router.get("/subcategories", response_model=List[SubCategoryResponse])
@@ -314,6 +348,7 @@ async def debug_create_product(
             "product_type": product.product_type,
             "purchase_price": product.purchase_price,
             "supplier_id": product.supplier_id,
+            "supplier": product.supplier,  # Agregar campo supplier
             "description": product.description,
             "is_active": product.is_active,
             "image_url": None
@@ -378,6 +413,7 @@ async def create_product(
         "product_type": product.product_type,
         "purchase_price": product.purchase_price,
         "supplier_id": product.supplier_id,
+        "supplier": product.supplier,  # Agregar campo supplier
         "description": product.description,
         "is_active": product.is_active,
         "image_url": None  # Por ahora sin imagen
@@ -542,6 +578,52 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     return product
 
+@router.put("/{product_id}/debug")
+async def debug_update_product(
+    product_id: int,
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Endpoint de debug para actualizar productos"""
+    try:
+        print("🔍 Datos recibidos para actualizar:", data)
+        
+        # Buscar el producto
+        db_product = db.query(Product).filter(Product.id == product_id).first()
+        if not db_product:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+        
+        print(f"📦 Producto encontrado: {db_product.name} (ID: {db_product.id})")
+        
+        # Actualizar campos directamente desde el diccionario
+        update_fields = [
+            'name', 'code', 'description', 'price', 'cost_price', 'stock', 
+            'min_stock', 'max_stock', 'stock_quantity', 'min_stock_level', 
+            'unit', 'category_id', 'product_type', 'purchase_price', 
+            'supplier_id', 'supplier', 'is_active'
+        ]
+        
+        for field in update_fields:
+            if field in data and data[field] is not None:
+                old_value = getattr(db_product, field, None)
+                new_value = data[field]
+                setattr(db_product, field, new_value)
+                print(f"  ✅ {field}: {old_value} → {new_value}")
+        
+        db.commit()
+        db.refresh(db_product)
+        
+        print("✅ Producto actualizado exitosamente")
+        return {"success": True, "product": db_product, "message": "Producto actualizado exitosamente"}
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"❌ Error actualizando producto: {error_details}")
+        db.rollback()
+        return {"error": str(e), "details": error_details}
+
 @router.put("/{product_id}", response_model=ProductResponse)
 async def update_product(
     product_id: int,
@@ -550,49 +632,56 @@ async def update_product(
     current_user: User = Depends(get_current_active_user)
 ):
     """Actualizar producto"""
-    db_product = db.query(Product).filter(Product.id == product_id).first()
-    if not db_product:
-        raise HTTPException(status_code=404, detail="Producto no encontrado")
-    
-    # Actualizar campos
-    update_data = {}
-    if product.name is not None:
-        update_data["name"] = product.name
-    if product.price is not None:
-        update_data["price"] = product.price
-    if product.cost_price is not None:
-        update_data["cost_price"] = product.cost_price
-    if product.stock is not None:
-        update_data["stock"] = product.stock
-    if product.min_stock is not None:
-        update_data["min_stock"] = product.min_stock
-    if product.max_stock is not None:
-        update_data["max_stock"] = product.max_stock
-    if product.stock_quantity is not None:
-        update_data["stock_quantity"] = product.stock_quantity
-    if product.min_stock_level is not None:
-        update_data["min_stock_level"] = product.min_stock_level
-    if product.unit is not None:
-        update_data["unit"] = product.unit
-    if product.category_id is not None:
-        update_data["category_id"] = product.category_id
-    if product.product_type is not None:
-        update_data["product_type"] = product.product_type
-    if product.purchase_price is not None:
-        update_data["purchase_price"] = product.purchase_price
-    if product.supplier_id is not None:
-        update_data["supplier_id"] = product.supplier_id
-    if product.description is not None:
-        update_data["description"] = product.description
-    if product.is_active is not None:
-        update_data["is_active"] = product.is_active
-    
-    for field, value in update_data.items():
-        setattr(db_product, field, value)
-    
-    db.commit()
-    db.refresh(db_product)
-    return db_product
+    try:
+        db_product = db.query(Product).filter(Product.id == product_id).first()
+        if not db_product:
+            raise HTTPException(status_code=404, detail="Producto no encontrado")
+        
+        # Actualizar campos
+        update_data = {}
+        if product.name is not None:
+            update_data["name"] = product.name
+        if product.price is not None:
+            update_data["price"] = product.price
+        if product.cost_price is not None:
+            update_data["cost_price"] = product.cost_price
+        if product.stock is not None:
+            update_data["stock"] = product.stock
+        if product.min_stock is not None:
+            update_data["min_stock"] = product.min_stock
+        if product.max_stock is not None:
+            update_data["max_stock"] = product.max_stock
+        if product.stock_quantity is not None:
+            update_data["stock_quantity"] = product.stock_quantity
+        if product.min_stock_level is not None:
+            update_data["min_stock_level"] = product.min_stock_level
+        if product.unit is not None:
+            update_data["unit"] = product.unit
+        if product.category_id is not None:
+            update_data["category_id"] = product.category_id
+        if product.product_type is not None:
+            update_data["product_type"] = product.product_type
+        if product.purchase_price is not None:
+            update_data["purchase_price"] = product.purchase_price
+        if product.supplier_id is not None:
+            update_data["supplier_id"] = product.supplier_id
+        if product.supplier is not None:
+            update_data["supplier"] = product.supplier
+        if product.description is not None:
+            update_data["description"] = product.description
+        if product.is_active is not None:
+            update_data["is_active"] = product.is_active
+        
+        for field, value in update_data.items():
+            setattr(db_product, field, value)
+        
+        db.commit()
+        db.refresh(db_product)
+        return db_product
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error actualizando producto: {str(e)}")
 
 @router.delete("/{product_id}")
 def delete_product(

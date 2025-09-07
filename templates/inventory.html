@@ -162,8 +162,13 @@
         margin-bottom: 20px;
     }
     
-    .floating-label input, .floating-label select {
+    .floating-label input, .floating-label select, .floating-label textarea {
         padding-top: 25px;
+    }
+    
+    .floating-label textarea {
+        min-height: 80px;
+        resize: vertical;
     }
     
     .floating-label label {
@@ -179,7 +184,10 @@
     .floating-label input:focus + label,
     .floating-label input:not(:placeholder-shown) + label,
     .floating-label select:focus + label,
-    .floating-label select:not([value=""]) + label {
+    .floating-label select:not([value=""]) + label,
+    .floating-label textarea:focus + label,
+    .floating-label textarea:not(:placeholder-shown) + label,
+    .floating-label label.floating {
         top: -8px;
         left: 10px;
         font-size: 0.7rem;
@@ -247,6 +255,56 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
+    
+    /* Estilos para tabla de productos */
+    .table th {
+        background-color: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+    
+    .btn-group .btn {
+        border-radius: 0;
+    }
+    
+    .btn-group .btn:first-child {
+        border-top-left-radius: 0.375rem;
+        border-bottom-left-radius: 0.375rem;
+    }
+    
+    .btn-group .btn:last-child {
+        border-top-right-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+    }
+    
+    /* Estilos para badges en tabla */
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.4em 0.6em;
+    }
+    
+    /* Responsive para tabla */
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.8rem;
+        }
+        
+        .btn-group .btn {
+            padding: 0.25rem 0.5rem;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -303,49 +361,167 @@
         <div class="col-12">
             <ul class="nav nav-tabs" id="inventoryTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#products" type="button" role="tab">
-                        <i class="bi bi-box-seam me-2"></i>Productos
-                    </button>
+                    <button class="nav-link active" id="table-tab" data-bs-toggle="tab" data-bs-target="#table" type="button" role="tab">
+                        <i class="bi bi-table me-2"></i>Productos
+            </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="categories-tab" data-bs-toggle="tab" data-bs-target="#categories" type="button" role="tab">
+                        <i class="bi bi-tags me-2"></i>Categorías
+            </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
                         <i class="bi bi-clock-history me-2"></i>Histórico de Movimientos
-                    </button>
+            </button>
                 </li>
             </ul>
-                </div>
-            </div>
+        </div>
+    </div>
 
     <!-- Contenido de las pestañas -->
     <div class="tab-content" id="inventoryTabContent">
-        <!-- Pestaña de Productos -->
-        <div class="tab-pane fade show active" id="products" role="tabpanel">
-            <!-- Filtros y búsqueda -->
-            <div class="row mb-4">
+        <!-- Pestaña de Productos (Tabla) -->
+        <div class="tab-pane fade show active" id="table" role="tabpanel">
+            <!-- Filtros y búsqueda para tabla -->
+    <div class="row mb-4">
                 <div class="col-md-6">
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0">
                             <i class="bi bi-search text-muted"></i>
                         </span>
-                        <input type="text" class="form-control search-box border-start-0" id="searchInput" 
+                        <input type="text" class="form-control search-box border-start-0" id="tableSearchInput" 
                                placeholder="Buscar productos...">
-        </div>
+                        </div>
                         </div>
                 <div class="col-md-6">
                     <div class="d-flex justify-content-end">
-                        <button class="btn filter-btn active" data-filter="all">Todos</button>
-                        <button class="btn filter-btn" data-filter="low-stock">Stock Bajo</button>
-                        <button class="btn filter-btn" data-filter="out-of-stock">Sin Stock</button>
-                        <button class="btn filter-btn" data-filter="categories">Categorías</button>
+                        <button class="btn filter-btn active" data-filter="all" onclick="filterTableProducts('all')">Todos</button>
+                        <button class="btn filter-btn" data-filter="low-stock" onclick="filterTableProducts('low-stock')">Stock Bajo</button>
+                        <button class="btn filter-btn" data-filter="out-of-stock" onclick="filterTableProducts('out-of-stock')">Sin Stock</button>
+                        <button class="btn btn-outline-primary ms-2" onclick="exportTableToCSV()">
+                            <i class="bi bi-download me-2"></i>Exportar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de productos -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-table me-2"></i>Productos de Inventario
+                            </h5>
+        </div>
+                <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="productsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Nombre</th>
+                                            <th>Categoría</th>
+                                            <th>Stock Actual</th>
+                                            <th>Stock Mínimo</th>
+                                            <th>Unidad</th>
+                                            <th>Precio Compra</th>
+                                            <th>Estado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productsTableBody">
+                                        <!-- Los productos se cargarán dinámicamente -->
+                                    </tbody>
+                                </table>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestaña de Categorías -->
+        <div class="tab-pane fade" id="categories" role="tabpanel">
+            <!-- Header de categorías -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5 class="mb-0">
+                        <i class="bi bi-tags text-primary me-2"></i>Gestión de Categorías
+                    </h5>
+                    <p class="text-muted mb-0">Organiza tus productos por categorías</p>
+                        </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-end">
+                        <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                            <i class="bi bi-plus-circle me-2"></i>Nueva Categoría
+                        </button>
                         </div>
                     </div>
                 </div>
 
-            <!-- Lista de productos -->
-            <div class="row" id="productsContainer">
-                <!-- Los productos se cargarán dinámicamente -->
+            <!-- Estadísticas de categorías -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary mb-1" id="totalCategories">0</h3>
+                            <p class="text-muted mb-0">Total Categorías</p>
+            </div>
+        </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                <div class="card-body">
+                            <h3 class="text-success mb-1" id="activeCategories">0</h3>
+                            <p class="text-muted mb-0">Categorías Activas</p>
+                        </div>
+                        </div>
+                    </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-warning mb-1" id="categoriesWithProducts">0</h3>
+                            <p class="text-muted mb-0">Con Productos</p>
+                </div>
+            </div>
         </div>
     </div>
+
+            <!-- Tabla de categorías -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-list-ul me-2"></i>Lista de Categorías
+                            </h5>
+                        </div>
+        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="categoriesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nombre</th>
+                                            <th>Descripción</th>
+                                            <th>Productos</th>
+                                            <th>Estado</th>
+                                            <th>Fecha Creación</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="categoriesTableBody">
+                                        <!-- Las categorías se cargarán dinámicamente -->
+                                    </tbody>
+                                </table>
+                    </div>
+                </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Pestaña de Histórico -->
         <div class="tab-pane fade" id="history" role="tabpanel">
@@ -444,19 +620,13 @@
                     <input type="hidden" id="productId">
                     
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="floating-label">
                                 <input type="text" class="form-control" id="productName" placeholder=" " required>
                                 <label for="productName">Nombre del Producto *</label>
+                            </div>
+                        </div>
                     </div>
-                    </div>
-                        <div class="col-md-6">
-                            <div class="floating-label">
-                                <input type="text" class="form-control" id="productCode" placeholder=" ">
-                                <label for="productCode">Código del Producto</label>
-                    </div>
-    </div>
-</div>
 
                     <div class="row">
                         <div class="col-md-6">
@@ -507,26 +677,20 @@
             </div>
                     
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <div class="floating-label">
                                 <input type="text" class="form-control" id="supplier" placeholder=" ">
                                 <label for="supplier">Proveedor</label>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="floating-label">
-                                <input type="text" class="form-control" id="barcode" placeholder=" ">
-                                <label for="barcode">Código de Barras</label>
-        </div>
-    </div>
-</div>
+                    </div>
 
                     <div class="floating-label">
                         <textarea class="form-control" id="productDescription" rows="3" placeholder=" "></textarea>
                         <label for="productDescription">Descripción</label>
-            </div>
+                    </div>
                 </form>
-                </div>
+            </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary-custom" onclick="saveProduct()">
@@ -543,7 +707,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="bi bi-arrow-up-down me-2"></i>Ajustar Stock
+                    <i class="bi bi-sliders me-2"></i>Ajustar Stock
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -551,17 +715,17 @@
                 <form id="stockForm">
                     <input type="hidden" id="stockProductId">
                 
-                <div class="mb-3">
+                    <div class="mb-3">
                         <label class="form-label">Producto</label>
                         <input type="text" class="form-control" id="stockProductName" readonly>
-                </div>
+                    </div>
                 
-                <div class="mb-3">
+                    <div class="mb-3">
                         <label class="form-label">Stock Actual</label>
                         <input type="text" class="form-control" id="currentStockDisplay" readonly>
-                </div>
+                    </div>
                 
-                <div class="mb-3">
+                    <div class="mb-3">
                         <label class="form-label">Tipo de Ajuste</label>
                         <select class="form-select" id="adjustmentType" required>
                             <option value="">Seleccionar tipo...</option>
@@ -569,9 +733,9 @@
                             <option value="salida">Salida (Quitar)</option>
                             <option value="ajuste">Ajuste (Corregir)</option>
                         </select>
-                </div>
+                    </div>
                 
-                <div class="mb-3">
+                    <div class="mb-3">
                         <label class="form-label">Cantidad</label>
                         <input type="number" class="form-control" id="adjustmentQuantity" min="0" step="0.01" required>
                 </div>
@@ -579,13 +743,139 @@
                     <div class="mb-3">
                         <label class="form-label">Motivo</label>
                         <textarea class="form-control" id="adjustmentReason" rows="2" placeholder="Ej: Compra de proveedor, Merma, Ajuste de inventario..."></textarea>
-                </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary-custom" onclick="saveStockAdjustment()">
-                    <i class="bi bi-check-circle me-2"></i>Aplicar Ajuste
+                    <i class="bi bi-sliders me-2"></i>Aplicar Ajuste
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver detalles del producto -->
+<div class="modal fade" id="viewProductModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewProductModalTitle">
+                    <i class="bi bi-eye me-2"></i>Detalles del Producto
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Código del Producto</label>
+                            <p class="form-control-plaintext" id="viewProductCode">-</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nombre</label>
+                            <p class="form-control-plaintext" id="viewProductName">-</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Categoría</label>
+                            <p class="form-control-plaintext" id="viewProductCategory">-</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tipo de Medida</label>
+                            <p class="form-control-plaintext" id="viewProductUnit">-</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Stock Actual</label>
+                            <p class="form-control-plaintext" id="viewProductStock">-</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Stock Mínimo</label>
+                            <p class="form-control-plaintext" id="viewProductMinStock">-</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Precio de Compra</label>
+                            <p class="form-control-plaintext" id="viewProductPurchasePrice">-</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Proveedor</label>
+                            <p class="form-control-plaintext" id="viewProductSupplier">-</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Descripción</label>
+                            <p class="form-control-plaintext" id="viewProductDescription">-</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Estado del Stock</label>
+                            <p class="form-control-plaintext" id="viewProductStockStatus">-</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Fecha de Creación</label>
+                            <p class="form-control-plaintext" id="viewProductCreatedAt">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary-custom" onclick="editProductFromView()">
+                    <i class="bi bi-pencil me-2"></i>Editar Producto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para crear/editar categoría -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryModalTitle">
+                    <i class="bi bi-plus-circle me-2"></i>Nueva Categoría
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <input type="hidden" id="categoryId">
+                
+                <div class="mb-3">
+                        <label class="form-label">Nombre de la Categoría *</label>
+                        <input type="text" class="form-control" id="categoryName" placeholder="Ej: Carnes, Verduras, Lácteos..." required>
+                </div>
+                
+                <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="categoryDescription" rows="3" placeholder="Descripción opcional de la categoría..."></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="categoryActive" checked>
+                            <label class="form-check-label" for="categoryActive">
+                                Categoría activa
+                        </label>
+                    </div>
+                </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary-custom" onclick="saveCategory()">
+                    <i class="bi bi-check-circle me-2"></i>Guardar Categoría
                 </button>
             </div>
         </div>
@@ -597,25 +887,62 @@ let products = [];
 let categories = [];
 let currentFilter = 'all';
 
+// Función para generar código de producto automáticamente
+function generateProductCode(categoryId, productName) {
+    // Obtener las 3 primeras letras del nombre en mayúsculas
+    const namePrefix = productName.substring(0, 3).toUpperCase();
+    
+    // Buscar el siguiente consecutivo para esta categoría y prefijo
+    const existingProducts = products.filter(p => 
+        p.category_id === parseInt(categoryId) && 
+        p.code && 
+        p.code.startsWith(categoryId + namePrefix)
+    );
+    
+    // Obtener el siguiente número consecutivo
+    let nextNumber = 1;
+    if (existingProducts.length > 0) {
+        const numbers = existingProducts.map(p => {
+            const code = p.code;
+            const numberPart = code.substring(categoryId.toString().length + 3);
+            return parseInt(numberPart) || 0;
+        });
+        nextNumber = Math.max(...numbers) + 1;
+    }
+    
+    // Formatear el número con 2 dígitos
+    const formattedNumber = nextNumber.toString().padStart(2, '0');
+    
+    // Retornar el código completo: ID_CATEGORIA + 3_LETRAS + 2_DIGITOS
+    return `${categoryId}${namePrefix}${formattedNumber}`;
+}
+
 // Cargar datos al inicializar
 document.addEventListener('DOMContentLoaded', function() {
     loadCategories();
     loadProducts();
     setupEventListeners();
+    // Cargar tabla automáticamente
+    renderProductsTable();
 });
 
 // Configurar event listeners
 function setupEventListeners() {
-    // Búsqueda
-    document.getElementById('searchInput').addEventListener('input', filterProducts);
+    // Búsqueda en tabla
+    const tableSearchInput = document.getElementById('tableSearchInput');
+    if (tableSearchInput) {
+        tableSearchInput.addEventListener('input', function() {
+            filterTableProducts(currentTableFilter);
+        });
+    }
     
-    // Filtros
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    // Filtros de tabla
+    document.querySelectorAll('#table .filter-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#table .filter-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            currentFilter = this.dataset.filter;
-            filterProducts();
+            currentTableFilter = this.dataset.filter;
+            filterTableProducts(currentTableFilter);
         });
     });
 }
@@ -694,114 +1021,17 @@ async function loadProducts() {
         }
         
         console.log('📦 Productos procesados:', products);
-        renderProducts();
+        renderProductsTable();
         updateStatistics();
     } catch (error) {
         console.error('Error cargando productos:', error);
         products = [];
-        renderProducts();
+        renderProductsTable();
         showAlert('Error cargando productos: ' + error.message, 'danger');
     }
 }
 
-// Renderizar productos
-function renderProducts() {
-    console.log('🎨 Renderizando productos:', products);
-    const container = document.getElementById('productsContainer');
-    container.innerHTML = '';
-    
-    if (products.length === 0) {
-        console.log('⚠️ No hay productos para renderizar');
-        container.innerHTML = `
-            <div class="col-12">
-                <div class="text-center py-5">
-                    <i class="bi bi-inbox display-1 text-muted"></i>
-                    <h4 class="text-muted mt-3">No hay productos</h4>
-                    <p class="text-muted">Comienza agregando tu primer producto al inventario</p>
-                    <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#productModal">
-                        <i class="bi bi-plus-circle me-2"></i>Agregar Producto
-                    </button>
-                </div>
-            </div>
-        `;
-        return;
-    }
-    
-    console.log(`✅ Renderizando ${products.length} productos`);
-    
-    products.forEach(product => {
-        const productCard = createProductCard(product);
-        container.appendChild(productCard);
-    });
-}
-
-// Crear tarjeta de producto
-function createProductCard(product) {
-    const col = document.createElement('div');
-    col.className = 'col-md-6 col-lg-4';
-    
-    const stockStatus = getStockStatus(product);
-    const category = categories.find(c => c.id === product.category_id);
-    
-    col.innerHTML = `
-        <div class="product-card">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="flex-grow-1">
-                    <h6 class="mb-1 fw-bold">${product.name}</h6>
-                    <p class="text-muted mb-1 small">${product.code || 'Sin código'}</p>
-                    ${category ? `<span class="category-badge">${category.name}</span>` : ''}
-                            </div>
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
-                        <i class="bi bi-three-dots-vertical"></i>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="editProduct(${product.id})">
-                            <i class="bi bi-pencil me-2"></i>Editar
-                        </a></li>
-                        <li><a class="dropdown-item" href="#" onclick="adjustStock(${product.id})">
-                            <i class="bi bi-arrow-up-down me-2"></i>Ajustar Stock
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteProduct(${product.id})">
-                            <i class="bi bi-trash me-2"></i>Eliminar
-                        </a></li>
-                    </ul>
-                        </div>
-                            </div>
-            
-            <div class="row mb-3">
-                <div class="col-6">
-                    <div class="text-center">
-                        <h5 class="mb-0 text-primary">${product.stock_quantity || 0}</h5>
-                        <small class="text-muted">Stock Actual</small>
-                        </div>
-                        </div>
-                <div class="col-6">
-                    <div class="text-center">
-                        <h5 class="mb-0 text-warning">${product.min_stock_level || 0}</h5>
-                        <small class="text-muted">Stock Mínimo</small>
-                    </div>
-                        </div>
-                </div>
-            
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="stock-indicator ${stockStatus.class}">${stockStatus.text}</span>
-                    <br>
-                    <small class="text-muted">
-                        <span class="measurement-badge">${product.unit || 'unidad'}</span>
-                    </small>
-                    </div>
-                <div class="text-end">
-                    ${product.purchase_price ? `<small class="text-success fw-bold">$${product.purchase_price}</small>` : ''}
-                </div>
-            </div>
-        </div>
-    `;
-    
-    return col;
-}
+// Funciones de vista de tarjetas eliminadas - solo mantenemos la vista de tabla
 
 // Obtener estado del stock
 function getStockStatus(product) {
@@ -817,46 +1047,7 @@ function getStockStatus(product) {
     }
 }
 
-// Filtrar productos
-function filterProducts() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const filteredProducts = products.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(searchTerm) ||
-                            (product.code && product.code.toLowerCase().includes(searchTerm));
-        
-        if (currentFilter === 'all') return matchesSearch;
-        if (currentFilter === 'low-stock') return matchesSearch && getStockStatus(product).class === 'stock-low';
-        if (currentFilter === 'out-of-stock') return matchesSearch && getStockStatus(product).class === 'stock-out';
-        
-        return matchesSearch;
-    });
-    
-    renderFilteredProducts(filteredProducts);
-}
-
-// Renderizar productos filtrados
-function renderFilteredProducts(filteredProducts) {
-    const container = document.getElementById('productsContainer');
-    container.innerHTML = '';
-    
-    if (filteredProducts.length === 0) {
-        container.innerHTML = `
-            <div class="col-12">
-                <div class="text-center py-5">
-                    <i class="bi bi-search display-1 text-muted"></i>
-                    <h4 class="text-muted mt-3">No se encontraron productos</h4>
-                    <p class="text-muted">Intenta con otros términos de búsqueda</p>
-                </div>
-            </div>
-        `;
-        return;
-    }
-    
-    filteredProducts.forEach(product => {
-        const productCard = createProductCard(product);
-        container.appendChild(productCard);
-    });
-}
+// Funciones de filtrado de vista de tarjetas eliminadas
 
 // Actualizar estadísticas
 function updateStatistics() {
@@ -886,14 +1077,20 @@ async function saveProduct() {
         return;
     }
     
+    // Generar código automáticamente
+    const productName = document.getElementById('productName').value;
+    const category = categories.find(c => c.id === parseInt(categoryId));
+    const generatedCode = generateProductCode(categoryId, productName);
+    
     const productData = {
-        name: document.getElementById('productName').value,
-        code: document.getElementById('productCode').value,
+        name: productName,
+        code: generatedCode,
         category_id: parseInt(categoryId),
         unit: document.getElementById('measurementType').value,
         stock_quantity: parseFloat(document.getElementById('currentStock').value),
         min_stock_level: parseFloat(document.getElementById('minStock').value),
         purchase_price: parseFloat(document.getElementById('purchasePrice').value) || null,
+        supplier: document.getElementById('supplier').value || null,
         description: document.getElementById('productDescription').value,
         product_type: 'inventory',
         is_active: true,
@@ -908,7 +1105,7 @@ async function saveProduct() {
     
     try {
         const productId = document.getElementById('productId').value;
-        const url = productId ? `/api/v1/products/${productId}` : '/api/v1/products/debug';
+        const url = productId ? `/api/v1/products/${productId}/debug` : '/api/v1/products/debug';
         const method = productId ? 'PUT' : 'POST';
         
         // Obtener token de autenticación
@@ -953,6 +1150,86 @@ async function saveProduct() {
     }
 }
 
+// Variable global para almacenar el ID del producto en vista
+let currentViewProductId = null;
+
+// Ver detalles del producto
+async function viewProduct(productId) {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
+            window.location.href = '/login';
+            return;
+        }
+        
+        const response = await fetch(`/api/v1/products/${productId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const product = await response.json();
+        currentViewProductId = productId;
+        
+        // Llenar el modal con los datos del producto
+        document.getElementById('viewProductCode').textContent = product.code || 'Sin código';
+        document.getElementById('viewProductName').textContent = product.name || '-';
+        
+        // Obtener nombre de la categoría
+        const category = categories.find(c => c.id === product.category_id);
+        document.getElementById('viewProductCategory').textContent = category ? category.name : 'Sin categoría';
+        
+        document.getElementById('viewProductUnit').textContent = product.unit || 'unidad';
+        document.getElementById('viewProductStock').textContent = `${product.stock_quantity || 0} ${product.unit || 'unidad'}`;
+        document.getElementById('viewProductMinStock').textContent = `${product.min_stock_level || 0} ${product.unit || 'unidad'}`;
+        
+        // Formatear precio de compra
+        const purchasePrice = product.purchase_price ? `$${product.purchase_price.toLocaleString()}` : 'No especificado';
+        document.getElementById('viewProductPurchasePrice').textContent = purchasePrice;
+        
+        document.getElementById('viewProductSupplier').textContent = product.supplier || 'No especificado';
+        document.getElementById('viewProductDescription').textContent = product.description || 'Sin descripción';
+        
+        // Estado del stock
+        const stockStatus = getStockStatus(product);
+        document.getElementById('viewProductStockStatus').innerHTML = `<span class="stock-indicator ${stockStatus.class}">${stockStatus.text}</span>`;
+        
+        // Fecha de creación
+        const createdAt = product.created_at ? new Date(product.created_at).toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        }) : 'No disponible';
+        document.getElementById('viewProductCreatedAt').textContent = createdAt;
+        
+        const modal = new bootstrap.Modal(document.getElementById('viewProductModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Error cargando producto:', error);
+        showAlert('Error cargando detalles del producto', 'danger');
+    }
+}
+
+// Editar producto desde la vista
+function editProductFromView() {
+    if (currentViewProductId) {
+        // Cerrar modal de vista
+        bootstrap.Modal.getInstance(document.getElementById('viewProductModal')).hide();
+        
+        // Abrir modal de edición
+        setTimeout(() => {
+            editProduct(currentViewProductId);
+        }, 300);
+    }
+}
+
 // Editar producto
 async function editProduct(productId) {
     try {
@@ -978,16 +1255,21 @@ async function editProduct(productId) {
         document.getElementById('productModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Editar Producto';
         document.getElementById('productId').value = product.id;
         document.getElementById('productName').value = product.name;
-        document.getElementById('productCode').value = product.code || '';
         document.getElementById('productCategory').value = product.category_id || '';
         document.getElementById('measurementType').value = product.unit || '';
         document.getElementById('currentStock').value = product.stock_quantity || 0;
         document.getElementById('minStock').value = product.min_stock_level || 0;
         document.getElementById('purchasePrice').value = product.purchase_price || '';
+        document.getElementById('supplier').value = product.supplier || '';
         document.getElementById('productDescription').value = product.description || '';
         
         const modal = new bootstrap.Modal(document.getElementById('productModal'));
         modal.show();
+        
+        // Manejar etiquetas flotantes después de cargar los datos
+        setTimeout(() => {
+            handleFloatingLabels();
+        }, 100);
     } catch (error) {
         console.error('Error cargando producto:', error);
         showAlert('Error cargando producto', 'danger');
@@ -1088,9 +1370,9 @@ async function deleteProduct(productId) {
         if (!token) {
             showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
             window.location.href = '/login';
-            return;
-        }
-
+        return;
+    }
+    
         const response = await fetch(`/api/v1/products/${productId}`, {
             method: 'DELETE',
             headers: {
@@ -1128,11 +1410,53 @@ function showAlert(message, type) {
     }, 5000);
 }
 
+// Función para manejar etiquetas flotantes en textarea
+function handleFloatingLabels() {
+    const textareas = document.querySelectorAll('.floating-label textarea');
+    textareas.forEach(textarea => {
+        const label = textarea.nextElementSibling;
+        if (label && label.tagName === 'LABEL') {
+            // Verificar si el textarea tiene contenido
+            if (textarea.value.trim() !== '') {
+                label.classList.add('floating');
+            }
+            
+            // Agregar event listeners
+            textarea.addEventListener('input', function() {
+                if (this.value.trim() !== '') {
+                    label.classList.add('floating');
+                } else {
+                    label.classList.remove('floating');
+                }
+            });
+            
+            textarea.addEventListener('focus', function() {
+                label.classList.add('floating');
+            });
+            
+            textarea.addEventListener('blur', function() {
+                if (this.value.trim() === '') {
+                    label.classList.remove('floating');
+                }
+            });
+        }
+    });
+}
+
 // Limpiar formulario al cerrar modal
 document.getElementById('productModal').addEventListener('hidden.bs.modal', function() {
     document.getElementById('productForm').reset();
     document.getElementById('productId').value = '';
     document.getElementById('productModalTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Nuevo Producto';
+    
+    // Resetear etiquetas flotantes
+    const labels = document.querySelectorAll('.floating-label label');
+    labels.forEach(label => label.classList.remove('floating'));
+});
+
+// Inicializar etiquetas flotantes cuando se abre el modal
+document.getElementById('productModal').addEventListener('shown.bs.modal', function() {
+    handleFloatingLabels();
 });
 
 // ==================== FUNCIONES DEL HISTÓRICO DE MOVIMIENTOS ====================
@@ -1147,9 +1471,9 @@ async function loadMovementHistory() {
         if (!token) {
             showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
             window.location.href = '/login';
-            return;
-        }
-
+        return;
+    }
+    
         // Obtener filtros
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
@@ -1223,15 +1547,15 @@ async function loadMovementSummary() {
 function renderMovements() {
     const tbody = document.getElementById('movementsTableBody');
     tbody.innerHTML = '';
-
-    if (movements.length === 0) {
+        
+        if (movements.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="8" class="text-center py-4">
                     <i class="bi bi-inbox display-4 text-muted"></i>
                     <p class="text-muted mt-2">No se encontraron movimientos</p>
                 </td>
-            </tr>
+                            </tr>
         `;
         return;
     }
@@ -1239,8 +1563,8 @@ function renderMovements() {
     movements.forEach(movement => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${formatDateTime(movement.created_at)}</td>
-            <td>
+                                    <td>${formatDateTime(movement.created_at)}</td>
+                                    <td>
                 <div>
                     <strong>${movement.product_name}</strong>
                     <br>
@@ -1250,8 +1574,8 @@ function renderMovements() {
             <td>
                 <span class="badge ${getMovementTypeBadgeClass(movement.movement_type)}">
                     ${getMovementTypeLabel(movement.movement_type)}
-                </span>
-            </td>
+                                        </span>
+                                    </td>
             <td class="text-center">
                 <strong class="${getMovementQuantityClass(movement.movement_type)}">
                     ${movement.movement_type === 'salida' ? '-' : '+'}${movement.quantity}
@@ -1306,8 +1630,8 @@ function renderMovementSummary() {
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
+                </div>
+            `;
     });
     
     summaryHtml += '</div>';
@@ -1409,6 +1733,437 @@ document.getElementById('history-tab').addEventListener('click', function() {
     loadProductsForHistoryFilter();
     setupDefaultDates();
     loadMovementHistory();
+});
+
+// Event listener para cuando se cambia a la pestaña de tabla
+document.getElementById('table-tab').addEventListener('click', function() {
+    renderProductsTable();
+});
+
+// Event listener para cuando se cambia a la pestaña de categorías
+document.getElementById('categories-tab').addEventListener('click', function() {
+    renderCategoriesTable();
+    updateCategoryStatistics();
+});
+
+// ==================== FUNCIONES DE VISTA DE TABLA ====================
+
+let currentTableFilter = 'all';
+
+// Renderizar productos en tabla
+function renderProductsTable() {
+    const tbody = document.getElementById('productsTableBody');
+    tbody.innerHTML = '';
+
+    if (products.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-4">
+                    <i class="bi bi-inbox display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No hay productos</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    products.forEach(product => {
+        const row = createProductTableRow(product);
+        tbody.appendChild(row);
+    });
+}
+
+// Crear fila de producto para la tabla
+function createProductTableRow(product) {
+    const row = document.createElement('tr');
+    const stockStatus = getStockStatus(product);
+    const category = categories.find(c => c.id === product.category_id);
+    
+    row.innerHTML = `
+        <td>
+            <strong class="text-primary">${product.code || 'Sin código'}</strong>
+        </td>
+        <td>
+            <div>
+                <strong>${product.name}</strong>
+                ${product.description ? `<br><small class="text-muted">${product.description}</small>` : ''}
+            </div>
+        </td>
+        <td>
+            ${category ? `<span class="badge bg-secondary">${category.name}</span>` : '<span class="text-muted">Sin categoría</span>'}
+        </td>
+        <td class="text-center">
+            <strong class="text-primary">${product.stock_quantity || 0}</strong>
+        </td>
+        <td class="text-center">
+            <span class="text-warning">${product.min_stock_level || 0}</span>
+        </td>
+        <td class="text-center">
+            <span class="badge bg-light text-dark">${product.unit || 'unidad'}</span>
+        </td>
+        <td class="text-center">
+            ${product.purchase_price ? `<strong class="text-success">$${product.purchase_price.toLocaleString()}</strong>` : '<span class="text-muted">-</span>'}
+        </td>
+        <td class="text-center">
+            <span class="stock-indicator ${stockStatus.class}">${stockStatus.text}</span>
+        </td>
+        <td class="text-center">
+            <div class="btn-group" role="group">
+                <button class="btn btn-sm btn-outline-info" onclick="viewProduct(${product.id})" title="Ver Detalles">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${product.id})" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success" onclick="adjustStock(${product.id})" title="Ajustar Stock">
+                    <i class="bi bi-sliders"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${product.id})" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </td>
+    `;
+    
+    return row;
+}
+
+// Filtrar productos en la tabla
+function filterTableProducts(filter) {
+    currentTableFilter = filter;
+    
+    // Actualizar botones activos
+    document.querySelectorAll('#table .filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`#table .filter-btn[data-filter="${filter}"]`).classList.add('active');
+    
+    // Filtrar productos
+    const searchTerm = document.getElementById('tableSearchInput').value.toLowerCase();
+    const filteredProducts = products.filter(product => {
+        const matchesSearch = product.name.toLowerCase().includes(searchTerm) ||
+                            (product.code && product.code.toLowerCase().includes(searchTerm));
+        
+        if (filter === 'all') return matchesSearch;
+        if (filter === 'low-stock') return matchesSearch && getStockStatus(product).class === 'stock-low';
+        if (filter === 'out-of-stock') return matchesSearch && getStockStatus(product).class === 'stock-out';
+        
+        return matchesSearch;
+    });
+    
+    renderFilteredTableProducts(filteredProducts);
+}
+
+// Renderizar productos filtrados en la tabla
+function renderFilteredTableProducts(filteredProducts) {
+    const tbody = document.getElementById('productsTableBody');
+    tbody.innerHTML = '';
+
+    if (filteredProducts.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center py-4">
+                    <i class="bi bi-search display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No se encontraron productos</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    filteredProducts.forEach(product => {
+        const row = createProductTableRow(product);
+        tbody.appendChild(row);
+    });
+}
+
+// Exportar tabla a CSV
+function exportTableToCSV() {
+    if (products.length === 0) {
+        showAlert('No hay productos para exportar', 'warning');
+        return;
+    }
+
+    // Crear CSV
+    let csv = 'Código,Nombre,Categoría,Stock Actual,Stock Mínimo,Unidad,Precio Compra,Estado,Descripción\n';
+    
+    products.forEach(product => {
+        const category = categories.find(c => c.id === product.category_id);
+        const stockStatus = getStockStatus(product);
+        
+        csv += `"${product.code || ''}","${product.name}","${category ? category.name : ''}","${product.stock_quantity || 0}","${product.min_stock_level || 0}","${product.unit || 'unidad'}","${product.purchase_price || 0}","${stockStatus.text}","${product.description || ''}"\n`;
+    });
+
+    // Descargar archivo
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `productos_inventario_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showAlert('Productos exportados exitosamente', 'success');
+}
+
+// ==================== FUNCIONES DE GESTIÓN DE CATEGORÍAS ====================
+
+// Renderizar categorías en tabla
+function renderCategoriesTable() {
+    const tbody = document.getElementById('categoriesTableBody');
+    tbody.innerHTML = '';
+
+    if (categories.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-4">
+                    <i class="bi bi-inbox display-4 text-muted"></i>
+                    <p class="text-muted mt-2">No hay categorías</p>
+                    <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                        <i class="bi bi-plus-circle me-2"></i>Crear Primera Categoría
+                    </button>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    categories.forEach(category => {
+        const row = createCategoryTableRow(category);
+        tbody.appendChild(row);
+    });
+}
+
+// Crear fila de categoría para la tabla
+function createCategoryTableRow(category) {
+    const row = document.createElement('tr');
+    
+    // Contar productos en esta categoría
+    const productsInCategory = products.filter(p => p.category_id === category.id).length;
+    
+    row.innerHTML = `
+        <td>
+            <strong class="text-primary">${category.id}</strong>
+        </td>
+        <td>
+            <div>
+                <strong>${category.name}</strong>
+            </div>
+        </td>
+        <td>
+            <span class="text-muted">${category.description || 'Sin descripción'}</span>
+        </td>
+        <td class="text-center">
+            <span class="badge bg-info">${productsInCategory}</span>
+        </td>
+        <td class="text-center">
+            <span class="badge ${category.is_active ? 'bg-success' : 'bg-secondary'}">
+                ${category.is_active ? 'Activa' : 'Inactiva'}
+            </span>
+        </td>
+        <td class="text-center">
+            <small class="text-muted">${formatDate(category.created_at)}</small>
+        </td>
+        <td class="text-center">
+            <div class="btn-group" role="group">
+                <button class="btn btn-sm btn-outline-primary" onclick="editCategory(${category.id})" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(${category.id})" title="Eliminar" ${productsInCategory > 0 ? 'disabled' : ''}>
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </td>
+    `;
+    
+    return row;
+}
+
+// Actualizar estadísticas de categorías
+function updateCategoryStatistics() {
+    const total = categories.length;
+    const active = categories.filter(c => c.is_active).length;
+    const withProducts = categories.filter(c => products.some(p => p.category_id === c.id)).length;
+    
+    document.getElementById('totalCategories').textContent = total;
+    document.getElementById('activeCategories').textContent = active;
+    document.getElementById('categoriesWithProducts').textContent = withProducts;
+}
+
+// Guardar categoría
+async function saveCategory() {
+    const form = document.getElementById('categoryForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const categoryData = {
+        name: document.getElementById('categoryName').value,
+        description: document.getElementById('categoryDescription').value,
+        is_active: document.getElementById('categoryActive').checked
+    };
+    
+    console.log('🏷️ Datos de la categoría a enviar:', categoryData);
+    
+    try {
+        const categoryId = document.getElementById('categoryId').value;
+        const url = categoryId ? `/api/v1/products/categories/${categoryId}` : '/api/v1/products/categories';
+        const method = categoryId ? 'PUT' : 'POST';
+        
+        // Obtener token de autenticación
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
+            window.location.href = '/login';
+            return;
+        }
+
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(categoryData)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Respuesta del servidor:', result);
+            showAlert('Categoría guardada exitosamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('categoryModal')).hide();
+            form.reset();
+            loadCategories();
+            renderCategoriesTable();
+            updateCategoryStatistics();
+        } else {
+            console.error('❌ Error HTTP:', response.status, response.statusText);
+            const responseText = await response.text();
+            console.error('❌ Respuesta del servidor (texto):', responseText);
+            
+            try {
+                const error = JSON.parse(responseText);
+                showAlert(`Error: ${error.detail || error.error || 'Error desconocido'}`, 'danger');
+            } catch (e) {
+                showAlert(`Error del servidor: ${response.status} - ${response.statusText}`, 'danger');
+            }
+        }
+    } catch (error) {
+        console.error('Error guardando categoría:', error);
+        showAlert('Error guardando categoría', 'danger');
+    }
+}
+
+// Editar categoría
+async function editCategory(categoryId) {
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
+            window.location.href = '/login';
+            return;
+        }
+        
+        const response = await fetch(`/api/v1/products/categories/${categoryId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const category = await response.json();
+        
+        document.getElementById('categoryModalTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Editar Categoría';
+        document.getElementById('categoryId').value = category.id;
+        document.getElementById('categoryName').value = category.name;
+        document.getElementById('categoryDescription').value = category.description || '';
+        document.getElementById('categoryActive').checked = category.is_active;
+        
+        const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Error cargando categoría:', error);
+        showAlert('Error cargando categoría', 'danger');
+    }
+}
+
+// Eliminar categoría
+async function deleteCategory(categoryId) {
+    // Verificar si la categoría tiene productos
+    const productsInCategory = products.filter(p => p.category_id === categoryId).length;
+    if (productsInCategory > 0) {
+        showAlert('No se puede eliminar una categoría que tiene productos asignados', 'warning');
+        return;
+    }
+    
+    if (!confirm('¿Estás seguro de que quieres eliminar esta categoría?')) {
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
+            window.location.href = '/login';
+            return;
+        }
+
+        const response = await fetch(`/api/v1/products/categories/${categoryId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            showAlert('Categoría eliminada exitosamente', 'success');
+            loadCategories();
+            renderCategoriesTable();
+            updateCategoryStatistics();
+        } else {
+            const error = await response.json();
+            showAlert(`Error: ${error.detail}`, 'danger');
+        }
+    } catch (error) {
+        console.error('Error eliminando categoría:', error);
+        showAlert('Error eliminando categoría', 'danger');
+    }
+}
+
+// Formatear fecha
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+// Limpiar formulario al cerrar modal de categoría
+document.getElementById('categoryModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('categoryForm').reset();
+    document.getElementById('categoryId').value = '';
+    document.getElementById('categoryModalTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Nueva Categoría';
+    document.getElementById('categoryActive').checked = true;
+});
+
+// Event listener para búsqueda en tabla
+document.addEventListener('DOMContentLoaded', function() {
+    // Agregar event listener para búsqueda en tabla
+    const tableSearchInput = document.getElementById('tableSearchInput');
+    if (tableSearchInput) {
+        tableSearchInput.addEventListener('input', function() {
+            filterTableProducts(currentTableFilter);
+        });
+    }
 });
 </script>
 {% endblock %}

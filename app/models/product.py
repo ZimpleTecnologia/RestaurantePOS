@@ -104,6 +104,7 @@ class Product(Base):
     # Campos específicos para materias primas
     purchase_price = Column(Numeric(10, 2), nullable=True)  # Precio de compra para materias primas
     supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=True)
+    supplier = Column(String(100), nullable=True)  # Nombre del proveedor como string
     
     # Campos de stock para compatibilidad con el router
     stock = Column(Integer, default=0)  # Alias para stock_quantity
@@ -131,7 +132,7 @@ class Product(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relaciones
-    supplier = relationship("Supplier", backref="products")
+    supplier_rel = relationship("Supplier", backref="products")
     category_rel = relationship("Category", back_populates="products")
     subcategory_rel = relationship("SubCategory", back_populates="products")
     inventory_lots = relationship("InventoryLot", back_populates="product")
