@@ -211,8 +211,12 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Guardar token y redirigir
+                    // Guardar token en localStorage y cookies
                     localStorage.setItem('auth_token', data.access_token);
+                    localStorage.setItem('access_token', data.access_token);
+                    
+                    // También guardar en cookies para el middleware
+                    document.cookie = `auth_token=${data.access_token}; path=/; max-age=${30 * 60}; SameSite=Strict`;
                     
                     // Obtener información del usuario
                     const userResponse = await fetch('/api/v1/auth/me', {

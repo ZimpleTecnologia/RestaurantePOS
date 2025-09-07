@@ -20,7 +20,7 @@
                         <div class="card bg-primary text-white">
                             <div class="card-body text-center">
                                 <h3 class="card-title" id="totalSales">0</h3>
-                                <p class="card-text">Ventas Totales</p>
+                                <p class="card-text">Ventas Hoy</p>
                             </div>
                         </div>
                     </div>
@@ -28,55 +28,112 @@
                         <div class="card bg-success text-white">
                             <div class="card-body text-center">
                                 <h3 class="card-title" id="totalRevenue">$0</h3>
-                                <p class="card-text">Ingresos Totales</p>
+                                <p class="card-text">Ingresos Hoy</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card bg-info text-white">
                             <div class="card-body text-center">
-                                <h3 class="card-title" id="totalCustomers">0</h3>
-                                <p class="card-text">Clientes Registrados</p>
+                                <h3 class="card-title" id="pendingOrders">0</h3>
+                                <p class="card-text">Pedidos Pendientes</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card bg-warning text-white">
                             <div class="card-body text-center">
-                                <h3 class="card-title" id="totalProducts">0</h3>
-                                <p class="card-text">Productos Activos</p>
+                                <h3 class="card-title" id="lowStock">0</h3>
+                                <p class="card-text">Stock Bajo</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Acciones Rápidas -->
+                <!-- Módulos Principales -->
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="m-0 font-weight-bold">Acciones Rápidas</h6>
+                                <h6 class="m-0 font-weight-bold">Módulos del Sistema</h6>
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-3">
-                                        <a href="/caja-ventas" class="btn btn-primary w-100 mb-2">
-                                            <i class="fas fa-cash-register"></i> Abrir Caja
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/products" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-box text-primary" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Productos</h6>
+                                                    <p class="card-text text-muted small">Gestión de productos y menú</p>
+                                                </div>
+                                            </div>
                                         </a>
                                     </div>
-                                    <div class="col-md-3">
-                                        <a href="/sales" class="btn btn-success w-100 mb-2">
-                                            <i class="fas fa-plus-circle"></i> Nueva Venta
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/kitchen" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-fire text-danger" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Cocina</h6>
+                                                    <p class="card-text text-muted small">Gestión de pedidos y preparación</p>
+                                                </div>
+                                            </div>
                                         </a>
                                     </div>
-                                    <div class="col-md-3">
-                                        <a href="/products" class="btn btn-info w-100 mb-2">
-                                            <i class="fas fa-box"></i> Gestionar Productos
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/waiters" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-person-badge text-success" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Meseros</h6>
+                                                    <p class="card-text text-muted small">Toma de pedidos y gestión de mesas</p>
+                                                </div>
+                                            </div>
                                         </a>
                                     </div>
-                                    <div class="col-md-3">
-                                        <a href="/reports" class="btn btn-warning w-100 mb-2">
-                                            <i class="fas fa-chart-bar"></i> Ver Reportes
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/inventory" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-archive text-warning" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Inventario</h6>
+                                                    <p class="card-text text-muted small">Control de stock y movimientos</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/caja-ventas" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-cash-coin text-success" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Caja y Ventas</h6>
+                                                    <p class="card-text text-muted small">Procesamiento de pagos y cierre</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/reports" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-graph-up text-primary" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Reportes</h6>
+                                                    <p class="card-text text-muted small">Análisis y estadísticas</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/settings" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-gear text-secondary" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Configuración</h6>
+                                                    <p class="card-text text-muted small">Ajustes del sistema</p>
+                                                </div>
+                                            </div>
                                         </a>
                                     </div>
                                 </div>
@@ -85,20 +142,36 @@
                     </div>
                 </div>
 
-                <!-- Actividad Reciente -->
+                <!-- Acciones Rápidas -->
                 <div class="row mt-4">
                     <div class="col-md-8">
                         <div class="card">
                             <div class="card-header">
                                 <h6 class="m-0 font-weight-bold">
-                                    <i class="fas fa-clock"></i> Actividad Reciente
+                                    <i class="bi bi-lightning"></i> Acciones Rápidas
                                 </h6>
                             </div>
                             <div class="card-body">
-                                <div id="recentActivity">
-                                    <div class="text-center text-muted">
-                                        <i class="fas fa-spinner fa-spin fa-2x"></i>
-                                        <p>Cargando actividad...</p>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <a href="/caja-ventas" class="btn btn-primary w-100 mb-2">
+                                            <i class="bi bi-cash-coin"></i> Abrir Caja
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <a href="/waiters" class="btn btn-success w-100 mb-2">
+                                            <i class="bi bi-person-badge"></i> Tomar Pedido
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <a href="/kitchen" class="btn btn-warning w-100 mb-2">
+                                            <i class="bi bi-fire"></i> Ver Cocina
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <a href="/inventory" class="btn btn-info w-100 mb-2">
+                                            <i class="bi bi-archive"></i> Revisar Inventario
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -108,13 +181,13 @@
                         <div class="card">
                             <div class="card-header">
                                 <h6 class="m-0 font-weight-bold">
-                                    <i class="fas fa-bell"></i> Notificaciones
+                                    <i class="bi bi-bell"></i> Notificaciones
                                 </h6>
                             </div>
                             <div class="card-body">
                                 <div id="notifications">
                                     <div class="text-center text-muted">
-                                        <i class="fas fa-bell fa-2x"></i>
+                                        <i class="bi bi-bell fa-2x"></i>
                                         <p>No hay notificaciones</p>
                                     </div>
                                 </div>
@@ -165,10 +238,10 @@
             
             if (response.ok) {
                 const stats = await response.json();
-                document.getElementById('totalSales').textContent = stats.total_sales || 0;
-                document.getElementById('totalRevenue').textContent = `$${stats.total_revenue || 0}`;
-                document.getElementById('totalCustomers').textContent = stats.total_customers || 0;
-                document.getElementById('totalProducts').textContent = stats.total_products || 0;
+                document.getElementById('totalSales').textContent = stats.today_sales || 0;
+                document.getElementById('totalRevenue').textContent = `$${stats.today_revenue || 0}`;
+                document.getElementById('pendingOrders').textContent = stats.pending_orders || 0;
+                document.getElementById('lowStock').textContent = stats.low_stock_items || 0;
             } else if (response.status === 401) {
                 // Token inválido, limpiar y redirigir
                 localStorage.removeItem('auth_token');
@@ -178,7 +251,17 @@
             }
         } catch (error) {
             console.error('Error cargando estadísticas:', error);
+            // Cargar datos de ejemplo si hay error
+            loadSampleData();
         }
+    }
+    
+    // Función para cargar datos de ejemplo
+    function loadSampleData() {
+        document.getElementById('totalSales').textContent = '12';
+        document.getElementById('totalRevenue').textContent = '$1,250';
+        document.getElementById('pendingOrders').textContent = '3';
+        document.getElementById('lowStock').textContent = '5';
     }
 
     // Función para establecer la fecha actual

@@ -1,132 +1,349 @@
-{% extends "base_role.html" %}
+{% extends "base.html" %}
 
-{% block title %}Pedidos - Meseros{% endblock %}
+{% block title %}Toma de Pedidos - Meseros{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .table-card {
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .table-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .table-card.occupied {
+        border-color: #dc3545;
+        background-color: #f8d7da;
+    }
+    
+    .table-card.available {
+        border-color: #28a745;
+        background-color: #d4edda;
+    }
+    
+    .table-card.selected {
+        border-color: #007bff;
+        background-color: #cce7ff;
+        transform: scale(1.05);
+    }
+    
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .product-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .product-card:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    
+    .product-card img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-bottom: 8px;
+    }
+    
+    .order-items {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .order-item {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 8px;
+        background-color: #f8f9fa;
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .quantity-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .quantity-btn:hover {
+        background-color: #0056b3;
+    }
+    
+    .quantity-btn.remove {
+        background-color: #dc3545;
+    }
+    
+    .quantity-btn.remove:hover {
+        background-color: #c82333;
+    }
+    
+    .search-box {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .search-box input {
+        padding-left: 40px;
+        border-radius: 25px;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .category-tabs {
+        margin-bottom: 20px;
+    }
+    
+    .category-tab {
+        padding: 8px 16px;
+        border: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+        border-radius: 20px;
+        margin-right: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .category-tab.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    
+    .order-summary {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .total-display {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #28a745;
+        text-align: center;
+        margin: 10px 0;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .action-btn {
+        flex: 1;
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-confirm {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .btn-confirm:hover {
+        background-color: #218838;
+    }
+    
+    .btn-cancel {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .btn-cancel:hover {
+        background-color: #c82333;
+    }
+    
+    .btn-print {
+        background-color: #17a2b8;
+        color: white;
+    }
+    
+    .btn-print:hover {
+        background-color: #138496;
+    }
+    
+    .notes-section {
+        margin-top: 15px;
+    }
+    
+    .notes-section textarea {
+        border-radius: 8px;
+        resize: vertical;
+    }
+    
+    @media (max-width: 768px) {
+        .table-grid {
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        }
+        
+        .product-grid {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Header simplificado -->
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0">
                 <i class="bi bi-clipboard-check text-primary"></i>
-                Gestión de Pedidos
+                Toma de Pedidos
             </h1>
-            <p class="text-muted mb-0">Panel para meseros</p>
+            <p class="text-muted mb-0">Interfaz optimizada para meseros</p>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary" onclick="refreshData()">
+            <button class="btn btn-outline-primary" onclick="refreshTables()">
                 <i class="bi bi-arrow-clockwise"></i> Actualizar
             </button>
-            <button class="btn btn-primary" onclick="showNewOrderModal()">
-                <i class="bi bi-plus-lg"></i> Nuevo Pedido
+            <button class="btn btn-success" onclick="showActiveOrders()">
+                <i class="bi bi-list-check"></i> Pedidos Activos
             </button>
         </div>
     </div>
 
-    <!-- Estadísticas rápidas -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="card-title">Mesas Ocupadas</h6>
-                            <h3 class="mb-0" id="occupied-tables-count">0</h3>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="bi bi-table fs-1"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="card-title">Pendientes</h6>
-                            <h3 class="mb-0" id="pending-orders-count">0</h3>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="bi bi-clock fs-1"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="card-title">Listos</h6>
-                            <h3 class="mb-0" id="ready-orders-count">0</h3>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="bi bi-check-circle fs-1"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="card-title">Pendientes Pago</h6>
-                            <h3 class="mb-0" id="pending-payment-count">0</h3>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="bi bi-credit-card fs-1"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Vista principal simplificada -->
     <div class="row">
-        <!-- Mesas disponibles -->
+        <!-- Panel izquierdo: Mesas -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-table"></i> Mesas Disponibles
+                        <i class="bi bi-grid-3x3-gap"></i> Mesas
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div id="available-tables" class="row g-2">
-                        <!-- Mesas disponibles se cargarán aquí -->
+                    <div class="table-grid" id="tablesGrid">
+                        <!-- Las mesas se cargarán dinámicamente -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Pedidos activos -->
-        <div class="col-md-8">
+        <!-- Panel central: Productos -->
+        <div class="col-md-5">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-clipboard"></i> Pedidos Activos
+                        <i class="bi bi-box"></i> Productos
                     </h5>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary active" data-filter="all">
-                            Todos
-                        </button>
-                        <button type="button" class="btn btn-outline-warning" data-filter="pending">
-                            Pendientes
-                        </button>
-                        <button type="button" class="btn btn-outline-success" data-filter="ready">
-                            Listos
-                        </button>
-                    </div>
                 </div>
                 <div class="card-body">
-                    <div id="active-orders-list">
-                        <!-- Pedidos activos se cargarán aquí -->
+                    <!-- Búsqueda -->
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="form-control" id="productSearch" 
+                               placeholder="Buscar productos..." onkeyup="filterProducts()">
+                    </div>
+
+                    <!-- Categorías -->
+                    <div class="category-tabs" id="categoryTabs">
+                        <!-- Las categorías se cargarán dinámicamente -->
+                    </div>
+
+                    <!-- Grid de productos -->
+                    <div class="product-grid" id="productsGrid">
+                        <!-- Los productos se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel derecho: Pedido actual -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-receipt"></i> Pedido Actual
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="currentOrderInfo">
+                        <p class="text-muted">Selecciona una mesa para comenzar</p>
+                    </div>
+
+                    <div class="order-items" id="orderItems">
+                        <!-- Los items del pedido se mostrarán aquí -->
+                    </div>
+
+                    <div class="order-summary" id="orderSummary" style="display: none;">
+                        <div class="total-display" id="orderTotal">
+                            Total: $0.00
+                        </div>
+                        
+                        <div class="notes-section">
+                            <label for="orderNotes" class="form-label">Notas del pedido:</label>
+                            <textarea class="form-control" id="orderNotes" rows="3" 
+                                      placeholder="Instrucciones especiales..."></textarea>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="action-btn btn-confirm" onclick="confirmOrder()">
+                                <i class="bi bi-check-circle"></i> Confirmar
+                            </button>
+                            <button class="action-btn btn-print" onclick="printTicket()">
+                                <i class="bi bi-printer"></i> Imprimir
+                            </button>
+                            <button class="action-btn btn-cancel" onclick="clearOrder()">
+                                <i class="bi bi-x-circle"></i> Limpiar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -134,583 +351,520 @@
     </div>
 </div>
 
-<!-- Modal para nuevo pedido -->
-<div class="modal fade" id="newOrderModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+<!-- Modal para pedidos activos -->
+<div class="modal fade" id="activeOrdersModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Nuevo Pedido</h5>
+                <h5 class="modal-title">
+                    <i class="bi bi-list-check"></i> Pedidos Activos
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="newOrderForm">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="orderTable" class="form-label">Mesa *</label>
-                                <select class="form-select" id="orderTable" required>
-                                    <option value="">Seleccionar mesa...</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="orderCustomer" class="form-label">Cliente (opcional)</label>
-                                <input type="text" class="form-control" id="orderCustomer" placeholder="Nombre del cliente">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Productos</label>
-                        <div id="orderItems">
-                            <div class="order-item row g-2 mb-2">
-                                <div class="col-md-6">
-                                    <select class="form-select product-select" required>
-                                        <option value="">Seleccionar producto...</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <input type="number" class="form-control quantity-input" placeholder="Cant." min="1" value="1" required>
-                                </div>
-                                <div class="col-md-2">
-                                    <input type="text" class="form-control price-display" placeholder="Precio" readonly>
-                                </div>
-                                <div class="col-md-1">
-                                    <button type="button" class="btn btn-outline-danger btn-sm remove-item">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="addOrderItem()">
-                            <i class="bi bi-plus"></i> Agregar Producto
-                        </button>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="orderNotes" class="form-label">Notas especiales</label>
-                        <textarea class="form-control" id="orderNotes" rows="2" placeholder="Instrucciones especiales, alergias, etc."></textarea>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="orderPriority" class="form-label">Prioridad</label>
-                                <select class="form-select" id="orderPriority">
-                                    <option value="normal">Normal</option>
-                                    <option value="high">Alta</option>
-                                    <option value="urgent">Urgente</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Total</label>
-                                <h4 class="text-primary" id="orderTotal">$0.00</h4>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="createOrder()">
-                    <i class="bi bi-check-lg"></i> Crear Pedido
-                </button>
+                <div id="activeOrdersList">
+                    <!-- Los pedidos activos se cargarán aquí -->
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal para ver detalles del pedido -->
+<!-- Modal para detalles del pedido -->
 <div class="modal fade" id="orderDetailModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="orderDetailTitle">Detalles del Pedido</h5>
+                <h5 class="modal-title">
+                    <i class="bi bi-receipt"></i> Detalles del Pedido
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="orderDetailContent">
-                <!-- Contenido dinámico -->
-            </div>
-            <div class="modal-footer" id="orderDetailActions">
-                <!-- Acciones dinámicas -->
+                <!-- Los detalles se cargarán aquí -->
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-let tables = [];
+// Variables globales
+let currentTable = null;
+let currentOrder = {
+    items: [],
+    notes: '',
+    total: 0
+};
 let products = [];
-let activeOrders = [];
-let currentOrderId = null;
+let categories = [];
+let tables = [];
 
-// Cargar datos al iniciar
+// Inicialización
 document.addEventListener('DOMContentLoaded', function() {
-    loadData();
-    // Auto-refresh cada 30 segundos
-    setInterval(loadData, 30000);
+    loadTables();
+    loadProducts();
+    loadCategories();
+    
+    // Actualizar cada 30 segundos
+    setInterval(refreshTables, 30000);
 });
 
-async function loadData() {
-    await Promise.all([
-        loadTables(),
-        loadProducts(),
-        loadActiveOrders()
-    ]);
-    updateStats();
-}
-
+// Cargar mesas
 async function loadTables() {
     try {
         const response = await fetch('/api/v1/tables/');
         tables = await response.json();
-        renderAvailableTables();
+        renderTables();
     } catch (error) {
         console.error('Error cargando mesas:', error);
+        showAlert('Error cargando mesas', 'danger');
     }
 }
 
+// Renderizar mesas
+function renderTables() {
+    const grid = document.getElementById('tablesGrid');
+    grid.innerHTML = '';
+    
+    tables.forEach(table => {
+        const card = document.createElement('div');
+        card.className = `table-card ${table.status === 'ocupada' ? 'occupied' : 'available'}`;
+        card.onclick = () => selectTable(table);
+        
+        card.innerHTML = `
+            <div class="fw-bold">Mesa ${table.table_number}</div>
+            <div class="small text-muted">${table.status}</div>
+            ${table.current_order ? `<div class="small text-danger">Pedido #${table.current_order}</div>` : ''}
+        `;
+        
+        grid.appendChild(card);
+    });
+}
+
+// Seleccionar mesa
+function selectTable(table) {
+    // Deseleccionar mesa anterior
+    document.querySelectorAll('.table-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Seleccionar nueva mesa
+    event.target.closest('.table-card').classList.add('selected');
+    
+    currentTable = table;
+    currentOrder = {
+        items: [],
+        notes: '',
+        total: 0
+    };
+    
+    updateOrderInfo();
+    updateOrderSummary();
+}
+
+// Cargar productos
 async function loadProducts() {
     try {
         const response = await fetch('/api/v1/products/');
-        const data = await response.json();
-        products = data.items || data;
-        populateProductSelects();
+        products = await response.json();
+        renderProducts();
     } catch (error) {
         console.error('Error cargando productos:', error);
+        showAlert('Error cargando productos', 'danger');
     }
 }
 
-async function loadActiveOrders() {
+// Renderizar productos
+function renderProducts(filteredProducts = null) {
+    const grid = document.getElementById('productsGrid');
+    const productsToShow = filteredProducts || products;
+    
+    grid.innerHTML = '';
+    
+    productsToShow.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.onclick = () => addToOrder(product);
+        
+        card.innerHTML = `
+            <img src="${product.image_url || '/static/images/default-product.png'}" 
+                 alt="${product.name}" onerror="this.src='/static/images/default-product.png'">
+            <div class="fw-bold">${product.name}</div>
+            <div class="text-success">$${product.price}</div>
+            <div class="small text-muted">${product.category || 'Sin categoría'}</div>
+        `;
+        
+        grid.appendChild(card);
+    });
+}
+
+// Filtrar productos
+function filterProducts() {
+    const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+    const filtered = products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.description?.toLowerCase().includes(searchTerm)
+    );
+    renderProducts(filtered);
+}
+
+// Cargar categorías
+async function loadCategories() {
     try {
-        const response = await fetch('/api/v1/orders/active');
-        activeOrders = await response.json();
-        renderActiveOrders();
+        const response = await fetch('/api/v1/products/categories');
+        categories = await response.json();
+        renderCategories();
     } catch (error) {
-        console.error('Error cargando pedidos:', error);
+        console.error('Error cargando categorías:', error);
     }
 }
 
-function renderAvailableTables() {
-    const container = document.getElementById('available-tables');
-    const availableTables = tables.filter(t => t.status === 'OCCUPIED');
+// Renderizar categorías
+function renderCategories() {
+    const tabs = document.getElementById('categoryTabs');
+    tabs.innerHTML = '<div class="category-tab active" onclick="filterByCategory(null)">Todos</div>';
     
-    container.innerHTML = '';
+    categories.forEach(category => {
+        const tab = document.createElement('div');
+        tab.className = 'category-tab';
+        tab.textContent = category;
+        tab.onclick = () => filterByCategory(category);
+        tabs.appendChild(tab);
+    });
+}
+
+// Filtrar por categoría
+function filterByCategory(category) {
+    // Actualizar tabs activos
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    event.target.classList.add('active');
     
-    if (availableTables.length === 0) {
-        container.innerHTML = '<div class="col-12 text-center text-muted">No hay mesas ocupadas</div>';
+    // Filtrar productos
+    const filtered = category ? 
+        products.filter(product => product.category === category) : 
+        products;
+    renderProducts(filtered);
+}
+
+// Agregar producto al pedido
+function addToOrder(product) {
+    if (!currentTable) {
+        showAlert('Selecciona una mesa primero', 'warning');
         return;
     }
     
-    availableTables.forEach(table => {
-        const tableCard = document.createElement('div');
-        tableCard.className = 'col-6';
-        tableCard.innerHTML = `
-            <div class="card table-card" onclick="selectTableForOrder(${table.id})">
-                <div class="card-body text-center p-2">
-                    <h6 class="mb-1">Mesa ${table.table_number}</h6>
-                    <small class="text-muted">${table.name || 'Mesa'}</small>
-                    <br>
-                    <small class="text-warning">Ocupada</small>
-                </div>
+    const existingItem = currentOrder.items.find(item => item.product_id === product.id);
+    
+    if (existingItem) {
+        existingItem.quantity++;
+        existingItem.total_price = existingItem.quantity * existingItem.unit_price;
+    } else {
+        currentOrder.items.push({
+            product_id: product.id,
+            product_name: product.name,
+            unit_price: product.price,
+            quantity: 1,
+            total_price: product.price,
+            notes: ''
+        });
+    }
+    
+    updateOrderSummary();
+    showAlert(`${product.name} agregado al pedido`, 'success');
+}
+
+// Actualizar información del pedido
+function updateOrderInfo() {
+    const info = document.getElementById('currentOrderInfo');
+    if (currentTable) {
+        info.innerHTML = `
+            <div class="alert alert-info">
+                <strong>Mesa ${currentTable.table_number}</strong><br>
+                Estado: ${currentTable.status}<br>
+                ${currentTable.current_order ? `Pedido actual: #${currentTable.current_order}` : 'Nuevo pedido'}
             </div>
         `;
-        container.appendChild(tableCard);
-    });
+    } else {
+        info.innerHTML = '<p class="text-muted">Selecciona una mesa para comenzar</p>';
+    }
 }
 
-function renderActiveOrders() {
-    const container = document.getElementById('active-orders-list');
+// Actualizar resumen del pedido
+function updateOrderSummary() {
+    const summary = document.getElementById('orderSummary');
+    const items = document.getElementById('orderItems');
+    const total = document.getElementById('orderTotal');
     
-    if (activeOrders.length === 0) {
-        container.innerHTML = '<div class="text-center text-muted py-4">No hay pedidos activos</div>';
+    if (currentOrder.items.length === 0) {
+        summary.style.display = 'none';
+        items.innerHTML = '<p class="text-muted">No hay items en el pedido</p>';
         return;
     }
     
-    container.innerHTML = activeOrders.map(order => `
-        <div class="order-card mb-3 ${getOrderStatusClass(order.status)}" onclick="viewOrderDetail(${order.id})">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-3">
-                            <h6 class="mb-1">Mesa ${order.table_number}</h6>
-                            <small class="text-muted">#${order.order_number}</small>
-                        </div>
-                        <div class="col-md-3">
-                            <span class="badge ${getStatusBadgeClass(order.status)}">
-                                ${getStatusText(order.status)}
-                            </span>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted">
-                                ${formatDateTime(order.created_at)}
-                            </small>
-                        </div>
-                        <div class="col-md-3 text-end">
-                            <h6 class="mb-0">$${order.total_amount}</h6>
-                            <small class="text-muted">${order.items_count} items</small>
-                        </div>
-                    </div>
+    summary.style.display = 'block';
+    
+    // Calcular total
+    currentOrder.total = currentOrder.items.reduce((sum, item) => sum + item.total_price, 0);
+    
+    // Renderizar items
+    items.innerHTML = '';
+    currentOrder.items.forEach((item, index) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'order-item';
+        itemDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${item.product_name}</strong><br>
+                    <small class="text-muted">$${item.unit_price} c/u</small>
+                </div>
+                <div class="quantity-controls">
+                    <button class="quantity-btn" onclick="updateQuantity(${index}, -1)">-</button>
+                    <span class="mx-2 fw-bold">${item.quantity}</span>
+                    <button class="quantity-btn" onclick="updateQuantity(${index}, 1)">+</button>
+                    <button class="quantity-btn remove" onclick="removeItem(${index})">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </div>
             </div>
-        </div>
-    `).join('');
-}
-
-function getOrderStatusClass(status) {
-    switch(status) {
-        case 'PENDING': return 'border-warning';
-        case 'PREPARING': return 'border-info';
-        case 'READY': return 'border-success';
-        case 'SERVED': return 'border-primary';
-        default: return 'border-secondary';
-    }
-}
-
-function getStatusBadgeClass(status) {
-    switch(status) {
-        case 'PENDING': return 'bg-warning';
-        case 'PREPARING': return 'bg-info';
-        case 'READY': return 'bg-success';
-        case 'SERVED': return 'bg-primary';
-        default: return 'bg-secondary';
-    }
-}
-
-function getStatusText(status) {
-    switch(status) {
-        case 'PENDING': return 'Pendiente';
-        case 'PREPARING': return 'Preparando';
-        case 'READY': return 'Listo';
-        case 'SERVED': return 'Servido';
-        default: return 'Desconocido';
-    }
-}
-
-function formatDateTime(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('es-ES', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-    });
-}
-
-function updateStats() {
-    const occupiedTables = tables.filter(t => t.status === 'OCCUPIED').length;
-    const pendingOrders = activeOrders.filter(o => o.status === 'PENDING').length;
-    const readyOrders = activeOrders.filter(o => o.status === 'READY').length;
-    const pendingPayment = activeOrders.filter(o => o.status === 'SERVED').length;
-    
-    document.getElementById('occupied-tables-count').textContent = occupiedTables;
-    document.getElementById('pending-orders-count').textContent = pendingOrders;
-    document.getElementById('ready-orders-count').textContent = readyOrders;
-    document.getElementById('pending-payment-count').textContent = pendingPayment;
-}
-
-function showNewOrderModal() {
-    const modal = new bootstrap.Modal(document.getElementById('newOrderModal'));
-    populateTableSelect();
-    modal.show();
-}
-
-function populateTableSelect() {
-    const select = document.getElementById('orderTable');
-    const occupiedTables = tables.filter(t => t.status === 'OCCUPIED');
-    
-    select.innerHTML = '<option value="">Seleccionar mesa...</option>';
-    occupiedTables.forEach(table => {
-        const option = document.createElement('option');
-        option.value = table.id;
-        option.textContent = `Mesa ${table.table_number} - ${table.name || 'Mesa'}`;
-        select.appendChild(option);
-    });
-}
-
-function populateProductSelects() {
-    const selects = document.querySelectorAll('.product-select');
-    selects.forEach(select => {
-        select.innerHTML = '<option value="">Seleccionar producto...</option>';
-        products.forEach(product => {
-            const option = document.createElement('option');
-            option.value = product.id;
-            option.textContent = `${product.name} - $${product.price}`;
-            option.dataset.price = product.price;
-            select.appendChild(option);
-        });
-    });
-}
-
-function addOrderItem() {
-    const container = document.getElementById('orderItems');
-    const newItem = document.createElement('div');
-    newItem.className = 'order-item row g-2 mb-2';
-    newItem.innerHTML = `
-        <div class="col-md-6">
-            <select class="form-select product-select" required>
-                <option value="">Seleccionar producto...</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <input type="number" class="form-control quantity-input" placeholder="Cant." min="1" value="1" required>
-        </div>
-        <div class="col-md-2">
-            <input type="text" class="form-control price-display" placeholder="Precio" readonly>
-        </div>
-        <div class="col-md-1">
-            <button type="button" class="btn btn-outline-danger btn-sm remove-item">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-    `;
-    
-    container.appendChild(newItem);
-    populateProductSelects();
-    setupItemListeners(newItem);
-}
-
-function setupItemListeners(itemElement) {
-    const select = itemElement.querySelector('.product-select');
-    const quantity = itemElement.querySelector('.quantity-input');
-    const priceDisplay = itemElement.querySelector('.price-display');
-    const removeBtn = itemElement.querySelector('.remove-item');
-    
-    select.addEventListener('change', () => updateItemPrice(itemElement));
-    quantity.addEventListener('input', () => updateItemPrice(itemElement));
-    removeBtn.addEventListener('click', () => itemElement.remove());
-}
-
-function updateItemPrice(itemElement) {
-    const select = itemElement.querySelector('.product-select');
-    const quantity = itemElement.querySelector('.quantity-input');
-    const priceDisplay = itemElement.querySelector('.price-display');
-    
-    if (select.value && quantity.value) {
-        const product = products.find(p => p.id == select.value);
-        const total = product.price * quantity.value;
-        priceDisplay.value = `$${total.toFixed(2)}`;
-    } else {
-        priceDisplay.value = '';
-    }
-    
-    updateOrderTotal();
-}
-
-function updateOrderTotal() {
-    const items = document.querySelectorAll('.order-item');
-    let total = 0;
-    
-    items.forEach(item => {
-        const priceDisplay = item.querySelector('.price-display');
-        const price = parseFloat(priceDisplay.value.replace('$', '')) || 0;
-        total += price;
+            <div class="mt-2">
+                <input type="text" class="form-control form-control-sm" 
+                       placeholder="Notas para este item..." 
+                       value="${item.notes}"
+                       onchange="updateItemNotes(${index}, this.value)">
+            </div>
+        `;
+        items.appendChild(itemDiv);
     });
     
-    document.getElementById('orderTotal').textContent = `$${total.toFixed(2)}`;
+    total.textContent = `Total: $${currentOrder.total.toFixed(2)}`;
 }
 
-async function createOrder() {
-    const form = document.getElementById('newOrderForm');
-    const formData = new FormData(form);
-    
-    const items = [];
-    document.querySelectorAll('.order-item').forEach(item => {
-        const productId = item.querySelector('.product-select').value;
-        const quantity = item.querySelector('.quantity-input').value;
-        
-        if (productId && quantity) {
-            items.push({
-                product_id: parseInt(productId),
-                quantity: parseInt(quantity)
-            });
-        }
-    });
-    
-    if (!formData.get('orderTable') || items.length === 0) {
-        showAlert('Por favor completa todos los campos requeridos', 'error');
+// Actualizar cantidad
+function updateQuantity(index, change) {
+    const item = currentOrder.items[index];
+    item.quantity = Math.max(1, item.quantity + change);
+    item.total_price = item.quantity * item.unit_price;
+    updateOrderSummary();
+}
+
+// Remover item
+function removeItem(index) {
+    currentOrder.items.splice(index, 1);
+    updateOrderSummary();
+}
+
+// Actualizar notas del item
+function updateItemNotes(index, notes) {
+    currentOrder.items[index].notes = notes;
+}
+
+// Confirmar pedido
+async function confirmOrder() {
+    if (!currentTable || currentOrder.items.length === 0) {
+        showAlert('Selecciona una mesa y agrega productos', 'warning');
         return;
     }
     
-    const orderData = {
-        table_id: parseInt(formData.get('orderTable')),
-        customer_name: formData.get('orderCustomer') || null,
-        notes: formData.get('orderNotes') || null,
-        priority: formData.get('orderPriority') || 'normal',
-        items: items
-    };
+    const notes = document.getElementById('orderNotes').value;
+    currentOrder.notes = notes;
     
     try {
+        const orderData = {
+            table_id: currentTable.id,
+            order_type: 'mesa',
+            notes: notes,
+            items: currentOrder.items.map(item => ({
+                product_id: item.product_id,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                notes: item.notes
+            }))
+        };
+        
         const response = await fetch('/api/v1/orders/', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
             body: JSON.stringify(orderData)
         });
         
         if (response.ok) {
-            showAlert('Pedido creado exitosamente', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('newOrderModal')).hide();
-            form.reset();
-            loadData();
+            const result = await response.json();
+            showAlert(`Pedido #${result.order_number} creado exitosamente`, 'success');
+            
+            // Limpiar pedido actual
+            clearOrder();
+            
+            // Actualizar mesas
+            loadTables();
+            
+            // Enviar a cocina
+            sendToKitchen(result.id);
         } else {
-            showAlert('Error creando pedido', 'error');
+            const error = await response.json();
+            showAlert(`Error: ${error.detail}`, 'danger');
         }
     } catch (error) {
-        console.error('Error:', error);
-        showAlert('Error creando pedido', 'error');
+        console.error('Error creando pedido:', error);
+        showAlert('Error creando pedido', 'danger');
     }
 }
 
-function selectTableForOrder(tableId) {
-    const modal = new bootstrap.Modal(document.getElementById('newOrderModal'));
-    document.getElementById('orderTable').value = tableId;
-    modal.show();
-}
-
-function viewOrderDetail(orderId) {
-    currentOrderId = orderId;
-    const order = activeOrders.find(o => o.id === orderId);
-    
-    if (!order) return;
-    
-    const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
-    const title = document.getElementById('orderDetailTitle');
-    const content = document.getElementById('orderDetailContent');
-    const actions = document.getElementById('orderDetailActions');
-    
-    title.textContent = `Pedido #${order.order_number} - Mesa ${order.table_number}`;
-    
-    content.innerHTML = `
-        <div class="row">
-            <div class="col-md-6">
-                <h6>Información del Pedido</h6>
-                <p><strong>Mesa:</strong> ${order.table_number}</p>
-                <p><strong>Cliente:</strong> ${order.customer_name || 'No especificado'}</p>
-                <p><strong>Estado:</strong> <span class="badge ${getStatusBadgeClass(order.status)}">${getStatusText(order.status)}</span></p>
-                <p><strong>Fecha:</strong> ${formatDateTime(order.created_at)}</p>
-                ${order.notes ? `<p><strong>Notas:</strong> ${order.notes}</p>` : ''}
-            </div>
-            <div class="col-md-6">
-                <h6>Productos</h6>
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th>Cant.</th>
-                                <th>Precio</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${order.items.map(item => `
-                                <tr>
-                                    <td>${item.product_name}</td>
-                                    <td>${item.quantity}</td>
-                                    <td>$${item.unit_price}</td>
-                                    <td>$${item.total_price}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <th colspan="3">Total</th>
-                                <th>$${order.total_amount}</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    let actionsHtml = '';
-    if (order.status === 'READY') {
-        actionsHtml = `
-            <button class="btn btn-success" onclick="markOrderServed(${order.id})">
-                <i class="bi bi-check-lg"></i> Marcar como Servido
-            </button>
-        `;
-    }
-    
-    actions.innerHTML = actionsHtml;
-    modal.show();
-}
-
-async function markOrderServed(orderId) {
+// Enviar a cocina
+async function sendToKitchen(orderId) {
     try {
-        const response = await fetch(`/api/v1/orders/${orderId}/served`, {
+        await fetch(`/api/v1/kitchen/orders/${orderId}/start`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+    } catch (error) {
+        console.error('Error enviando a cocina:', error);
+    }
+}
+
+// Limpiar pedido
+function clearOrder() {
+    currentOrder = {
+        items: [],
+        notes: '',
+        total: 0
+    };
+    document.getElementById('orderNotes').value = '';
+    updateOrderSummary();
+    
+    // Deseleccionar mesa
+    document.querySelectorAll('.table-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    currentTable = null;
+    updateOrderInfo();
+}
+
+// Imprimir ticket
+function printTicket() {
+    if (currentOrder.items.length === 0) {
+        showAlert('No hay items para imprimir', 'warning');
+        return;
+    }
+    
+    // Aquí implementarías la lógica de impresión
+    showAlert('Función de impresión en desarrollo', 'info');
+}
+
+// Mostrar pedidos activos
+async function showActiveOrders() {
+    try {
+        const response = await fetch('/api/v1/orders/active');
+        const orders = await response.json();
+        
+        const modal = new bootstrap.Modal(document.getElementById('activeOrdersModal'));
+        const list = document.getElementById('activeOrdersList');
+        
+        list.innerHTML = '';
+        orders.forEach(order => {
+            const orderDiv = document.createElement('div');
+            orderDiv.className = 'card mb-3';
+            orderDiv.innerHTML = `
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Pedido #${order.order_number}</h6>
+                            <p class="card-text">
+                                Mesa: ${order.table_name || 'N/A'}<br>
+                                Mesero: ${order.waiter_name}<br>
+                                Estado: <span class="badge bg-${getStatusColor(order.status)}">${order.status}</span>
+                            </p>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="viewOrderDetails(${order.id})">
+                            Ver Detalles
+                        </button>
+                    </div>
+                </div>
+            `;
+            list.appendChild(orderDiv);
         });
         
-        if (response.ok) {
-            showAlert('Pedido marcado como servido', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('orderDetailModal')).hide();
-            loadData();
-        } else {
-            showAlert('Error actualizando pedido', 'error');
-        }
+        modal.show();
     } catch (error) {
-        console.error('Error:', error);
-        showAlert('Error actualizando pedido', 'error');
+        console.error('Error cargando pedidos activos:', error);
+        showAlert('Error cargando pedidos activos', 'danger');
     }
 }
 
-function refreshData() {
-    loadData();
+// Ver detalles del pedido
+async function viewOrderDetails(orderId) {
+    try {
+        const response = await fetch(`/api/v1/orders/${orderId}`);
+        const order = await response.json();
+        
+        const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+        const content = document.getElementById('orderDetailContent');
+        
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Información del Pedido</h6>
+                    <p><strong>Número:</strong> ${order.order_number}</p>
+                    <p><strong>Mesa:</strong> ${order.table_name || 'N/A'}</p>
+                    <p><strong>Mesero:</strong> ${order.waiter_name}</p>
+                    <p><strong>Estado:</strong> <span class="badge bg-${getStatusColor(order.status)}">${order.status}</span></p>
+                    <p><strong>Total:</strong> $${order.final_amount}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Items</h6>
+                    <ul class="list-group">
+                        ${order.items.map(item => `
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>${item.product_name} x${item.quantity}</span>
+                                <span>$${item.total_price}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        modal.show();
+    } catch (error) {
+        console.error('Error cargando detalles:', error);
+        showAlert('Error cargando detalles', 'danger');
+    }
+}
+
+// Obtener color del estado
+function getStatusColor(status) {
+    const colors = {
+        'pendiente': 'warning',
+        'preparando': 'info',
+        'listo': 'success',
+        'servido': 'primary',
+        'pagado': 'secondary',
+        'cancelado': 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+// Actualizar mesas
+function refreshTables() {
+    loadTables();
+}
+
+// Utilidades
+function getToken() {
+    return localStorage.getItem('access_token');
 }
 
 function showAlert(message, type) {
     // Implementar sistema de alertas
     console.log(`${type}: ${message}`);
 }
-
-// Configurar listeners para filtros
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('[data-filter]').forEach(button => {
-        button.addEventListener('click', function() {
-            const filter = this.dataset.filter;
-            // Implementar filtrado
-            console.log('Filtrar por:', filter);
-        });
-    });
-});
 </script>
-
-<style>
-.table-card {
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.table-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.order-card {
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.order-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.order-item {
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    padding: 0.5rem;
-}
-
-@media (max-width: 768px) {
-    .col-md-3 {
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
-}
-</style>
 {% endblock %}

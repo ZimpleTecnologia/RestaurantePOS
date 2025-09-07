@@ -1,38 +1,292 @@
 {% extends "base.html" %}
 
 {% block title %}Productos - Sistema POS{% endblock %}
-{% block page_title %}Productos{% endblock %}
+{% block page_title %}Gestión de Productos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .product-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .product-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .product-image-placeholder {
+        width: 100%;
+        height: 200px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px 10px 0 0;
+        color: #6c757d;
+    }
+    
+    .view-toggle {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 8px;
+    }
+    
+    .view-toggle .btn {
+        border-radius: 6px;
+        margin: 0 2px;
+    }
+    
+    .filter-card {
+        background: white;
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .search-box {
+        border-radius: 25px;
+        border: 2px solid #e9ecef;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .search-box:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-modern {
+        border-radius: 25px;
+        padding: 10px 25px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .stock-badge {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        border-radius: 15px;
+    }
+    
+    .price-tag {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    
+    .category-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+    }
+    
+    .grid-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        padding: 20px 0;
+    }
+    
+    .table-view {
+        display: block;
+    }
+    
+    .hidden {
+        display: none !important;
+    }
+    
+    .upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 15px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .upload-area:hover {
+        border-color: #667eea;
+        background-color: #f8f9ff;
+    }
+    
+    .upload-area.dragover {
+        border-color: #667eea;
+        background-color: #f0f2ff;
+    }
+    
+    .image-preview {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 10px;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold">Gestión de Productos</h6>
-                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#productModal" onclick="openNewProduct()">
-                    <i class="bi bi-plus-circle"></i> Nuevo Producto
-                </button>
+<!-- Estadísticas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="bi bi-box fs-1 mb-3"></i>
+                <h3 id="totalProducts">0</h3>
+                <p class="mb-0">Total Productos</p>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover" id="products-table">
-                        <thead>
-                            <tr>
-                                <th>Código</th>
-                                <th>Nombre</th>
-                                <th>Precio</th>
-                                <th>Stock</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="6" class="text-center">Cargando productos...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="bi bi-check-circle fs-1 mb-3"></i>
+                <h3 id="activeProducts">0</h3>
+                <p class="mb-0">Productos Activos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="bi bi-exclamation-triangle fs-1 mb-3"></i>
+                <h3 id="lowStockProducts">0</h3>
+                <p class="mb-0">Stock Bajo</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="bi bi-currency-dollar fs-1 mb-3"></i>
+                <h3 id="totalValue">$0</h3>
+                <p class="mb-0">Valor Total</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Controles principales -->
+<div class="card filter-card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control search-box border-start-0" id="searchInput" placeholder="Buscar productos...">
                 </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="categoryFilter">
+                    <option value="">Todas las categorías</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="stockFilter">
+                    <option value="">Todos los stocks</option>
+                    <option value="low">Stock bajo</option>
+                    <option value="out">Sin stock</option>
+                    <option value="normal">Stock normal</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="view-toggle d-flex justify-content-center">
+                    <button class="btn btn-sm btn-outline-primary active" id="gridViewBtn" title="Vista de tarjetas">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="tableViewBtn" title="Vista de tabla">
+                        <i class="bi bi-list"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botones de acción -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-primary btn-modern" data-bs-toggle="modal" data-bs-target="#productModal" onclick="openNewProduct()">
+                <i class="bi bi-plus-circle"></i> Nuevo Producto
+            </button>
+            <button class="btn btn-success btn-modern" onclick="exportProducts()">
+                <i class="bi bi-download"></i> Exportar
+            </button>
+            <button class="btn btn-info btn-modern" onclick="showImportModal()">
+                <i class="bi bi-upload"></i> Importar
+            </button>
+            <button class="btn btn-warning btn-modern" onclick="refreshProducts()">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Vista de tarjetas -->
+<div id="gridView" class="grid-view">
+    <!-- Los productos se cargarán aquí dinámicamente -->
+</div>
+
+<!-- Vista de tabla -->
+<div id="tableView" class="table-view hidden">
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="products-table">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="8" class="text-center">Cargando productos...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -40,7 +294,7 @@
 
 <!-- Modal para Agregar/Editar Producto -->
 <div class="modal fade" id="productModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="productModalTitle">Nuevo Producto</h5>
@@ -50,96 +304,112 @@
                 <form id="productForm">
                     <input type="hidden" id="productId">
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Código del Producto</label>
-                                <input type="text" class="form-control" id="productCode" required>
+                        <div class="col-md-8">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre del Producto *</label>
+                                        <input type="text" class="form-control" id="productName" required>
+                                        <small class="text-muted">El código se generará automáticamente</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Código</label>
+                                        <input type="text" class="form-control" id="productCode" readonly>
+                                        <small class="text-muted">Generado automáticamente</small>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Nombre</label>
-                                <input type="text" class="form-control" id="productName" required>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Precio de Venta *</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="productPrice" step="0.01" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Precio de Costo</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="productCostPrice" step="0.01">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Stock Inicial *</label>
+                                        <input type="number" class="form-control" id="productStock" value="0" required>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Precio de Venta</label>
-                                <input type="number" class="form-control" id="productPrice" step="0.01" required>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Stock Mínimo</label>
+                                        <input type="number" class="form-control" id="productMinStock" value="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Stock Máximo</label>
+                                        <input type="number" class="form-control" id="productMaxStock" value="100">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Categoría *</label>
+                                        <div class="input-group">
+                                            <select class="form-control" id="productCategory" required>
+                                                <option value="">Seleccionar categoría...</option>
+                                            </select>
+                                            <button class="btn btn-outline-secondary" type="button" onclick="openNewCategory()" title="Crear nueva categoría">
+                                                <i class="bi bi-plus-circle"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Precio de Costo</label>
-                                <input type="number" class="form-control" id="productCostPrice" step="0.01">
+                                <label class="form-label">Descripción</label>
+                                <textarea class="form-control" id="productDescription" rows="3" placeholder="Describe el producto..."></textarea>
                             </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label">Stock Inicial</label>
-                                <input type="number" class="form-control" id="productStock" value="0" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label class="form-label">Stock Mínimo</label>
-                                <input type="number" class="form-control" id="productMinStock" value="0">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label class="form-label">Stock Máximo</label>
-                                <input type="number" class="form-control" id="productMaxStock" value="100">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Categoría</label>
-                                <div class="input-group">
-                                    <select class="form-control" id="productCategory" required>
-                                        <option value="">Seleccionar categoría...</option>
-                                    </select>
-                                    <button class="btn btn-outline-secondary" type="button" onclick="openNewCategory()" title="Crear nueva categoría">
-                                        <i class="bi bi-plus-circle"></i>
-                                    </button>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="productActive" checked>
+                                    <label class="form-check-label">Producto Activo</label>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label">Subcategoría (opcional)</label>
-                                <div class="input-group">
-                                    <select class="form-control" id="productSubcategory">
-                                        <option value="">Seleccionar subcategoría...</option>
-                                    </select>
-                                    <button class="btn btn-outline-secondary" type="button" onclick="openNewSubcategory()" title="Crear nueva subcategoría" id="btnNewSubcategory" disabled>
-                                        <i class="bi bi-plus-circle"></i>
+                                <label class="form-label">Imagen del Producto</label>
+                                <div class="upload-area" id="uploadArea" onclick="document.getElementById('imageInput').click()">
+                                    <i class="bi bi-cloud-upload fs-1 text-muted"></i>
+                                    <p class="mt-2 mb-0">Haz clic o arrastra una imagen aquí</p>
+                                    <small class="text-muted">JPG, PNG, GIF hasta 5MB</small>
+                                </div>
+                                <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                                <img id="imagePreview" class="image-preview" style="display: none;">
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" id="removeImageBtn" style="display: none;" onclick="removeImage()">
+                                        <i class="bi bi-trash"></i> Eliminar imagen
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Descripción</label>
-                        <textarea class="form-control" id="productDescription" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="productActive" checked>
-                            <label class="form-check-label">Producto Activo</label>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="saveProduct()">Guardar Producto</button>
+                <button type="button" class="btn btn-primary" onclick="saveProduct()">
+                    <i class="bi bi-check-circle"></i> Guardar Producto
+                </button>
             </div>
         </div>
     </div>
@@ -156,7 +426,7 @@
             <div class="modal-body">
                 <form id="categoryForm">
                     <div class="mb-3">
-                        <label class="form-label">Nombre de la Categoría</label>
+                        <label class="form-label">Nombre de la Categoría *</label>
                         <input type="text" class="form-control" id="categoryName" required>
                     </div>
                     <div class="mb-3">
@@ -175,36 +445,31 @@
     </div>
 </div>
 
-<!-- Modal para Crear Subcategoría -->
-<div class="modal fade" id="subcategoryModal" tabindex="-1">
+<!-- Modal para Importar -->
+<div class="modal fade" id="importModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Nueva Subcategoría</h5>
+                <h5 class="modal-title">Importar Productos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="subcategoryForm">
-                    <div class="mb-3">
-                        <label class="form-label">Categoría Padre</label>
-                        <select class="form-control" id="subcategoryParentCategory" required>
-                            <option value="">Seleccionar categoría...</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Nombre de la Subcategoría</label>
-                        <input type="text" class="form-control" id="subcategoryName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Descripción (opcional)</label>
-                        <textarea class="form-control" id="subcategoryDescription" rows="3"></textarea>
-                    </div>
-                </form>
+                <div class="upload-area" id="excelUploadArea" onclick="document.getElementById('excelInput').click()">
+                    <i class="bi bi-file-earmark-excel fs-1 text-success"></i>
+                    <p class="mt-2 mb-0">Haz clic o arrastra un archivo Excel aquí</p>
+                    <small class="text-muted">XLSX, XLS hasta 10MB</small>
+                </div>
+                <input type="file" id="excelInput" accept=".xlsx,.xls" style="display: none;" onchange="handleExcelUpload(event)">
+                <div class="mt-3">
+                    <a href="/api/v1/products/export-template" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-download"></i> Descargar Plantilla
+                    </a>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="saveSubcategory()">
-                    <i class="bi bi-check-circle"></i> Guardar Subcategoría
+                <button type="button" class="btn btn-primary" onclick="importProducts()" id="importBtn" disabled>
+                    <i class="bi bi-upload"></i> Importar
                 </button>
             </div>
         </div>
@@ -213,36 +478,97 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 let currentProductId = null;
+let currentView = 'grid';
+let productsData = [];
+let importData = null;
 
 $(document).ready(function() {
     loadProducts();
     loadCategories();
+    loadStatistics();
     
-    // Cargar subcategorías cuando se seleccione una categoría
-    $('#productCategory').on('change', function() {
-        const categoryId = $(this).val();
-        if (categoryId) {
-            loadSubcategories(categoryId);
-            $('#btnNewSubcategory').prop('disabled', false);
-        } else {
-            $('#productSubcategory').empty().append('<option value="">Seleccionar subcategoría...</option>');
-            $('#btnNewSubcategory').prop('disabled', true);
-        }
+    // Eventos de búsqueda y filtros
+    $('#searchInput').on('input', debounce(filterProducts, 300));
+    $('#categoryFilter').on('change', filterProducts);
+    $('#stockFilter').on('change', filterProducts);
+    
+    // Cambio de vista
+    $('#gridViewBtn').on('click', function() {
+        setView('grid');
     });
     
-    // Limpiar subcategorías cuando se cierre el modal de producto
-    $('#productModal').on('hidden.bs.modal', function() {
-        $('#productSubcategory').empty().append('<option value="">Seleccionar subcategoría...</option>');
-        $('#btnNewSubcategory').prop('disabled', true);
+    $('#tableViewBtn').on('click', function() {
+        setView('table');
     });
+    
+    // Drag and drop para imágenes
+    setupDragAndDrop();
 });
 
-function loadProducts() {
-    const token = localStorage.getItem('access_token');
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+function setView(view) {
+    currentView = view;
+    
+    if (view === 'grid') {
+        $('#gridView').removeClass('hidden');
+        $('#tableView').addClass('hidden');
+        $('#gridViewBtn').addClass('active').removeClass('btn-outline-primary').addClass('btn-primary');
+        $('#tableViewBtn').removeClass('active').removeClass('btn-primary').addClass('btn-outline-secondary');
+    } else {
+        $('#gridView').addClass('hidden');
+        $('#tableView').removeClass('hidden');
+        $('#tableViewBtn').addClass('active').removeClass('btn-outline-secondary').addClass('btn-secondary');
+        $('#gridViewBtn').removeClass('active').removeClass('btn-primary').addClass('btn-outline-primary');
+    }
+}
+
+function loadStatistics() {
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('access_token');
     if (!token) {
-        $('#products-table tbody').html('<tr><td colspan="6" class="text-center text-danger">No hay token de autenticación</td></tr>');
+        console.log('No hay token de autenticación para estadísticas');
+        return;
+    }
+    
+    $.ajax({
+        url: '/api/v1/products/statistics',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token
+        },
+        success: function(data) {
+            $('#totalProducts').text(data.total_products || 0);
+            $('#activeProducts').text(data.active_products || 0);
+            $('#lowStockProducts').text(data.low_stock_products || 0);
+            $('#totalValue').text('$' + (data.total_value || 0).toLocaleString());
+        },
+        error: function(xhr) {
+            console.error('Error cargando estadísticas:', xhr.responseText);
+            // Si fallan las estadísticas, no mostrar error al usuario
+        }
+    });
+}
+
+function loadProducts() {
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('access_token');
+    if (!token) {
+        showError('No hay token de autenticación. Por favor, inicie sesión nuevamente.');
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 2000);
         return;
     }
     
@@ -253,57 +579,174 @@ function loadProducts() {
             'Authorization': 'Bearer ' + token
         },
         success: function(data) {
-            const tbody = $('#products-table tbody');
-            tbody.empty();
-            
-            if (data.length === 0) {
-                tbody.html('<tr><td colspan="6" class="text-center text-muted">No hay productos registrados</td></tr>');
-            } else {
-                data.forEach(product => {
-                    const row = `
-                        <tr>
-                            <td>${product.code || 'N/A'}</td>
-                            <td>${product.name || 'N/A'}</td>
-                            <td>$${product.price || 0}</td>
-                            <td>
-                                <span class="badge bg-${product.stock <= product.min_stock ? 'danger' : 'success'}">
-                                    ${product.stock || 0}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge bg-${product.is_active ? 'success' : 'secondary'}">
-                                    ${product.is_active ? 'Activo' : 'Inactivo'}
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${product.id})">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${product.id})">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                    tbody.append(row);
-                });
-            }
+            productsData = data;
+            renderProducts(data);
+            loadStatistics();
         },
-        error: function(xhr, status, error) {
+        error: function(xhr) {
             console.error('Error al cargar productos:', xhr.responseText);
-            
             if (xhr.status === 401) {
-                $('#products-table tbody').html('<tr><td colspan="6" class="text-center text-danger">Sesión expirada. <a href="/login">Iniciar sesión</a></td></tr>');
+                showError('Sesión expirada. Redirigiendo al login...');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
             } else {
-                $('#products-table tbody').html('<tr><td colspan="6" class="text-center text-danger">Error al cargar productos</td></tr>');
+                showError('Error al cargar productos. Código: ' + xhr.status);
             }
         }
     });
 }
 
+function renderProducts(products) {
+    if (currentView === 'grid') {
+        renderGridView(products);
+    } else {
+        renderTableView(products);
+    }
+}
+
+function renderGridView(products) {
+    const gridContainer = $('#gridView');
+    gridContainer.empty();
+    
+    if (products.length === 0) {
+        gridContainer.html(`
+            <div class="col-12 text-center text-muted">
+                <i class="bi bi-box fs-1"></i>
+                <p class="mt-3">No hay productos registrados</p>
+            </div>
+        `);
+        return;
+    }
+    
+    products.forEach(product => {
+        const card = `
+            <div class="card product-card">
+                <div class="position-relative">
+                    ${product.image_url ? 
+                        `<img src="${product.image_url}" class="product-image" alt="${product.name}">` :
+                        `<div class="product-image-placeholder">
+                            <i class="bi bi-image fs-1"></i>
+                        </div>`
+                    }
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="category-badge">${product.category_name || 'Sin categoría'}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title mb-2">${product.name}</h6>
+                    <p class="text-muted small mb-2">Código: ${product.code}</p>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="price-tag">$${product.price}</span>
+                        <span class="stock-badge badge bg-${getStockBadgeColor(product.stock, product.min_stock)}">
+                            ${product.stock} unidades
+                        </span>
+                    </div>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary flex-fill" onclick="editProduct(${product.id})">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${product.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        gridContainer.append(card);
+    });
+}
+
+function renderTableView(products) {
+    const tbody = $('#products-table tbody');
+    tbody.empty();
+    
+    if (products.length === 0) {
+        tbody.html('<tr><td colspan="8" class="text-center text-muted">No hay productos registrados</td></tr>');
+        return;
+    }
+    
+    products.forEach(product => {
+        const row = `
+            <tr>
+                <td>
+                    ${product.image_url ? 
+                        `<img src="${product.image_url}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">` :
+                        `<div style="width: 50px; height: 50px; background: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-image text-muted"></i>
+                        </div>`
+                    }
+                </td>
+                <td>${product.code}</td>
+                <td><strong>${product.name}</strong></td>
+                <td><span class="category-badge">${product.category_name || 'Sin categoría'}</span></td>
+                <td><span class="price-tag">$${product.price}</span></td>
+                <td>
+                    <span class="stock-badge badge bg-${getStockBadgeColor(product.stock, product.min_stock)}">
+                        ${product.stock}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-${product.is_active ? 'success' : 'secondary'}">
+                        ${product.is_active ? 'Activo' : 'Inactivo'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${product.id})">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${product.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        tbody.append(row);
+    });
+}
+
+function getStockBadgeColor(stock, minStock) {
+    if (stock === 0) return 'danger';
+    if (stock <= minStock) return 'warning';
+    return 'success';
+}
+
+function filterProducts() {
+    const searchTerm = $('#searchInput').val().toLowerCase();
+    const categoryFilter = $('#categoryFilter').val();
+    const stockFilter = $('#stockFilter').val();
+    
+    let filtered = productsData.filter(product => {
+        // Filtro de búsqueda
+        const matchesSearch = !searchTerm || 
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.code.toLowerCase().includes(searchTerm);
+        
+        // Filtro de categoría
+        const matchesCategory = !categoryFilter || product.category_id == categoryFilter;
+        
+        // Filtro de stock
+        let matchesStock = true;
+        if (stockFilter === 'low') {
+            matchesStock = product.stock > 0 && product.stock <= product.min_stock;
+        } else if (stockFilter === 'out') {
+            matchesStock = product.stock === 0;
+        } else if (stockFilter === 'normal') {
+            matchesStock = product.stock > product.min_stock;
+        }
+        
+        return matchesSearch && matchesCategory && matchesStock;
+    });
+    
+    renderProducts(filtered);
+}
+
 function loadCategories() {
-    const token = localStorage.getItem('access_token');
-    if (!token) return;
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('access_token');
+    if (!token) {
+        console.log('No hay token de autenticación para categorías');
+        return;
+    }
     
     $.ajax({
         url: '/api/v1/products/categories',
@@ -313,49 +756,29 @@ function loadCategories() {
         },
         success: function(categories) {
             const categorySelect = $('#productCategory');
-            const subcategoryParentSelect = $('#subcategoryParentCategory');
+            const categoryFilter = $('#categoryFilter');
             
             categorySelect.empty();
             categorySelect.append('<option value="">Seleccionar categoría...</option>');
             
-            subcategoryParentSelect.empty();
-            subcategoryParentSelect.append('<option value="">Seleccionar categoría...</option>');
+            categoryFilter.empty();
+            categoryFilter.append('<option value="">Todas las categorías</option>');
             
             categories.forEach(category => {
                 categorySelect.append(`<option value="${category.id}">${category.name}</option>`);
-                subcategoryParentSelect.append(`<option value="${category.id}">${category.name}</option>`);
+                categoryFilter.append(`<option value="${category.id}">${category.name}</option>`);
             });
         },
-        error: function(xhr, status, error) {
+        error: function(xhr) {
             console.error('Error al cargar categorías:', xhr.responseText);
         }
     });
 }
 
-function loadSubcategories(categoryId = null) {
-    const token = localStorage.getItem('access_token');
-    if (!token) return Promise.resolve();
-    
-    const params = categoryId ? { category_id: categoryId } : {};
-    
-    return $.ajax({
-        url: '/api/v1/products/subcategories',
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + token
-        },
-        data: params
-    }).then(function(subcategories) {
-        const subcategorySelect = $('#productSubcategory');
-        subcategorySelect.empty();
-        subcategorySelect.append('<option value="">Seleccionar subcategoría...</option>');
-        
-        subcategories.forEach(subcategory => {
-            subcategorySelect.append(`<option value="${subcategory.id}">${subcategory.name}</option>`);
-        });
-    }).fail(function(xhr, status, error) {
-        console.error('Error al cargar subcategorías:', xhr.responseText);
-    });
+function generateProductCode() {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `PROD${timestamp}${random}`;
 }
 
 function openNewProduct() {
@@ -363,18 +786,22 @@ function openNewProduct() {
     $('#productModalTitle').text('Nuevo Producto');
     $('#productForm')[0].reset();
     $('#productActive').prop('checked', true);
+    $('#productCode').val(generateProductCode());
+    $('#imagePreview').hide();
+    $('#removeImageBtn').hide();
+    $('#uploadArea').show();
 }
 
 function editProduct(productId) {
     currentProductId = productId;
     $('#productModalTitle').text('Editar Producto');
     
-    // Cargar datos del producto
+    const token = localStorage.getItem('auth_token');
     $.ajax({
         url: `/api/v1/products/${productId}`,
         method: 'GET',
         headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+            'Authorization': 'Bearer ' + token
         },
         success: function(product) {
             $('#productId').val(product.id);
@@ -389,42 +816,49 @@ function editProduct(productId) {
             $('#productDescription').val(product.description);
             $('#productActive').prop('checked', product.is_active);
             
-            // Cargar subcategorías si hay una categoría seleccionada
-            if (product.category_id) {
-                loadSubcategories(product.category_id).then(() => {
-                    $('#productSubcategory').val(product.subcategory_id || '');
-                });
+            // Manejar imagen
+            if (product.image_url) {
+                $('#imagePreview').attr('src', product.image_url).show();
+                $('#removeImageBtn').show();
+                $('#uploadArea').hide();
+            } else {
+                $('#imagePreview').hide();
+                $('#removeImageBtn').hide();
+                $('#uploadArea').show();
             }
             
             $('#productModal').modal('show');
         },
         error: function() {
-            alert('Error al cargar el producto');
+            showError('Error al cargar el producto');
         }
     });
 }
 
 function saveProduct() {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('auth_token');
     if (!token) {
-        alert('No hay token de autenticación. Por favor, inicie sesión nuevamente.');
-        window.location.href = '/login';
+        showError('No hay token de autenticación');
         return;
     }
     
-    const productData = {
-        code: $('#productCode').val(),
-        name: $('#productName').val(),
-        price: parseFloat($('#productPrice').val()),
-        cost_price: parseFloat($('#productCostPrice').val()) || 0,
-        stock: parseInt($('#productStock').val()),
-        min_stock: parseInt($('#productMinStock').val()) || 0,
-        max_stock: parseInt($('#productMaxStock').val()) || 100,
-        category_id: parseInt($('#productCategory').val()),
-        subcategory_id: $('#productSubcategory').val() ? parseInt($('#productSubcategory').val()) : null,
-        description: $('#productDescription').val(),
-        is_active: $('#productActive').is(':checked')
-    };
+    const formData = new FormData();
+    formData.append('name', $('#productName').val());
+    formData.append('code', $('#productCode').val());
+    formData.append('price', $('#productPrice').val());
+    formData.append('cost_price', $('#productCostPrice').val() || 0);
+    formData.append('stock', $('#productStock').val());
+    formData.append('min_stock', $('#productMinStock').val() || 0);
+    formData.append('max_stock', $('#productMaxStock').val() || 100);
+    formData.append('category_id', $('#productCategory').val());
+    formData.append('description', $('#productDescription').val());
+    formData.append('is_active', $('#productActive').is(':checked'));
+    
+    // Agregar imagen si existe
+    const imageFile = document.getElementById('imageInput').files[0];
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
     
     const method = currentProductId ? 'PUT' : 'POST';
     const url = currentProductId ? `/api/v1/products/${currentProductId}` : '/api/v1/products/';
@@ -433,70 +867,181 @@ function saveProduct() {
         url: url,
         method: method,
         headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
+            'Authorization': 'Bearer ' + token
         },
-        data: JSON.stringify(productData),
+        data: formData,
+        processData: false,
+        contentType: false,
         success: function() {
             $('#productModal').modal('hide');
             loadProducts();
-            alert(currentProductId ? 'Producto actualizado correctamente' : 'Producto creado correctamente');
+            showSuccess(currentProductId ? 'Producto actualizado correctamente' : 'Producto creado correctamente');
         },
-        error: function(xhr, status, error) {
+        error: function(xhr) {
             console.error('Error al guardar producto:', xhr.responseText);
-            
-            if (xhr.status === 401) {
-                alert('Sesión expirada. Por favor, inicie sesión nuevamente.');
-                window.location.href = '/login';
-            } else if (xhr.status === 400) {
-                try {
-                    const errorData = JSON.parse(xhr.responseText);
-                    alert('Error de validación: ' + (errorData.detail || 'Datos inválidos'));
-                } catch (e) {
-                    alert('Error de validación en los datos del producto');
-                }
-            } else {
-                alert('Error al guardar el producto. Código: ' + xhr.status);
-            }
+            showError('Error al guardar el producto');
         }
     });
 }
 
 function deleteProduct(productId) {
     if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+        const token = localStorage.getItem('auth_token');
         $.ajax({
             url: `/api/v1/products/${productId}`,
             method: 'DELETE',
             headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                'Authorization': 'Bearer ' + token
             },
             success: function() {
                 loadProducts();
-                alert('Producto eliminado correctamente');
+                showSuccess('Producto eliminado correctamente');
             },
             error: function() {
-                alert('Error al eliminar el producto');
+                showError('Error al eliminar el producto');
             }
         });
     }
 }
 
-// Funciones para manejar categorías y subcategorías
+function setupDragAndDrop() {
+    const uploadArea = document.getElementById('uploadArea');
+    const excelUploadArea = document.getElementById('excelUploadArea');
+    
+    [uploadArea, excelUploadArea].forEach(area => {
+        if (!area) return;
+        
+        area.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            area.classList.add('dragover');
+        });
+        
+        area.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            area.classList.remove('dragover');
+        });
+        
+        area.addEventListener('drop', (e) => {
+            e.preventDefault();
+            area.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                if (area === uploadArea) {
+                    document.getElementById('imageInput').files = files;
+                    handleImageUpload({ target: { files: files } });
+                } else {
+                    document.getElementById('excelInput').files = files;
+                    handleExcelUpload({ target: { files: files } });
+                }
+            }
+        });
+    });
+}
+
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+            showError('La imagen debe ser menor a 5MB');
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $('#imagePreview').attr('src', e.target.result).show();
+            $('#removeImageBtn').show();
+            $('#uploadArea').hide();
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function removeImage() {
+    $('#imageInput').val('');
+    $('#imagePreview').hide();
+    $('#removeImageBtn').hide();
+    $('#uploadArea').show();
+}
+
+function showImportModal() {
+    $('#importModal').modal('show');
+}
+
+function handleExcelUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                importData = jsonData;
+                $('#importBtn').prop('disabled', false);
+                showSuccess(`Archivo cargado: ${jsonData.length} productos encontrados`);
+            } catch (error) {
+                showError('Error al procesar el archivo Excel');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+}
+
+function importProducts() {
+    if (!importData || importData.length === 0) {
+        showError('No hay datos para importar');
+        return;
+    }
+    
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        showError('No hay token de autenticación');
+        return;
+    }
+    
+    $.ajax({
+        url: '/api/v1/products/import',
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        },
+        data: JSON.stringify({ products: importData }),
+        success: function(response) {
+            $('#importModal').modal('hide');
+            loadProducts();
+            showSuccess(`Importación exitosa: ${response.imported} productos importados`);
+            importData = null;
+            $('#importBtn').prop('disabled', true);
+        },
+        error: function(xhr) {
+            showError('Error al importar productos');
+        }
+    });
+}
+
+function exportProducts() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        showError('No hay token de autenticación');
+        return;
+    }
+    
+    window.open('/api/v1/products/export', '_blank');
+}
+
+function refreshProducts() {
+    loadProducts();
+    showSuccess('Productos actualizados');
+}
+
+// Funciones para categorías
 function openNewCategory() {
     $('#categoryForm')[0].reset();
     $('#categoryModal').modal('show');
-}
-
-function openNewSubcategory() {
-    $('#subcategoryForm')[0].reset();
-    
-    // Preseleccionar la categoría actual si hay una seleccionada
-    const currentCategoryId = $('#productCategory').val();
-    if (currentCategoryId) {
-        $('#subcategoryParentCategory').val(currentCategoryId);
-    }
-    
-    $('#subcategoryModal').modal('show');
 }
 
 function saveCategory() {
@@ -506,15 +1051,16 @@ function saveCategory() {
     };
     
     if (!categoryData.name) {
-        alert('Por favor ingrese el nombre de la categoría');
+        showError('Por favor ingrese el nombre de la categoría');
         return;
     }
     
+    const token = localStorage.getItem('auth_token');
     $.ajax({
         url: '/api/v1/products/categories',
         method: 'POST',
         headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+            'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json'
         },
         data: JSON.stringify(categoryData),
@@ -522,65 +1068,23 @@ function saveCategory() {
             $('#categoryModal').modal('hide');
             loadCategories();
             $('#productCategory').val(response.id);
-            // Cargar subcategorías de la nueva categoría
-            loadSubcategories(response.id);
-            $('#btnNewSubcategory').prop('disabled', false);
-            alert('Categoría creada correctamente');
+            showSuccess('Categoría creada correctamente');
         },
         error: function(xhr) {
-            if (xhr.status === 400) {
-                try {
-                    const errorData = JSON.parse(xhr.responseText);
-                    alert('Error: ' + (errorData.detail || 'Datos inválidos'));
-                } catch (e) {
-                    alert('Error al crear la categoría');
-                }
-            } else {
-                alert('Error al crear la categoría');
-            }
+            showError('Error al crear la categoría');
         }
     });
 }
 
-function saveSubcategory() {
-    const subcategoryData = {
-        name: $('#subcategoryName').val(),
-        description: $('#subcategoryDescription').val(),
-        category_id: parseInt($('#subcategoryParentCategory').val())
-    };
-    
-    if (!subcategoryData.name || !subcategoryData.category_id) {
-        alert('Por favor complete todos los campos requeridos');
-        return;
-    }
-    
-    $.ajax({
-        url: '/api/v1/products/subcategories',
-        method: 'POST',
-        headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
-            'Content-Type': 'application/json'
-        },
-        data: JSON.stringify(subcategoryData),
-        success: function(response) {
-            $('#subcategoryModal').modal('hide');
-            loadSubcategories(response.category_id);
-            $('#productSubcategory').val(response.id);
-            alert('Subcategoría creada correctamente');
-        },
-        error: function(xhr) {
-            if (xhr.status === 400) {
-                try {
-                    const errorData = JSON.parse(xhr.responseText);
-                    alert('Error: ' + (errorData.detail || 'Datos inválidos'));
-                } catch (e) {
-                    alert('Error al crear la subcategoría');
-                }
-            } else {
-                alert('Error al crear la subcategoría');
-            }
-        }
-    });
+// Funciones de utilidad
+function showSuccess(message) {
+    // Implementar notificación de éxito
+    alert(message);
+}
+
+function showError(message) {
+    // Implementar notificación de error
+    alert('Error: ' + message);
 }
 </script>
 {% endblock %}

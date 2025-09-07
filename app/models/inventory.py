@@ -169,7 +169,7 @@ class InventoryMovement(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relaciones
-    product = relationship("Product", back_populates="inventory_movements")
+    product = relationship("Product")
     lot = relationship("InventoryLot", back_populates="movements")
     user = relationship("User", back_populates="inventory_movements")
     location = relationship("InventoryLocation")

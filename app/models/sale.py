@@ -48,7 +48,7 @@ class Sale(Base):
     commission = Column(Numeric(10, 2), default=0)
     
     # Estado
-    status = Column(String(10), default="pendiente")
+    status = Column(String(10), default=SaleStatus.PENDIENTE)
     
     # Relaciones
     customer = relationship("Customer", back_populates="sales")
@@ -78,7 +78,7 @@ class SaleItem(Base):
     
     # Relaciones
     sale = relationship("Sale", back_populates="items")
-    product = relationship("Product", back_populates="sale_items")
+    product = relationship("Product")
     
     def __repr__(self):
         return f"<SaleItem(id={self.id}, product_id={self.product_id}, quantity={self.quantity})>"

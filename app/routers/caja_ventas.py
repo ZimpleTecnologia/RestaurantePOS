@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.models.user import User
 from app.models.cash_register import CashRegister, CashSession, CashMovement, CashStatus, MovementType
-from app.models.sale import Sale, SaleItem
+from app.models.sale import Sale, SaleItem, PaymentMethod, SaleStatus
 from app.models.product import Product
 from app.auth.dependencies import get_current_active_user
 from app.services.cash_service import CashService
@@ -61,8 +61,7 @@ class AprobacionCierreRequest(BaseModel):
 
 @router.get("/estado")
 def get_estado_caja_ventas(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Obtener estado completo de caja y ventas"""
     # Verificar que existe la caja principal
@@ -230,14 +229,17 @@ def registrar_venta(
         if total_venta <= 0:
             raise HTTPException(status_code=400, detail="El total de la venta debe ser mayor a 0")
         
+        # Generar número de venta único
+        from datetime import datetime
+        sale_number = f"V{datetime.now().strftime('%Y%m%d%H%M%S')}{current_user.id:03d}"
+        
         # Crear la venta
         sale = Sale(
+            sale_number=sale_number,
             user_id=current_user.id,
             customer_id=request.customer_id,
             total=total_venta,
-            payment_method=request.payment_method,
-            notes=request.notes,
-            status="completada"
+            status="pendiente"
         )
         db.add(sale)
         db.flush()  # Para obtener el ID
@@ -249,9 +251,18 @@ def registrar_venta(
                 product_id=item_data['product'].id,
                 quantity=item_data['quantity'],
                 unit_price=item_data['price'],
-                subtotal=item_data['subtotal']
+                total=item_data['subtotal']
             )
             db.add(sale_item)
+        
+        # Crear método de pago
+        payment_method = PaymentMethod(
+            sale_id=sale.id,
+            payment_type=request.payment_method,
+            amount=total_venta,
+            notes=request.notes
+        )
+        db.add(payment_method)
         
         # Registrar movimiento de caja
         CashService.register_sale_movement(
@@ -269,7 +280,7 @@ def registrar_venta(
             "venta": {
                 "id": sale.id,
                 "total": sale.total,
-                "payment_method": sale.payment_method,
+                "payment_method": request.payment_method,
                 "items_count": len(items_validos),
                 "session_number": active_session.session_number
             }
@@ -401,8 +412,7 @@ def get_movimientos_sesion(
     session_id: Optional[int] = None,
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Obtener movimientos de la sesión actual"""
     # Si no se especifica sesión, usar la activa

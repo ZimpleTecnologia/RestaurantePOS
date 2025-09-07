@@ -11,7 +11,7 @@ import logging
 from app.database import get_db
 from app.models.user import User, UserRole
 from app.models.product import Product
-from app.models.category import Category
+from app.models.product import Category
 from app.models.inventory import (
     InventoryMovement, InventoryLot, InventoryLocation, 
     InventoryAlert, InventoryCount, InventoryCountItem,

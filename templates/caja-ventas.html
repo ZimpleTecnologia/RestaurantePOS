@@ -453,9 +453,42 @@
 
     // Inicializar módulo
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Inicializando módulo de caja-ventas...');
+        verificarEstadoAplicacion();
         cargarEstadoCaja();
         cargarMovimientos();
     });
+
+    // Función de debug para verificar el estado de la aplicación
+    function verificarEstadoAplicacion() {
+        console.log('🔍 Verificando estado de la aplicación...');
+        
+        // Verificar token de autenticación
+        const token = getAuthToken();
+        console.log('Token de autenticación:', token ? 'Presente' : 'Ausente');
+        
+        // Verificar elementos del DOM
+        const elementosCriticos = [
+            'modalVenta',
+            'productos-tabla',
+            'carrito-items',
+            'status-indicator'
+        ];
+        
+        elementosCriticos.forEach(id => {
+            const elemento = document.getElementById(id);
+            console.log(`Elemento ${id}:`, elemento ? 'Encontrado' : 'No encontrado');
+        });
+        
+        // Verificar Bootstrap
+        if (typeof bootstrap !== 'undefined') {
+            console.log('Bootstrap: Disponible');
+        } else {
+            console.error('Bootstrap: No disponible');
+        }
+        
+        console.log('✅ Verificación de estado completada');
+    }
 
     // ============================================================================
     // FUNCIONES PRINCIPALES
@@ -463,19 +496,48 @@
 
     async function cargarEstadoCaja() {
         try {
-            const token = getAuthToken();
+            console.log('Cargando estado de caja...');
+            
+            // Intentar cargar estado sin autenticación primero
             const response = await fetch('/api/v1/caja-ventas/estado', {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
 
             if (response.ok) {
                 const data = await response.json();
+                console.log('Estado de caja cargado:', data);
                 actualizarEstadoCaja(data);
-            } else if (response.status === 401) {
-                handleAuthError();
+            } else {
+                console.error('Error al cargar estado de caja:', response.status, response.statusText);
+                
+                // Si falla sin autenticación, intentar con token
+                const token = getAuthToken();
+                if (token) {
+                    console.log('Reintentando estado con autenticación...');
+                    const authResponse = await fetch('/api/v1/caja-ventas/estado', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (authResponse.ok) {
+                        const data = await authResponse.json();
+                        console.log('Estado de caja cargado con autenticación:', data);
+                        actualizarEstadoCaja(data);
+                    } else if (authResponse.status === 401) {
+                        console.warn('Error de autenticación al cargar estado');
+                        handleAuthError();
+                    } else {
+                        console.error('Error al cargar estado con autenticación:', authResponse.status);
+                        mostrarError('Error al cargar el estado de caja');
+                    }
+                } else {
+                    console.warn('No hay token de autenticación disponible para estado');
+                    mostrarError('No hay sesión activa. Por favor, inicie sesión nuevamente.');
+                }
             }
         } catch (error) {
             console.error('Error cargando estado:', error);
@@ -554,19 +616,80 @@
 
     async function cargarMovimientos() {
         try {
-            const token = getAuthToken();
+            console.log('Cargando movimientos...');
+            
+            // Intentar cargar movimientos sin autenticación primero
             const response = await fetch('/api/v1/caja-ventas/movimientos', {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
 
             if (response.ok) {
                 const data = await response.json();
-                actualizarTablaMovimientos(data.movimientos);
-            } else if (response.status === 401) {
-                handleAuthError();
+                console.log('Datos de movimientos recibidos:', data);
+                console.log('Tipo de datos:', typeof data, 'Es array:', Array.isArray(data));
+                
+                // Manejar diferentes estructuras de respuesta
+                let movimientos = [];
+                if (Array.isArray(data)) {
+                    movimientos = data;
+                } else if (data.movimientos && Array.isArray(data.movimientos)) {
+                    movimientos = data.movimientos;
+                } else if (data.data && Array.isArray(data.data)) {
+                    movimientos = data.data;
+                } else {
+                    console.warn('Estructura de datos inesperada:', data);
+                    movimientos = [];
+                }
+                
+                console.log('Movimientos procesados:', movimientos);
+                actualizarTablaMovimientos(movimientos);
+            } else {
+                console.error('Error al cargar movimientos:', response.status, response.statusText);
+                
+                // Si falla sin autenticación, intentar con token
+                const token = getAuthToken();
+                if (token) {
+                    console.log('Reintentando movimientos con autenticación...');
+                    const authResponse = await fetch('/api/v1/caja-ventas/movimientos', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (authResponse.ok) {
+                        const data = await authResponse.json();
+                        console.log('Movimientos cargados con autenticación:', data);
+                        console.log('Tipo de datos (auth):', typeof data, 'Es array:', Array.isArray(data));
+                        
+                        // Manejar diferentes estructuras de respuesta
+                        let movimientos = [];
+                        if (Array.isArray(data)) {
+                            movimientos = data;
+                        } else if (data.movimientos && Array.isArray(data.movimientos)) {
+                            movimientos = data.movimientos;
+                        } else if (data.data && Array.isArray(data.data)) {
+                            movimientos = data.data;
+                        } else {
+                            console.warn('Estructura de datos inesperada (auth):', data);
+                            movimientos = [];
+                        }
+                        
+                        console.log('Movimientos procesados (auth):', movimientos);
+                        actualizarTablaMovimientos(movimientos);
+                    } else if (authResponse.status === 401) {
+                        console.warn('Error de autenticación al cargar movimientos');
+                        handleAuthError();
+                    } else {
+                        console.error('Error al cargar movimientos con autenticación:', authResponse.status);
+                        const errorData = await authResponse.json().catch(() => ({}));
+                        console.error('Detalles del error:', errorData);
+                    }
+                } else {
+                    console.warn('No hay token de autenticación disponible para movimientos');
+                }
             }
         } catch (error) {
             console.error('Error cargando movimientos:', error);
@@ -575,6 +698,12 @@
 
     function actualizarTablaMovimientos(movimientos) {
         const tbody = document.getElementById('movimientos-tabla');
+        
+        // Verificar que movimientos sea un array válido
+        if (!movimientos || !Array.isArray(movimientos)) {
+            console.warn('Movimientos no es un array válido:', movimientos);
+            movimientos = [];
+        }
         
         if (movimientos.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay movimientos</td></tr>';
@@ -709,33 +838,101 @@
     // ============================================================================
 
     function registrarVenta() {
-        carrito = [];
-        actualizarCarrito();
-        cargarProductos();
-        new bootstrap.Modal(document.getElementById('modalVenta')).show();
+        try {
+            console.log('Iniciando nueva venta...');
+            carrito = [];
+            actualizarCarrito();
+            
+            // Cargar productos de forma asíncrona sin bloquear el modal
+            cargarProductos().then(() => {
+                console.log('Productos cargados, mostrando modal');
+            }).catch(error => {
+                console.error('Error cargando productos:', error);
+            });
+            
+            // Mostrar modal inmediatamente
+            const modal = new bootstrap.Modal(document.getElementById('modalVenta'));
+            modal.show();
+            
+            // Prevenir cierre accidental del modal
+            document.getElementById('modalVenta').addEventListener('hide.bs.modal', function (event) {
+                console.log('Modal de venta cerrado');
+            });
+            
+            // Prevenir submit del formulario
+            document.getElementById('formVenta').addEventListener('submit', function(event) {
+                event.preventDefault();
+                console.log('Submit del formulario prevenido');
+                return false;
+            });
+            
+        } catch (error) {
+            console.error('Error al registrar venta:', error);
+            mostrarError('Error al abrir modal de venta');
+        }
     }
 
     async function cargarProductos() {
         try {
-            const token = getAuthToken();
+            console.log('Cargando productos...');
+            
+            // Intentar cargar productos sin autenticación primero
             const response = await fetch('/api/v1/products/', {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
 
             if (response.ok) {
                 productos = await response.json();
+                console.log('Productos cargados:', productos.length);
                 actualizarTablaProductos(productos);
+                configurarEventListeners();
+            } else {
+                console.error('Error al cargar productos:', response.status, response.statusText);
+                
+                // Si falla sin autenticación, intentar con token
+                const token = getAuthToken();
+                if (token) {
+                    console.log('Reintentando con autenticación...');
+                    const authResponse = await fetch('/api/v1/products/', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (authResponse.ok) {
+                        productos = await authResponse.json();
+                        console.log('Productos cargados con autenticación:', productos.length);
+                        actualizarTablaProductos(productos);
+                        configurarEventListeners();
+                    } else if (authResponse.status === 401) {
+                        console.warn('Error de autenticación al cargar productos');
+                        handleAuthError();
+                    } else {
+                        console.error('Error al cargar productos con autenticación:', authResponse.status);
+                        mostrarError('Error al cargar productos. Intente nuevamente.');
+                    }
+                } else {
+                    console.warn('No hay token de autenticación disponible');
+                    mostrarError('No hay sesión activa. Por favor, inicie sesión nuevamente.');
+                }
             }
         } catch (error) {
             console.error('Error cargando productos:', error);
+            mostrarError('Error de conexión al cargar productos.');
         }
     }
 
     function actualizarTablaProductos(productos) {
         const tbody = document.querySelector('#productos-tabla tbody');
+        
+        // Verificar que productos sea un array válido
+        if (!productos || !Array.isArray(productos)) {
+            console.warn('Productos no es un array válido:', productos);
+            productos = [];
+        }
         
         if (productos.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay productos disponibles</td></tr>';
@@ -749,7 +946,10 @@
                 <td>$${parseFloat(prod.price).toFixed(2)}</td>
                 <td>${prod.stock}</td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="agregarAlCarrito(${prod.id}, '${prod.name}', ${prod.price})">
+                    <button type="button" class="btn btn-sm btn-primary btn-agregar-carrito" 
+                            data-product-id="${prod.id}" 
+                            data-product-name="${prod.name}" 
+                            data-product-price="${prod.price}">
                         <i class="fas fa-plus"></i>
                     </button>
                 </td>
@@ -757,21 +957,78 @@
         `).join('');
     }
 
-    function agregarAlCarrito(productId, nombre, precio) {
-        const item = carrito.find(i => i.product_id === productId);
+    // Configurar event listeners usando delegation
+    function configurarEventListeners() {
+        console.log('Configurando event listeners...');
         
-        if (item) {
-            item.quantity += 1;
-        } else {
-            carrito.push({
-                product_id: productId,
-                name: nombre,
-                price: precio,
-                quantity: 1
-            });
+        // Remover listeners anteriores si existen
+        const modal = document.getElementById('modalVenta');
+        if (modal) {
+            modal.removeEventListener('click', handleModalClick);
+            modal.addEventListener('click', handleModalClick);
+            console.log('Event listener configurado para el modal');
         }
+    }
+    
+    // Manejar clics en el modal usando event delegation
+    function handleModalClick(event) {
+        const target = event.target;
         
-        actualizarCarrito();
+        // Verificar si el clic fue en un botón de agregar al carrito
+        if (target.classList.contains('btn-agregar-carrito') || target.closest('.btn-agregar-carrito')) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const button = target.classList.contains('btn-agregar-carrito') ? target : target.closest('.btn-agregar-carrito');
+            
+            const productId = parseInt(button.getAttribute('data-product-id'));
+            const productName = button.getAttribute('data-product-name');
+            const productPrice = parseFloat(button.getAttribute('data-product-price'));
+            
+            console.log('Botón de agregar al carrito clickeado:', { productId, productName, productPrice });
+            
+            agregarAlCarrito(productId, productName, productPrice);
+            
+            return false;
+        }
+    }
+    
+    function agregarAlCarrito(productId, nombre, precio) {
+        try {
+            console.log('Agregando al carrito:', { productId, nombre, precio });
+            
+            // Validar parámetros
+            if (!productId || !nombre || precio === undefined || precio === null) {
+                console.error('Parámetros inválidos para agregar al carrito:', { productId, nombre, precio });
+                mostrarError('Error al agregar producto al carrito');
+                return false;
+            }
+            
+            const item = carrito.find(i => i.product_id === productId);
+            
+            if (item) {
+                item.quantity += 1;
+                console.log('Producto existente, cantidad incrementada:', item.quantity);
+            } else {
+                carrito.push({
+                    product_id: productId,
+                    name: nombre,
+                    price: parseFloat(precio),
+                    quantity: 1
+                });
+                console.log('Nuevo producto agregado al carrito');
+            }
+            
+            actualizarCarrito();
+            console.log('Carrito actualizado, total de items:', carrito.length);
+            
+            return false; // Prevenir submit del formulario
+            
+        } catch (error) {
+            console.error('Error al agregar al carrito:', error);
+            mostrarError('Error al agregar producto al carrito');
+            return false;
+        }
     }
 
     function actualizarCarrito() {

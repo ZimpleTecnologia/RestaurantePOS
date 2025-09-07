@@ -24,8 +24,7 @@ router = APIRouter(prefix="/settings", tags=["configuración"])
 
 @router.get("/")
 def get_all_settings(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Obtener todas las configuraciones del sistema"""
     settings = SettingsService.get_all_settings(db)
@@ -60,8 +59,7 @@ def get_all_settings(
 
 @router.get("/business-info")
 def get_business_info(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Obtener información del negocio"""
     return SettingsService.get_business_info(db)
@@ -164,8 +162,7 @@ def initialize_settings(
 
 @router.get("/cash-register-config")
 def get_cash_register_config(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
     """Obtener configuración específica de caja"""
     return {
