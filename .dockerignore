@@ -6,9 +6,9 @@ __pycache__/
 .Python
 env/
 venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
+ENV/
+env.bak/
+venv.bak/
 
 # Archivos de IDE
 .vscode/
@@ -20,6 +20,24 @@ pip-delete-this-directory.txt
 # Archivos de sistema
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Archivos de configuración local
+.env
+.env.local
+.env.production
+
+# Archivos de base de datos
+*.db
+*.sqlite3
+
 
 # Archivos de Git
 .git/
@@ -33,6 +51,7 @@ docker-compose*
 # Archivos de documentación
 README.md
 *.md
+
 
 # Archivos de logs
 *.log
@@ -48,3 +67,17 @@ README.md
 # Archivos de configuración local
 .env
 .env.local 
+
+# Archivos de pruebas
+tests/
+test_*
+*_test.py
+
+# Archivos de backup
+*.bak
+*.backup
+
+# Archivos de uploads (se crearán en runtime)
+uploads/*
+!uploads/.gitkeep 
+

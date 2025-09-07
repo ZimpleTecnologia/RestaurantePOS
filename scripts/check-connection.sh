@@ -5,16 +5,6 @@
 
 set -e
 
-# Cargar variables de entorno desde .env
-if [ -f ".env" ]; then
-    echo "📄 Cargando variables de entorno desde .env..."
-    export $(grep -v '^#' .env | xargs)
-    echo "✅ Variables de entorno cargadas"
-else
-    echo "❌ Archivo .env no encontrado"
-    exit 1
-fi
-
 echo "🔍 Verificando conectividad con PostgreSQL..."
 
 # Función para verificar variables de entorno
@@ -51,12 +41,6 @@ parse_database_url() {
 check_network_connectivity() {
     echo "🌐 Verificando conectividad de red..."
     
-    # Si estamos en localhost, saltar la verificación de ping
-    if [ "$DB_HOST" = "localhost" ] || [ "$DB_HOST" = "127.0.0.1" ]; then
-        echo "✅ Host $DB_HOST (localhost) - saltando verificación de ping"
-        return 0
-    fi
-    
     if ping -c 1 "$DB_HOST" > /dev/null 2>&1; then
         echo "✅ Host $DB_HOST es alcanzable"
     else
@@ -70,43 +54,60 @@ check_network_connectivity() {
 check_port() {
     echo "🔌 Verificando puerto PostgreSQL..."
     
-    # Intentar diferentes métodos para verificar el puerto
-    if command -v nc >/dev/null 2>&1; then
-        # Usar netcat si está disponible
-        if nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null; then
-            echo "✅ Puerto $DB_PORT está abierto en $DB_HOST"
-            return 0
-        fi
-    elif command -v telnet >/dev/null 2>&1; then
-        # Usar telnet como alternativa
-        if timeout 5 bash -c "</dev/tcp/$DB_HOST/$DB_PORT" 2>/dev/null; then
-            echo "✅ Puerto $DB_PORT está abierto en $DB_HOST"
-            return 0
-        fi
-    else
-        # En Windows, intentar con PowerShell
-        if powershell -Command "Test-NetConnection -ComputerName $DB_HOST -Port $DB_PORT -InformationLevel Quiet" 2>/dev/null; then
-            echo "✅ Puerto $DB_PORT está abierto en $DB_HOST"
-            return 0
-        fi
-    fi
-    
-    echo "❌ Puerto $DB_PORT no está abierto en $DB_HOST"
-    echo "   Verificar que PostgreSQL esté ejecutándose en el puerto $DB_PORT"
-    return 1
-}
 
-# Función para verificar Docker (simplificada para Windows)
-check_docker_status() {
-    echo "🐳 Verificando estado de Docker..."
-    
-    if docker ps | grep -q "sistema_pos_db"; then
-        echo "✅ Contenedor sistema_pos_db está ejecutándose"
-        return 0
+    if nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null; then
+        echo "✅ Puerto $DB_PORT está abierto en $DB_HOST"
     else
-        echo "❌ Contenedor sistema_pos_db no está ejecutándose"
+        echo "❌ Puerto $DB_PORT no está abierto en $DB_HOST"
         return 1
     fi
+}
+
+# Función para verificar conexión PostgreSQL
+check_postgres_connection() {
+    echo "🐘 Verificando conexión PostgreSQL..."
+    
+    if pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" > /dev/null 2>&1; then
+        echo "✅ PostgreSQL está listo para conexiones"
+    else
+        echo "❌ PostgreSQL no está listo"
+        return 1
+    fi
+}
+
+# Función para verificar autenticación
+check_authentication() {
+    echo "🔐 Verificando autenticación..."
+    
+    # Crear archivo temporal con credenciales
+    export PGPASSWORD="$DB_PASS"
+    
+    if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" > /dev/null 2>&1; then
+        echo "✅ Autenticación exitosa"
+    else
+        echo "❌ Error de autenticación"
+        echo "   Verificar usuario y contraseña"
+        return 1
+    fi
+    
+    unset PGPASSWORD
+}
+
+# Función para verificar base de datos
+check_database() {
+    echo "📊 Verificando base de datos..."
+    
+    export PGPASSWORD="$DB_PASS"
+    
+    if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT current_database();" > /dev/null 2>&1; then
+        echo "✅ Conexión a base de datos exitosa"
+    else
+        echo "❌ No se puede conectar a la base de datos"
+        return 1
+    fi
+    
+    unset PGPASSWORD
+
 }
 
 # Función principal
@@ -122,13 +123,6 @@ main() {
     parse_database_url
     echo ""
     
-    # Verificar Docker
-    if ! check_docker_status; then
-        echo "❌ Falló la verificación de Docker"
-        exit 1
-    fi
-    echo ""
-    
     # Verificar conectividad de red
     if ! check_network_connectivity; then
         echo "❌ Falló la verificación de red"
@@ -142,12 +136,31 @@ main() {
         exit 1
     fi
     echo ""
-    
-    echo "🎉 ¡Verificaciones básicas completadas exitosamente!"
-    echo "✅ La aplicación debería poder conectarse a PostgreSQL"
+
+    # Verificar PostgreSQL
+    if ! check_postgres_connection; then
+        echo "❌ Falló la verificación de PostgreSQL"
+        exit 1
+    fi
     echo ""
-    echo "📝 Para verificar la conexión completa, ejecuta la aplicación:"
-    echo "   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+    
+    # Verificar autenticación
+    if ! check_authentication; then
+        echo "❌ Falló la verificación de autenticación"
+        exit 1
+    fi
+    echo ""
+    
+    # Verificar base de datos
+    if ! check_database; then
+        echo "❌ Falló la verificación de base de datos"
+        exit 1
+    fi
+    echo ""
+    
+    echo "🎉 ¡Todas las verificaciones pasaron exitosamente!"
+    echo "✅ La aplicación puede conectarse a PostgreSQL"
+
 }
 
 # Ejecutar función principal
