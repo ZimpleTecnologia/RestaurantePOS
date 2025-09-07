@@ -2,7 +2,7 @@
 Esquemas Pydantic para Ubicaciones y Mesas
 """
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from app.models.location import LocationType, TableStatus
 
@@ -52,7 +52,7 @@ class LocationResponse(LocationBase):
 
 class TableBase(BaseModel):
     """Esquema base para mesas"""
-    location_id: int
+    location_id: Optional[int] = None
     table_number: str
     name: Optional[str] = None
     capacity: int = 4
@@ -82,6 +82,7 @@ class TableResponse(TableBase):
     is_active: bool
     created_at: datetime
     updated_at: Optional[datetime] = None
+    active_orders: Optional[int] = 0
     
     class Config:
         from_attributes = True

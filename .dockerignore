@@ -1,8 +1,8 @@
 # Archivos de desarrollo
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+*.pyc
+*.pyo
+*.pyd
 .Python
 env/
 venv/
@@ -38,6 +38,7 @@ logs/
 *.db
 *.sqlite3
 
+
 # Archivos de Git
 .git/
 .gitignore
@@ -51,6 +52,22 @@ docker-compose*
 README.md
 *.md
 
+
+# Archivos de logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Archivos de base de datos
+*.db
+*.sqlite
+
+# Archivos de configuración local
+.env
+.env.local 
+
 # Archivos de pruebas
 tests/
 test_*
@@ -63,3 +80,4 @@ test_*
 # Archivos de uploads (se crearán en runtime)
 uploads/*
 !uploads/.gitkeep 
+

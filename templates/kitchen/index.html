@@ -1,0 +1,547 @@
+{% extends "base.html" %}
+
+{% block title %}Cocina - Gestión de Pedidos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header simplificado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="bi bi-fire text-danger"></i>
+                Cocina - Gestión de Pedidos
+            </h1>
+            <p class="text-muted mb-0">Panel de control para cocina</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="refreshOrders()">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+            <button class="btn btn-success" onclick="markAllReady()">
+                <i class="bi bi-check-all"></i> Marcar Todo Listo
+            </button>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title" id="pendingCount">0</h3>
+                    <p class="card-text">Pendientes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title" id="preparingCount">0</h3>
+                    <p class="card-text">En Preparación</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title" id="readyCount">0</h3>
+                    <p class="card-text">Listos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3 class="card-title" id="totalCount">0</h3>
+                    <p class="card-text">Total Hoy</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y controles -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-funnel"></i> Filtros
+                    </h5>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary active" data-filter="all">
+                            Todos
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" data-filter="pending">
+                            Pendientes
+                        </button>
+                        <button type="button" class="btn btn-outline-info" data-filter="preparing">
+                            Preparando
+                        </button>
+                        <button type="button" class="btn btn-outline-success" data-filter="ready">
+                            Listos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de pedidos -->
+    <div class="row" id="ordersContainer">
+        <!-- Los pedidos se cargarán dinámicamente aquí -->
+    </div>
+</div>
+
+<!-- Modal para ver detalles del pedido -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderDetailTitle">Detalles del Pedido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetailContent">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-footer" id="orderDetailActions">
+                <!-- Acciones dinámicas -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let orders = [];
+let currentFilter = 'all';
+
+// Cargar pedidos al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    loadOrders();
+    // Auto-refresh cada 30 segundos
+    setInterval(loadOrders, 30000);
+});
+
+async function loadOrders() {
+    try {
+        const response = await fetch('/api/v1/orders/active');
+        orders = await response.json();
+        updateStatistics();
+        renderOrders();
+    } catch (error) {
+        console.error('Error cargando pedidos:', error);
+        showAlert('Error cargando pedidos', 'error');
+    }
+}
+
+function updateStatistics() {
+    const pending = orders.filter(o => o.status === 'PENDING').length;
+    const preparing = orders.filter(o => o.status === 'PREPARING').length;
+    const ready = orders.filter(o => o.status === 'READY').length;
+    const total = orders.length;
+    
+    document.getElementById('pendingCount').textContent = pending;
+    document.getElementById('preparingCount').textContent = preparing;
+    document.getElementById('readyCount').textContent = ready;
+    document.getElementById('totalCount').textContent = total;
+}
+
+function renderOrders() {
+    const container = document.getElementById('ordersContainer');
+    
+    if (orders.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="bi bi-clipboard-x fs-1 text-muted"></i>
+                    <h5 class="text-muted mt-3">No hay pedidos activos</h5>
+                    <p class="text-muted">Los pedidos aparecerán aquí cuando los meseros los creen</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Filtrar pedidos según el filtro actual
+    let filteredOrders = orders;
+    if (currentFilter !== 'all') {
+        filteredOrders = orders.filter(order => {
+            switch(currentFilter) {
+                case 'pending': return order.status === 'PENDING';
+                case 'preparing': return order.status === 'PREPARING';
+                case 'ready': return order.status === 'READY';
+                default: return true;
+            }
+        });
+    }
+    
+    // Ordenar por prioridad y tiempo
+    filteredOrders.sort((a, b) => {
+        // Primero por estado (pendiente > preparando > listo)
+        const statusOrder = { 'PENDING': 0, 'PREPARING': 1, 'READY': 2 };
+        const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+        if (statusDiff !== 0) return statusDiff;
+        
+        // Luego por tiempo de creación (más antiguo primero)
+        return new Date(a.created_at) - new Date(b.created_at);
+    });
+    
+    container.innerHTML = filteredOrders.map(order => `
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card order-card ${getOrderStatusClass(order.status)}" onclick="viewOrderDetail(${order.id})">
+                <div class="card-header ${getOrderHeaderClass(order.status)}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-clipboard"></i> #${order.order_number}
+                        </h6>
+                        <span class="badge ${getStatusBadgeClass(order.status)}">
+                            ${getStatusText(order.status)}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Mesa ${order.table_number}</strong>
+                        ${order.customer_name ? `<br><small class="text-muted">${order.customer_name}</small>` : ''}
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> ${formatDateTime(order.created_at)}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <strong>Productos:</strong>
+                        <div class="mt-1">
+                            ${getMainItems(order.items).map(item => `
+                                <div class="d-flex justify-content-between">
+                                    <span>${item.quantity}x ${item.product_name}</span>
+                                </div>
+                            `).join('')}
+                            ${order.items.length > 3 ? `<small class="text-muted">+${order.items.length - 3} más...</small>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong class="text-primary">$${order.total_amount}</strong>
+                        <small class="text-muted">${order.items.length} items</small>
+                    </div>
+                    
+                    ${order.notes ? `
+                        <div class="mt-2 p-2 bg-light rounded">
+                            <small><strong>Notas:</strong> ${order.notes}</small>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid gap-1">
+                        ${getOrderActions(order)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getOrderStatusClass(status) {
+    switch(status) {
+        case 'PENDING': return 'border-warning';
+        case 'PREPARING': return 'border-info';
+        case 'READY': return 'border-success';
+        default: return 'border-secondary';
+    }
+}
+
+function getOrderHeaderClass(status) {
+    switch(status) {
+        case 'PENDING': return 'bg-warning text-white';
+        case 'PREPARING': return 'bg-info text-white';
+        case 'READY': return 'bg-success text-white';
+        default: return 'bg-secondary text-white';
+    }
+}
+
+function getStatusBadgeClass(status) {
+    switch(status) {
+        case 'PENDING': return 'bg-warning';
+        case 'PREPARING': return 'bg-info';
+        case 'READY': return 'bg-success';
+        default: return 'bg-secondary';
+    }
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'PENDING': return 'Pendiente';
+        case 'PREPARING': return 'Preparando';
+        case 'READY': return 'Listo';
+        default: return 'Desconocido';
+    }
+}
+
+function getMainItems(items) {
+    return items.slice(0, 3);
+}
+
+function getOrderActions(order) {
+    switch(order.status) {
+        case 'PENDING':
+            return `
+                <button class="btn btn-info btn-sm" onclick="markOrderPreparing(${order.id}); event.stopPropagation();">
+                    <i class="bi bi-play-fill"></i> Iniciar Preparación
+                </button>
+            `;
+        case 'PREPARING':
+            return `
+                <button class="btn btn-success btn-sm" onclick="markOrderReady(${order.id}); event.stopPropagation();">
+                    <i class="bi bi-check-lg"></i> Marcar Listo
+                </button>
+            `;
+        case 'READY':
+            return `
+                <div class="text-success">
+                    <i class="bi bi-check-circle"></i> Listo para servir
+                </div>
+            `;
+        default:
+            return '';
+    }
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+}
+
+function viewOrderDetail(orderId) {
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!order) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+    const title = document.getElementById('orderDetailTitle');
+    const content = document.getElementById('orderDetailContent');
+    const actions = document.getElementById('orderDetailActions');
+    
+    title.textContent = `Pedido #${order.order_number} - Mesa ${order.table_number}`;
+    
+    content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Información del Pedido</h6>
+                <p><strong>Número:</strong> #${order.order_number}</p>
+                <p><strong>Mesa:</strong> ${order.table_number}</p>
+                <p><strong>Cliente:</strong> ${order.customer_name || 'No especificado'}</p>
+                <p><strong>Estado:</strong> <span class="badge ${getStatusBadgeClass(order.status)}">${getStatusText(order.status)}</span></p>
+                <p><strong>Fecha:</strong> ${formatDateTime(order.created_at)}</p>
+                ${order.notes ? `<p><strong>Notas:</strong> ${order.notes}</p>` : ''}
+            </div>
+            <div class="col-md-6">
+                <h6>Productos</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cant.</th>
+                                <th>Precio</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${order.items.map(item => `
+                                <tr>
+                                    <td>${item.product_name}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>$${item.unit_price}</td>
+                                    <td>$${item.total_price}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3">Total</th>
+                                <th>$${order.total_amount}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    let actionsHtml = '';
+    switch(order.status) {
+        case 'PENDING':
+            actionsHtml = `
+                <button class="btn btn-info" onclick="markOrderPreparing(${order.id})">
+                    <i class="bi bi-play-fill"></i> Iniciar Preparación
+                </button>
+            `;
+            break;
+        case 'PREPARING':
+            actionsHtml = `
+                <button class="btn btn-success" onclick="markOrderReady(${order.id})">
+                    <i class="bi bi-check-lg"></i> Marcar Listo
+                </button>
+            `;
+            break;
+        case 'READY':
+            actionsHtml = `
+                <div class="text-success">
+                    <i class="bi bi-check-circle"></i> Pedido listo para servir
+                </div>
+            `;
+            break;
+    }
+    
+    actions.innerHTML = actionsHtml;
+    modal.show();
+}
+
+async function markOrderPreparing(orderId) {
+    try {
+        const response = await fetch(`/api/v1/orders/${orderId}/preparing`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            showAlert('Pedido marcado en preparación', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('orderDetailModal')).hide();
+            loadOrders();
+        } else {
+            showAlert('Error actualizando pedido', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error actualizando pedido', 'error');
+    }
+}
+
+async function markOrderReady(orderId) {
+    try {
+        const response = await fetch(`/api/v1/orders/${orderId}/ready`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            showAlert('Pedido marcado como listo', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('orderDetailModal')).hide();
+            loadOrders();
+        } else {
+            showAlert('Error actualizando pedido', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error actualizando pedido', 'error');
+    }
+}
+
+async function markAllReady() {
+    const preparingOrders = orders.filter(o => o.status === 'PREPARING');
+    
+    if (preparingOrders.length === 0) {
+        showAlert('No hay pedidos en preparación', 'info');
+        return;
+    }
+    
+    if (!confirm(`¿Marcar todos los ${preparingOrders.length} pedidos en preparación como listos?`)) {
+        return;
+    }
+    
+    try {
+        const promises = preparingOrders.map(order => 
+            fetch(`/api/v1/orders/${order.id}/ready`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' }
+            })
+        );
+        
+        await Promise.all(promises);
+        showAlert(`${preparingOrders.length} pedidos marcados como listos`, 'success');
+        loadOrders();
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error marcando pedidos como listos', 'error');
+    }
+}
+
+function refreshOrders() {
+    loadOrders();
+}
+
+function showAlert(message, type) {
+    // Implementar sistema de alertas
+    console.log(`${type}: ${message}`);
+}
+
+// Configurar filtros
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-filter]').forEach(button => {
+        button.addEventListener('click', function() {
+            // Remover clase active de todos los botones
+            document.querySelectorAll('[data-filter]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Agregar clase active al botón clickeado
+            this.classList.add('active');
+            
+            // Actualizar filtro y renderizar
+            currentFilter = this.dataset.filter;
+            renderOrders();
+        });
+    });
+});
+</script>
+
+<style>
+.order-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-width: 2px;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.order-card.border-warning {
+    background-color: #fffbf0;
+}
+
+.order-card.border-info {
+    background-color: #f0f8ff;
+}
+
+.order-card.border-success {
+    background-color: #f8fff9;
+}
+
+@media (max-width: 768px) {
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.375rem !important;
+        margin-bottom: 0.25rem;
+    }
+}
+</style>
+{% endblock %}

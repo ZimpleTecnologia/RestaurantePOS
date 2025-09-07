@@ -5,157 +5,196 @@
 
 {% block content %}
 <div class="row">
-    <!-- Estadísticas principales -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stats-card h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-uppercase mb-1">
-                            Ventas Hoy
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold" id="today-sales">$0</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-cart-check fa-2x text-white-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stats-card h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-uppercase mb-1">
-                            Productos
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold" id="total-products">0</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-box fa-2x text-white-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stats-card h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-uppercase mb-1">
-                            Clientes
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold" id="total-customers">0</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-people fa-2x text-white-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stats-card h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-uppercase mb-1">
-                            Stock Bajo
-                        </div>
-                        <div class="h5 mb-0 font-weight-bold" id="low-stock">0</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-exclamation-triangle fa-2x text-white-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <!-- Ventas recientes -->
-    <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold">Ventas Recientes</h6>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover" id="recent-sales-table">
-                        <thead>
-                            <tr>
-                                <th>Número</th>
-                                <th>Cliente</th>
-                                <th>Total</th>
-                                <th>Estado</th>
-                                <th>Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="5" class="text-center">Cargando...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Acciones rápidas -->
-    <div class="col-lg-4 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold">Acciones Rápidas</h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <button class="btn btn-primary" onclick="openNewSale()">
-                        <i class="bi bi-plus-circle"></i> Nueva Venta
-                    </button>
-                    <button class="btn btn-outline-primary" onclick="openNewProduct()">
-                        <i class="bi bi-box"></i> Agregar Producto
-                    </button>
-                    <button class="btn btn-outline-primary" onclick="openNewCustomer()">
-                        <i class="bi bi-person-plus"></i> Nuevo Cliente
-                    </button>
-                    <button class="btn btn-outline-primary" onclick="openInventoryAdjust()">
-                        <i class="bi bi-archive"></i> Ajustar Inventario
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Productos con stock bajo -->
-        <div class="card mt-4">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold text-warning">Stock Bajo</h6>
-            </div>
-            <div class="card-body">
-                <div id="low-stock-products">
-                    <p class="text-muted">Cargando...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Gráfico de ventas -->
-<div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold">Ventas de la Semana</h6>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">Panel de Control</h6>
+                <div>
+                    <span class="badge bg-primary" id="currentDate"></span>
+                </div>
             </div>
             <div class="card-body">
-                <canvas id="sales-chart" width="400" height="100"></canvas>
+                <!-- Estadísticas Principales -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h3 class="card-title" id="totalSales">0</h3>
+                                <p class="card-text">Ventas Hoy</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3 class="card-title" id="totalRevenue">$0</h3>
+                                <p class="card-text">Ingresos Hoy</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h3 class="card-title" id="pendingOrders">0</h3>
+                                <p class="card-text">Pedidos Pendientes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h3 class="card-title" id="lowStock">0</h3>
+                                <p class="card-text">Stock Bajo</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Módulos Principales -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">Módulos del Sistema</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/products" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-box text-primary" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Productos</h6>
+                                                    <p class="card-text text-muted small">Gestión de productos y menú</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/kitchen" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-fire text-danger" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Cocina</h6>
+                                                    <p class="card-text text-muted small">Gestión de pedidos y preparación</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/waiters" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-person-badge text-success" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Meseros</h6>
+                                                    <p class="card-text text-muted small">Toma de pedidos y gestión de mesas</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/inventory" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-archive text-warning" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Inventario</h6>
+                                                    <p class="card-text text-muted small">Control de stock y movimientos</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/caja-ventas" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-cash-coin text-success" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Caja y Ventas</h6>
+                                                    <p class="card-text text-muted small">Procesamiento de pagos y cierre</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/reports" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-graph-up text-primary" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Reportes</h6>
+                                                    <p class="card-text text-muted small">Análisis y estadísticas</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/settings" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-gear text-secondary" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Configuración</h6>
+                                                    <p class="card-text text-muted small">Ajustes del sistema</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acciones Rápidas -->
+                <div class="row mt-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">
+                                    <i class="bi bi-lightning"></i> Acciones Rápidas
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <a href="/caja-ventas" class="btn btn-primary w-100 mb-2">
+                                            <i class="bi bi-cash-coin"></i> Abrir Caja
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <a href="/waiters" class="btn btn-success w-100 mb-2">
+                                            <i class="bi bi-person-badge"></i> Tomar Pedido
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <a href="/kitchen" class="btn btn-warning w-100 mb-2">
+                                            <i class="bi bi-fire"></i> Ver Cocina
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <a href="/inventory" class="btn btn-info w-100 mb-2">
+                                            <i class="bi bi-archive"></i> Revisar Inventario
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">
+                                    <i class="bi bi-bell"></i> Notificaciones
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="notifications">
+                                    <div class="text-center text-muted">
+                                        <i class="bi bi-bell fa-2x"></i>
+                                        <p>No hay notificaciones</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -163,224 +202,91 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-$(document).ready(function() {
-    loadDashboardData();
-    loadRecentSales();
-    loadLowStockProducts();
-    createSalesChart();
-});
-
-function loadDashboardData() {
-    // Cargar estadísticas del dashboard
-    $.ajax({
-        url: '/api/v1/sales/reports/daily',
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-        },
-        success: function(data) {
-            $('#today-sales').text('$' + data.total_amount.toFixed(2));
-        },
-        error: function() {
-            $('#today-sales').text('Error');
-        }
+    // Inicializar dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cargar datos del dashboard
+        loadDashboardData();
+        setCurrentDate();
     });
 
-    // Cargar conteo de productos
-    $.ajax({
-        url: '/api/v1/products/',
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-        },
-        success: function(data) {
-            $('#total-products').text(data.length);
-        },
-        error: function() {
-            $('#total-products').text('Error');
-        }
-    });
-
-    // Cargar conteo de clientes
-    $.ajax({
-        url: '/api/v1/customers/',
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-        },
-        success: function(data) {
-            $('#total-customers').text(data.length);
-        },
-        error: function() {
-            $('#total-customers').text('Error');
-        }
-    });
-}
-
-function loadRecentSales() {
-    $.ajax({
-        url: '/api/v1/sales/',
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-        },
-        success: function(data) {
-            const tbody = $('#recent-sales-table tbody');
-            tbody.empty();
-            
-            data.slice(0, 5).forEach(sale => {
-                const row = `
-                    <tr>
-                        <td>${sale.sale_number}</td>
-                        <td>${sale.customer_name || 'Sin cliente'}</td>
-                        <td>$${sale.total}</td>
-                        <td><span class="badge bg-${getStatusColor(sale.status)}">${sale.status}</span></td>
-                        <td>${new Date(sale.created_at).toLocaleDateString()}</td>
-                    </tr>
-                `;
-                tbody.append(row);
-            });
-        },
-        error: function() {
-            $('#recent-sales-table tbody').html('<tr><td colspan="5" class="text-center text-danger">Error al cargar datos</td></tr>');
-        }
-    });
-}
-
-function loadLowStockProducts() {
-    $.ajax({
-        url: '/api/v1/products/',
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-        },
-        success: function(data) {
-            const lowStockProducts = data.filter(p => p.stock <= p.min_stock);
-            $('#low-stock').text(lowStockProducts.length);
-            
-            const container = $('#low-stock-products');
-            container.empty();
-            
-            if (lowStockProducts.length === 0) {
-                container.html('<p class="text-success">No hay productos con stock bajo</p>');
-            } else {
-                lowStockProducts.slice(0, 5).forEach(product => {
-                    const item = `
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-truncate">${product.name}</span>
-                            <span class="badge bg-warning">${product.stock}</span>
-                        </div>
-                    `;
-                    container.append(item);
-                });
-            }
-        },
-        error: function() {
-            $('#low-stock-products').html('<p class="text-danger">Error al cargar datos</p>');
-        }
-    });
-}
-
-function createSalesChart() {
-    const token = localStorage.getItem('access_token');
-    if (!token) return;
-    
-    $.ajax({
-        url: '/api/v1/sales/reports/weekly',
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + token
-        },
-        success: function(data) {
-            const ctx = document.getElementById('sales-chart').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: 'Ventas ($)',
-                        data: data.daily_sales,
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        },
-        error: function() {
-            // Si hay error, mostrar gráfico con datos de ejemplo
-            const ctx = document.getElementById('sales-chart').getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-                    datasets: [{
-                        label: 'Ventas ($)',
-                        data: [0, 0, 0, 0, 0, 0, 0],
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
-    });
-}
-
-function getStatusColor(status) {
-    switch(status) {
-        case 'completada': return 'success';
-        case 'pendiente': return 'warning';
-        case 'cancelada': return 'danger';
-        default: return 'secondary';
+    // Función para cerrar sesión
+    function logout() {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_info');
+        localStorage.removeItem('token_type');
+        window.location.href = '/login';
     }
-}
 
-// Funciones para acciones rápidas
-function openNewSale() {
-    window.location.href = '/sales';
-}
+    // Función para cargar datos del dashboard
+    async function loadDashboardData() {
+        const token = localStorage.getItem('auth_token');
+        
+        // Si no hay token, no cargar datos
+        if (!token) {
+            console.log('No hay token de autenticación');
+            return;
+        }
+        
+        try {
+            // Cargar estadísticas básicas
+            const response = await fetch('/api/v1/sales/stats', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                const stats = await response.json();
+                document.getElementById('totalSales').textContent = stats.today_sales || 0;
+                document.getElementById('totalRevenue').textContent = `$${stats.today_revenue || 0}`;
+                document.getElementById('pendingOrders').textContent = stats.pending_orders || 0;
+                document.getElementById('lowStock').textContent = stats.low_stock_items || 0;
+            } else if (response.status === 401) {
+                // Token inválido, limpiar y redirigir
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_info');
+                localStorage.removeItem('token_type');
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('Error cargando estadísticas:', error);
+            // Cargar datos de ejemplo si hay error
+            loadSampleData();
+        }
+    }
+    
+    // Función para cargar datos de ejemplo
+    function loadSampleData() {
+        document.getElementById('totalSales').textContent = '12';
+        document.getElementById('totalRevenue').textContent = '$1,250';
+        document.getElementById('pendingOrders').textContent = '3';
+        document.getElementById('lowStock').textContent = '5';
+    }
 
-function openNewProduct() {
-    window.location.href = '/products';
-}
+    // Función para establecer la fecha actual
+    function setCurrentDate() {
+        const now = new Date();
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('es-ES', options);
+    }
 
-function openNewCustomer() {
-    window.location.href = '/customers';
-}
-
-function openInventoryAdjust() {
-    window.location.href = '/inventory';
-}
+    // Función para marcar enlace activo
+    function setActiveNav() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+    }
 </script>
 {% endblock %} 

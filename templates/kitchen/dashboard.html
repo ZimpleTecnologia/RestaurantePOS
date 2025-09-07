@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cocina - Sistema POS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .order-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #6c757d;
+        }
+        .order-card.pending {
+            border-left-color: #ffc107;
+            background-color: #fff3cd;
+        }
+        .order-card.preparing {
+            border-left-color: #0d6efd;
+            background-color: #cff4fc;
+        }
+        .order-card.ready {
+            border-left-color: #198754;
+            background-color: #d1e7dd;
+        }
+        .order-card.urgent {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .item-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .priority-badge {
+            font-size: 0.8em;
+        }
+        .timer {
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-fire"></i> Cocina
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    <i class="bi bi-person-circle"></i>
+                    <span id="current-user-name">Cargando...</span>
+                </span>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Salir
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <!-- Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <h3 id="pending-count">0</h3>
+                        <p class="mb-0">Pendientes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <h3 id="preparing-count">0</h3>
+                        <p class="mb-0">En Preparación</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <h3 id="ready-count">0</h3>
+                        <p class="mb-0">Listas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <h3 id="urgent-count">0</h3>
+                        <p class="mb-0">Urgentes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="filterOrders('all')">Todas</button>
+                    <button type="button" class="btn btn-outline-warning" onclick="filterOrders('pending')">Pendientes</button>
+                    <button type="button" class="btn btn-outline-info" onclick="filterOrders('preparing')">En Preparación</button>
+                    <button type="button" class="btn btn-outline-success" onclick="filterOrders('ready')">Listas</button>
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-primary" onclick="refreshOrders()">
+                    <i class="bi bi-arrow-clockwise"></i> Actualizar
+                </button>
+                <button class="btn btn-success" onclick="playNotificationSound()">
+                    <i class="bi bi-volume-up"></i> Sonido
+                </button>
+            </div>
+        </div>
+
+        <!-- Órdenes -->
+        <div class="row" id="orders-container">
+            <!-- Las órdenes se cargarán aquí dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Modal para notas de cocina -->
+    <div class="modal fade" id="notesModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Notas de Cocina</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea class="form-control" id="kitchen-notes" rows="4" placeholder="Agregar notas de cocina..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveKitchenNotes()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentUser = null;
+        let currentOrders = [];
+        let currentFilter = 'all';
+        let selectedOrderId = null;
+        let refreshInterval;
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadOrders();
+            startAutoRefresh();
+        });
+
+        // Verificar autenticación
+        async function checkAuth() {
+            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    currentUser = await response.json();
+                    document.getElementById('current-user-name').textContent = currentUser.full_name;
+                    
+                    // Verificar que sea cocina o admin
+                    if (!['COCINA', 'ADMIN'].includes(currentUser.role)) {
+                        console.log('Usuario actual:', currentUser.role);
+                        // Temporalmente permitir acceso a todos los roles para pruebas
+                        // alert('No tienes permisos para acceder a la cocina');
+                        // window.location.href = '/';
+                    }
+                } else {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('access_token');
+                    window.location.href = '/login';
+                }
+            } catch (error) {
+                console.error('Error verificando autenticación:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        // Cargar órdenes
+        async function loadOrders() {
+            try {
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+                const response = await fetch('/api/v1/kitchen/orders', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    currentOrders = await response.json();
+                    renderOrders();
+                    updateStats();
+                } else {
+                    console.error('Error cargando órdenes');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Renderizar órdenes
+        function renderOrders() {
+            const container = document.getElementById('orders-container');
+            container.innerHTML = '';
+
+            const filteredOrders = filterOrdersByStatus(currentOrders, currentFilter);
+
+            if (filteredOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info text-center">
+                            <i class="bi bi-info-circle"></i>
+                            No hay órdenes ${currentFilter === 'all' ? '' : currentFilter} en este momento
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredOrders.forEach(order => {
+                const orderCard = createOrderCard(order);
+                container.appendChild(orderCard);
+            });
+        }
+
+        // Crear tarjeta de orden
+        function createOrderCard(order) {
+            const col = document.createElement('div');
+            col.className = 'col-md-6 col-lg-4 mb-3';
+
+            const statusClass = getStatusClass(order.status);
+            const priorityClass = getPriorityClass(order.priority);
+            const elapsedTime = getElapsedTime(order.created_at);
+            const isUrgent = order.priority === 'URGENTE' || order.priority === 'ALTA';
+
+            col.innerHTML = `
+                <div class="card order-card ${statusClass} ${isUrgent ? 'urgent' : ''}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Orden ${order.order_number}</strong>
+                            <br>
+                            <small class="text-muted">Mesa ${order.table_number}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge ${priorityClass} priority-badge">${order.priority}</span>
+                            <br>
+                            <span class="badge bg-secondary">${order.status.replace('_', ' ')}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <strong>Mesero:</strong> ${order.waiter_name}
+                            <br>
+                            <strong>Personas:</strong> ${order.people_count}
+                            <br>
+                            <strong>Tiempo:</strong> <span class="timer">${elapsedTime}</span>
+                        </div>
+                        
+                        ${order.notes ? `<div class="mb-2"><strong>Notas:</strong> ${order.notes}</div>` : ''}
+                        
+                        <div class="item-list">
+                            <strong>Items:</strong>
+                            <ul class="list-unstyled">
+                                ${order.items.map(item => `
+                                    <li class="mb-1">
+                                        <span class="badge bg-light text-dark">${item.quantity}x</span>
+                                        ${item.product ? item.product.name : 'Producto no encontrado'}
+                                        ${item.special_instructions ? `<br><small class="text-muted">${item.special_instructions}</small>` : ''}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3">
+                            ${order.status === 'PENDIENTE' ? `
+                                <button class="btn btn-primary btn-sm" onclick="startPreparation(${order.id})">
+                                    <i class="bi bi-play-circle"></i> Iniciar
+                                </button>
+                            ` : ''}
+                            
+                            ${order.status === 'EN_PREPARACION' ? `
+                                <button class="btn btn-success btn-sm" onclick="completeOrder(${order.id})">
+                                    <i class="bi bi-check-circle"></i> Completar
+                                </button>
+                            ` : ''}
+                            
+                            <button class="btn btn-outline-secondary btn-sm" onclick="editNotes(${order.id}, '${order.kitchen_notes || ''}')">
+                                <i class="bi bi-pencil"></i> Notas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return col;
+        }
+
+        // Obtener clase CSS para estado
+        function getStatusClass(status) {
+            switch (status) {
+                case 'PENDIENTE': return 'pending';
+                case 'EN_PREPARACION': return 'preparing';
+                case 'LISTO': return 'ready';
+                default: return '';
+            }
+        }
+
+        // Obtener clase CSS para prioridad
+        function getPriorityClass(priority) {
+            switch (priority) {
+                case 'URGENTE': return 'bg-danger';
+                case 'ALTA': return 'bg-warning';
+                case 'NORMAL': return 'bg-primary';
+                case 'BAJA': return 'bg-secondary';
+                default: return 'bg-secondary';
+            }
+        }
+
+        // Calcular tiempo transcurrido
+        function getElapsedTime(createdAt) {
+            const created = new Date(createdAt);
+            const now = new Date();
+            const diff = now - created;
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Filtrar órdenes por estado
+        function filterOrdersByStatus(orders, filter) {
+            if (filter === 'all') return orders;
+            return orders.filter(order => {
+                switch (filter) {
+                    case 'pending': return order.status === 'PENDIENTE';
+                    case 'preparing': return order.status === 'EN_PREPARACION';
+                    case 'ready': return order.status === 'LISTO';
+                    default: return true;
+                }
+            });
+        }
+
+        // Filtrar órdenes
+        function filterOrders(filter) {
+            currentFilter = filter;
+            renderOrders();
+        }
+
+        // Actualizar estadísticas
+        function updateStats() {
+            const pending = currentOrders.filter(o => o.status === 'PENDIENTE').length;
+            const preparing = currentOrders.filter(o => o.status === 'EN_PREPARACION').length;
+            const ready = currentOrders.filter(o => o.status === 'LISTO').length;
+            const urgent = currentOrders.filter(o => 
+                ['URGENTE', 'ALTA'].includes(o.priority) && 
+                ['PENDIENTE', 'EN_PREPARACION'].includes(o.status)
+            ).length;
+
+            document.getElementById('pending-count').textContent = pending;
+            document.getElementById('preparing-count').textContent = preparing;
+            document.getElementById('ready-count').textContent = ready;
+            document.getElementById('urgent-count').textContent = urgent;
+        }
+
+        // Iniciar preparación
+        async function startPreparation(orderId) {
+            try {
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+                const response = await fetch(`/api/v1/kitchen/orders/${orderId}/start`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    showSuccess('Orden iniciada en preparación');
+                    loadOrders();
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Error iniciando preparación');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error de conexión');
+            }
+        }
+
+        // Completar orden
+        async function completeOrder(orderId) {
+            try {
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+                const response = await fetch(`/api/v1/kitchen/orders/${orderId}/complete`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    showSuccess('Orden completada');
+                    loadOrders();
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Error completando orden');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error de conexión');
+            }
+        }
+
+        // Editar notas
+        function editNotes(orderId, currentNotes) {
+            selectedOrderId = orderId;
+            document.getElementById('kitchen-notes').value = currentNotes;
+            new bootstrap.Modal(document.getElementById('notesModal')).show();
+        }
+
+        // Guardar notas
+        async function saveKitchenNotes() {
+            const notes = document.getElementById('kitchen-notes').value;
+            
+            try {
+                const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+                const response = await fetch(`/api/v1/kitchen/orders/${selectedOrderId}/notes`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ kitchen_notes: notes })
+                });
+
+                if (response.ok) {
+                    showSuccess('Notas guardadas');
+                    bootstrap.Modal.getInstance(document.getElementById('notesModal')).hide();
+                    loadOrders();
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Error guardando notas');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Error de conexión');
+            }
+        }
+
+        // Actualizar órdenes
+        function refreshOrders() {
+            loadOrders();
+        }
+
+        // Auto-refresh
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                loadOrders();
+            }, 10000); // Cada 10 segundos
+        }
+
+        // Reproducir sonido de notificación
+        function playNotificationSound() {
+            // Crear un audio simple
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+            audio.play().catch(e => console.log('No se pudo reproducir el sonido'));
+        }
+
+        // Mostrar mensaje de éxito
+        function showSuccess(message) {
+            // Crear toast de Bootstrap
+            const toast = document.createElement('div');
+            toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3';
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            new bootstrap.Toast(toast).show();
+            
+            // Remover después de 3 segundos
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // Mostrar mensaje de error
+        function showError(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed top-0 end-0 m-3';
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            new bootstrap.Toast(toast).show();
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // Cerrar sesión
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+            window.location.href = '/login';
+        }
+
+        // Limpiar intervalo al salir
+        window.addEventListener('beforeunload', () => {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -4,21 +4,31 @@ Módulo de seguridad para autenticación JWT y hash de contraseñas
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import hashlib
+import os
 from app.config import settings
 
-# Configuración de hash de contraseñas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Configuración de hash de contraseñas usando hashlib
+def get_password_hash(password: str) -> str:
+    """Generar hash de contraseña usando SHA-256"""
+    salt = os.urandom(16).hex()
+    hash_obj = hashlib.sha256()
+    hash_obj.update((password + salt).encode('utf-8'))
+    return f"{salt}${hash_obj.hexdigest()}"
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verificar contraseña"""
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    """Generar hash de contraseña"""
-    return pwd_context.hash(password)
+    try:
+        if '$' not in hashed_password:
+            return False
+        
+        salt, hash_value = hashed_password.split('$', 1)
+        hash_obj = hashlib.sha256()
+        hash_obj.update((plain_password + salt).encode('utf-8'))
+        return hash_obj.hexdigest() == hash_value
+    except Exception:
+        return False
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

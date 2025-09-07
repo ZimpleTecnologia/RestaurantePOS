@@ -7,16 +7,13 @@ from datetime import datetime
 from app.models.user import UserRole
 
 
-class UserBase(BaseModel):
-    """Esquema base para usuarios"""
+
+class UserCreate(BaseModel):
+    """Esquema para crear usuario"""
     username: str
     email: EmailStr
     full_name: str
-    role: UserRole = UserRole.VENDEDOR
-
-
-class UserCreate(UserBase):
-    """Esquema para crear usuario"""
+    role: UserRole = UserRole.MESERO
     password: str
 
 
@@ -35,9 +32,13 @@ class UserLogin(BaseModel):
     password: str
 
 
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     """Esquema de respuesta para usuario"""
     id: int
+    username: str
+    email: EmailStr
+    full_name: str
+    role: UserRole
     is_active: bool
     is_verified: bool
     created_at: datetime

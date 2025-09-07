@@ -1,16 +1,19 @@
 # Importar todos los modelos para facilitar su uso
 from .user import User
-from .product import Product, Category, SubCategory
+from .product import Product, ProductCategory, Category, SubCategory
 from .sale import Sale, SaleItem, PaymentMethod
 from .customer import Customer, Credit, Payment
 from .supplier import Supplier, Purchase, PurchaseItem
 from .location import Location, Table
 from .inventory import InventoryMovement
 from .recipe import Recipe, RecipeItem
+from .settings import SystemSettings
+from .order import Order, OrderItem
 
 __all__ = [
     "User",
     "Product", 
+    "ProductCategory",
     "Category",
     "SubCategory",
     "Sale",
@@ -26,5 +29,8 @@ __all__ = [
     "Table",
     "InventoryMovement",
     "Recipe",
-    "RecipeItem"
+    "RecipeItem",
+    "SystemSettings",
+    "Order",
+    "OrderItem"
 ] 

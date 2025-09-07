@@ -1,0 +1,870 @@
+{% extends "base.html" %}
+
+{% block title %}Toma de Pedidos - Meseros{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .table-card {
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    .table-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .table-card.occupied {
+        border-color: #dc3545;
+        background-color: #f8d7da;
+    }
+    
+    .table-card.available {
+        border-color: #28a745;
+        background-color: #d4edda;
+    }
+    
+    .table-card.selected {
+        border-color: #007bff;
+        background-color: #cce7ff;
+        transform: scale(1.05);
+    }
+    
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .product-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .product-card:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    
+    .product-card img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-bottom: 8px;
+    }
+    
+    .order-items {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .order-item {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 8px;
+        background-color: #f8f9fa;
+    }
+    
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .quantity-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .quantity-btn:hover {
+        background-color: #0056b3;
+    }
+    
+    .quantity-btn.remove {
+        background-color: #dc3545;
+    }
+    
+    .quantity-btn.remove:hover {
+        background-color: #c82333;
+    }
+    
+    .search-box {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .search-box input {
+        padding-left: 40px;
+        border-radius: 25px;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .category-tabs {
+        margin-bottom: 20px;
+    }
+    
+    .category-tab {
+        padding: 8px 16px;
+        border: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+        border-radius: 20px;
+        margin-right: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .category-tab.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    
+    .order-summary {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .total-display {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #28a745;
+        text-align: center;
+        margin: 10px 0;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .action-btn {
+        flex: 1;
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-confirm {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .btn-confirm:hover {
+        background-color: #218838;
+    }
+    
+    .btn-cancel {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .btn-cancel:hover {
+        background-color: #c82333;
+    }
+    
+    .btn-print {
+        background-color: #17a2b8;
+        color: white;
+    }
+    
+    .btn-print:hover {
+        background-color: #138496;
+    }
+    
+    .notes-section {
+        margin-top: 15px;
+    }
+    
+    .notes-section textarea {
+        border-radius: 8px;
+        resize: vertical;
+    }
+    
+    @media (max-width: 768px) {
+        .table-grid {
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        }
+        
+        .product-grid {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="bi bi-clipboard-check text-primary"></i>
+                Toma de Pedidos
+            </h1>
+            <p class="text-muted mb-0">Interfaz optimizada para meseros</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="refreshTables()">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
+            <button class="btn btn-success" onclick="showActiveOrders()">
+                <i class="bi bi-list-check"></i> Pedidos Activos
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Panel izquierdo: Mesas -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-grid-3x3-gap"></i> Mesas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-grid" id="tablesGrid">
+                        <!-- Las mesas se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel central: Productos -->
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-box"></i> Productos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Búsqueda -->
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" class="form-control" id="productSearch" 
+                               placeholder="Buscar productos..." onkeyup="filterProducts()">
+                    </div>
+
+                    <!-- Categorías -->
+                    <div class="category-tabs" id="categoryTabs">
+                        <!-- Las categorías se cargarán dinámicamente -->
+                    </div>
+
+                    <!-- Grid de productos -->
+                    <div class="product-grid" id="productsGrid">
+                        <!-- Los productos se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel derecho: Pedido actual -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-receipt"></i> Pedido Actual
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="currentOrderInfo">
+                        <p class="text-muted">Selecciona una mesa para comenzar</p>
+                    </div>
+
+                    <div class="order-items" id="orderItems">
+                        <!-- Los items del pedido se mostrarán aquí -->
+                    </div>
+
+                    <div class="order-summary" id="orderSummary" style="display: none;">
+                        <div class="total-display" id="orderTotal">
+                            Total: $0.00
+                        </div>
+                        
+                        <div class="notes-section">
+                            <label for="orderNotes" class="form-label">Notas del pedido:</label>
+                            <textarea class="form-control" id="orderNotes" rows="3" 
+                                      placeholder="Instrucciones especiales..."></textarea>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="action-btn btn-confirm" onclick="confirmOrder()">
+                                <i class="bi bi-check-circle"></i> Confirmar
+                            </button>
+                            <button class="action-btn btn-print" onclick="printTicket()">
+                                <i class="bi bi-printer"></i> Imprimir
+                            </button>
+                            <button class="action-btn btn-cancel" onclick="clearOrder()">
+                                <i class="bi bi-x-circle"></i> Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para pedidos activos -->
+<div class="modal fade" id="activeOrdersModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-list-check"></i> Pedidos Activos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="activeOrdersList">
+                    <!-- Los pedidos activos se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalles del pedido -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-receipt"></i> Detalles del Pedido
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetailContent">
+                <!-- Los detalles se cargarán aquí -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+let currentTable = null;
+let currentOrder = {
+    items: [],
+    notes: '',
+    total: 0
+};
+let products = [];
+let categories = [];
+let tables = [];
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    loadTables();
+    loadProducts();
+    loadCategories();
+    
+    // Actualizar cada 30 segundos
+    setInterval(refreshTables, 30000);
+});
+
+// Cargar mesas
+async function loadTables() {
+    try {
+        const response = await fetch('/api/v1/tables/');
+        tables = await response.json();
+        renderTables();
+    } catch (error) {
+        console.error('Error cargando mesas:', error);
+        showAlert('Error cargando mesas', 'danger');
+    }
+}
+
+// Renderizar mesas
+function renderTables() {
+    const grid = document.getElementById('tablesGrid');
+    grid.innerHTML = '';
+    
+    tables.forEach(table => {
+        const card = document.createElement('div');
+        card.className = `table-card ${table.status === 'ocupada' ? 'occupied' : 'available'}`;
+        card.onclick = () => selectTable(table);
+        
+        card.innerHTML = `
+            <div class="fw-bold">Mesa ${table.table_number}</div>
+            <div class="small text-muted">${table.status}</div>
+            ${table.current_order ? `<div class="small text-danger">Pedido #${table.current_order}</div>` : ''}
+        `;
+        
+        grid.appendChild(card);
+    });
+}
+
+// Seleccionar mesa
+function selectTable(table) {
+    // Deseleccionar mesa anterior
+    document.querySelectorAll('.table-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Seleccionar nueva mesa
+    event.target.closest('.table-card').classList.add('selected');
+    
+    currentTable = table;
+    currentOrder = {
+        items: [],
+        notes: '',
+        total: 0
+    };
+    
+    updateOrderInfo();
+    updateOrderSummary();
+}
+
+// Cargar productos
+async function loadProducts() {
+    try {
+        const response = await fetch('/api/v1/products/');
+        products = await response.json();
+        renderProducts();
+    } catch (error) {
+        console.error('Error cargando productos:', error);
+        showAlert('Error cargando productos', 'danger');
+    }
+}
+
+// Renderizar productos
+function renderProducts(filteredProducts = null) {
+    const grid = document.getElementById('productsGrid');
+    const productsToShow = filteredProducts || products;
+    
+    grid.innerHTML = '';
+    
+    productsToShow.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.onclick = () => addToOrder(product);
+        
+        card.innerHTML = `
+            <img src="${product.image_url || '/static/images/default-product.png'}" 
+                 alt="${product.name}" onerror="this.src='/static/images/default-product.png'">
+            <div class="fw-bold">${product.name}</div>
+            <div class="text-success">$${product.price}</div>
+            <div class="small text-muted">${product.category || 'Sin categoría'}</div>
+        `;
+        
+        grid.appendChild(card);
+    });
+}
+
+// Filtrar productos
+function filterProducts() {
+    const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+    const filtered = products.filter(product => 
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.description?.toLowerCase().includes(searchTerm)
+    );
+    renderProducts(filtered);
+}
+
+// Cargar categorías
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/v1/products/categories');
+        categories = await response.json();
+        renderCategories();
+    } catch (error) {
+        console.error('Error cargando categorías:', error);
+    }
+}
+
+// Renderizar categorías
+function renderCategories() {
+    const tabs = document.getElementById('categoryTabs');
+    tabs.innerHTML = '<div class="category-tab active" onclick="filterByCategory(null)">Todos</div>';
+    
+    categories.forEach(category => {
+        const tab = document.createElement('div');
+        tab.className = 'category-tab';
+        tab.textContent = category;
+        tab.onclick = () => filterByCategory(category);
+        tabs.appendChild(tab);
+    });
+}
+
+// Filtrar por categoría
+function filterByCategory(category) {
+    // Actualizar tabs activos
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Filtrar productos
+    const filtered = category ? 
+        products.filter(product => product.category === category) : 
+        products;
+    renderProducts(filtered);
+}
+
+// Agregar producto al pedido
+function addToOrder(product) {
+    if (!currentTable) {
+        showAlert('Selecciona una mesa primero', 'warning');
+        return;
+    }
+    
+    const existingItem = currentOrder.items.find(item => item.product_id === product.id);
+    
+    if (existingItem) {
+        existingItem.quantity++;
+        existingItem.total_price = existingItem.quantity * existingItem.unit_price;
+    } else {
+        currentOrder.items.push({
+            product_id: product.id,
+            product_name: product.name,
+            unit_price: product.price,
+            quantity: 1,
+            total_price: product.price,
+            notes: ''
+        });
+    }
+    
+    updateOrderSummary();
+    showAlert(`${product.name} agregado al pedido`, 'success');
+}
+
+// Actualizar información del pedido
+function updateOrderInfo() {
+    const info = document.getElementById('currentOrderInfo');
+    if (currentTable) {
+        info.innerHTML = `
+            <div class="alert alert-info">
+                <strong>Mesa ${currentTable.table_number}</strong><br>
+                Estado: ${currentTable.status}<br>
+                ${currentTable.current_order ? `Pedido actual: #${currentTable.current_order}` : 'Nuevo pedido'}
+            </div>
+        `;
+    } else {
+        info.innerHTML = '<p class="text-muted">Selecciona una mesa para comenzar</p>';
+    }
+}
+
+// Actualizar resumen del pedido
+function updateOrderSummary() {
+    const summary = document.getElementById('orderSummary');
+    const items = document.getElementById('orderItems');
+    const total = document.getElementById('orderTotal');
+    
+    if (currentOrder.items.length === 0) {
+        summary.style.display = 'none';
+        items.innerHTML = '<p class="text-muted">No hay items en el pedido</p>';
+        return;
+    }
+    
+    summary.style.display = 'block';
+    
+    // Calcular total
+    currentOrder.total = currentOrder.items.reduce((sum, item) => sum + item.total_price, 0);
+    
+    // Renderizar items
+    items.innerHTML = '';
+    currentOrder.items.forEach((item, index) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'order-item';
+        itemDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${item.product_name}</strong><br>
+                    <small class="text-muted">$${item.unit_price} c/u</small>
+                </div>
+                <div class="quantity-controls">
+                    <button class="quantity-btn" onclick="updateQuantity(${index}, -1)">-</button>
+                    <span class="mx-2 fw-bold">${item.quantity}</span>
+                    <button class="quantity-btn" onclick="updateQuantity(${index}, 1)">+</button>
+                    <button class="quantity-btn remove" onclick="removeItem(${index})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="mt-2">
+                <input type="text" class="form-control form-control-sm" 
+                       placeholder="Notas para este item..." 
+                       value="${item.notes}"
+                       onchange="updateItemNotes(${index}, this.value)">
+            </div>
+        `;
+        items.appendChild(itemDiv);
+    });
+    
+    total.textContent = `Total: $${currentOrder.total.toFixed(2)}`;
+}
+
+// Actualizar cantidad
+function updateQuantity(index, change) {
+    const item = currentOrder.items[index];
+    item.quantity = Math.max(1, item.quantity + change);
+    item.total_price = item.quantity * item.unit_price;
+    updateOrderSummary();
+}
+
+// Remover item
+function removeItem(index) {
+    currentOrder.items.splice(index, 1);
+    updateOrderSummary();
+}
+
+// Actualizar notas del item
+function updateItemNotes(index, notes) {
+    currentOrder.items[index].notes = notes;
+}
+
+// Confirmar pedido
+async function confirmOrder() {
+    if (!currentTable || currentOrder.items.length === 0) {
+        showAlert('Selecciona una mesa y agrega productos', 'warning');
+        return;
+    }
+    
+    const notes = document.getElementById('orderNotes').value;
+    currentOrder.notes = notes;
+    
+    try {
+        const orderData = {
+            table_id: currentTable.id,
+            order_type: 'mesa',
+            notes: notes,
+            items: currentOrder.items.map(item => ({
+                product_id: item.product_id,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                notes: item.notes
+            }))
+        };
+        
+        const response = await fetch('/api/v1/orders/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            },
+            body: JSON.stringify(orderData)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            showAlert(`Pedido #${result.order_number} creado exitosamente`, 'success');
+            
+            // Limpiar pedido actual
+            clearOrder();
+            
+            // Actualizar mesas
+            loadTables();
+            
+            // Enviar a cocina
+            sendToKitchen(result.id);
+        } else {
+            const error = await response.json();
+            showAlert(`Error: ${error.detail}`, 'danger');
+        }
+    } catch (error) {
+        console.error('Error creando pedido:', error);
+        showAlert('Error creando pedido', 'danger');
+    }
+}
+
+// Enviar a cocina
+async function sendToKitchen(orderId) {
+    try {
+        await fetch(`/api/v1/kitchen/orders/${orderId}/start`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+    } catch (error) {
+        console.error('Error enviando a cocina:', error);
+    }
+}
+
+// Limpiar pedido
+function clearOrder() {
+    currentOrder = {
+        items: [],
+        notes: '',
+        total: 0
+    };
+    document.getElementById('orderNotes').value = '';
+    updateOrderSummary();
+    
+    // Deseleccionar mesa
+    document.querySelectorAll('.table-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    currentTable = null;
+    updateOrderInfo();
+}
+
+// Imprimir ticket
+function printTicket() {
+    if (currentOrder.items.length === 0) {
+        showAlert('No hay items para imprimir', 'warning');
+        return;
+    }
+    
+    // Aquí implementarías la lógica de impresión
+    showAlert('Función de impresión en desarrollo', 'info');
+}
+
+// Mostrar pedidos activos
+async function showActiveOrders() {
+    try {
+        const response = await fetch('/api/v1/orders/active');
+        const orders = await response.json();
+        
+        const modal = new bootstrap.Modal(document.getElementById('activeOrdersModal'));
+        const list = document.getElementById('activeOrdersList');
+        
+        list.innerHTML = '';
+        orders.forEach(order => {
+            const orderDiv = document.createElement('div');
+            orderDiv.className = 'card mb-3';
+            orderDiv.innerHTML = `
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">Pedido #${order.order_number}</h6>
+                            <p class="card-text">
+                                Mesa: ${order.table_name || 'N/A'}<br>
+                                Mesero: ${order.waiter_name}<br>
+                                Estado: <span class="badge bg-${getStatusColor(order.status)}">${order.status}</span>
+                            </p>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="viewOrderDetails(${order.id})">
+                            Ver Detalles
+                        </button>
+                    </div>
+                </div>
+            `;
+            list.appendChild(orderDiv);
+        });
+        
+        modal.show();
+    } catch (error) {
+        console.error('Error cargando pedidos activos:', error);
+        showAlert('Error cargando pedidos activos', 'danger');
+    }
+}
+
+// Ver detalles del pedido
+async function viewOrderDetails(orderId) {
+    try {
+        const response = await fetch(`/api/v1/orders/${orderId}`);
+        const order = await response.json();
+        
+        const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+        const content = document.getElementById('orderDetailContent');
+        
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Información del Pedido</h6>
+                    <p><strong>Número:</strong> ${order.order_number}</p>
+                    <p><strong>Mesa:</strong> ${order.table_name || 'N/A'}</p>
+                    <p><strong>Mesero:</strong> ${order.waiter_name}</p>
+                    <p><strong>Estado:</strong> <span class="badge bg-${getStatusColor(order.status)}">${order.status}</span></p>
+                    <p><strong>Total:</strong> $${order.final_amount}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6>Items</h6>
+                    <ul class="list-group">
+                        ${order.items.map(item => `
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span>${item.product_name} x${item.quantity}</span>
+                                <span>$${item.total_price}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        modal.show();
+    } catch (error) {
+        console.error('Error cargando detalles:', error);
+        showAlert('Error cargando detalles', 'danger');
+    }
+}
+
+// Obtener color del estado
+function getStatusColor(status) {
+    const colors = {
+        'pendiente': 'warning',
+        'preparando': 'info',
+        'listo': 'success',
+        'servido': 'primary',
+        'pagado': 'secondary',
+        'cancelado': 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+// Actualizar mesas
+function refreshTables() {
+    loadTables();
+}
+
+// Utilidades
+function getToken() {
+    return localStorage.getItem('access_token');
+}
+
+function showAlert(message, type) {
+    // Implementar sistema de alertas
+    console.log(`${type}: ${message}`);
+}
+</script>
+{% endblock %}

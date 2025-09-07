@@ -20,11 +20,14 @@ class Recipe(Base):
     instructions = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
     
+    # Costo total de la receta (calculado automáticamente)
+    total_cost = Column(Numeric(10, 2), nullable=True)
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relaciones
-    product = relationship("Product")
+    product = relationship("Product", back_populates="recipe")
     items = relationship("RecipeItem", back_populates="recipe", cascade="all, delete-orphan")
     
     def __repr__(self):
@@ -43,6 +46,10 @@ class RecipeItem(Base):
     unit = Column(String(20), default="unidad")  # unidad, gramo, ml, etc.
     is_optional = Column(Boolean, default=False)
     notes = Column(Text, nullable=True)
+    
+    # Costo unitario del ingrediente en el momento de la receta
+    unit_cost = Column(Numeric(10, 2), nullable=True)
+    total_cost = Column(Numeric(10, 2), nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     

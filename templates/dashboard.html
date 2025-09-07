@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sistema POS Restaurante{% endblock %}
+{% block page_title %}Dashboard del Restaurante{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Cards de Estadísticas Principales -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                            Órdenes Pendientes
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold" id="pending-orders">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                            En Preparación
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold" id="preparing-orders">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-fire fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                            Listos para Servir
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold" id="ready-orders">0</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">
+                            Ocupación de Mesas
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold" id="table-occupancy">0%</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-table fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos y Estadísticas -->
+<div class="row">
+    <!-- Gráfico de Órdenes por Hora -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Órdenes por Hora - Hoy</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow">
+                        <a class="dropdown-item" href="#" onclick="refreshChart()">Actualizar</a>
+                        <a class="dropdown-item" href="/reports">Ver Reportes Completos</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="ordersChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado de Mesas -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Estado de Mesas</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="tablesChart"></canvas>
+                </div>
+                <div class="mt-4 text-center small">
+                    <span class="mr-2">
+                        <i class="fas fa-circle text-success"></i> Libres
+                    </span>
+                    <span class="mr-2">
+                        <i class="fas fa-circle text-warning"></i> Ocupadas
+                    </span>
+                    <span class="mr-2">
+                        <i class="fas fa-circle text-danger"></i> Mantenimiento
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notificaciones y Actividad Reciente -->
+<div class="row">
+    <!-- Notificaciones -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-bell"></i> Notificaciones
+                </h6>
+                <span class="badge bg-danger" id="notifications-count">0</span>
+            </div>
+            <div class="card-body">
+                <div id="notifications-container">
+                    <!-- Notificaciones se cargan dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actividad Reciente -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-activity"></i> Actividad Reciente
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="recent-activity">
+                    <!-- Actividad reciente se carga dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rendimiento de Meseros -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-people"></i> Rendimiento de Meseros - Hoy
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="waiterPerformanceTable">
+                        <thead>
+                            <tr>
+                                <th>Mesero</th>
+                                <th>Órdenes</th>
+                                <th>Completadas</th>
+                                <th>Ventas</th>
+                                <th>Tiempo Promedio</th>
+                                <th>Eficiencia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Datos se cargan dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stats-card {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+}
+
+.notification-item {
+    border-left: 4px solid #e9ecef;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+
+.notification-item.high-priority {
+    border-left-color: #ffc107;
+    background-color: #fff8e1;
+}
+
+.notification-item.urgent {
+    border-left-color: #dc3545;
+    background-color: #ffebee;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.activity-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let ordersChart = null;
+let tablesChart = null;
+let currentUser = null;
+
+// Auth token
+const token = localStorage.getItem('access_token');
+if (!token) {
+    window.location.href = '/login';
+}
+
+// Headers para API
+const headers = {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+};
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    loadCurrentUser();
+    loadDashboardData();
+    initializeCharts();
+    
+    // Auto refresh every 30 seconds
+    setInterval(loadDashboardData, 30000);
+});
+
+// Load current user
+async function loadCurrentUser() {
+    try {
+        const response = await fetch('/api/v1/auth/me', { headers });
+        if (response.ok) {
+            currentUser = await response.json();
+        } else {
+            window.location.href = '/login';
+        }
+    } catch (error) {
+        console.error('Error loading user:', error);
+        window.location.href = '/login';
+    }
+}
+
+// Load dashboard data
+async function loadDashboardData() {
+    try {
+        // Cargar estadísticas generales
+        const statsResponse = await fetch('/api/v1/notifications/stats', { headers });
+        if (statsResponse.ok) {
+            const stats = await statsResponse.json();
+            updateStatsCards(stats);
+        }
+        
+        // Cargar notificaciones
+        const notificationsResponse = await fetch('/api/v1/notifications/', { headers });
+        if (notificationsResponse.ok) {
+            const notifications = await notificationsResponse.json();
+            updateNotifications(notifications);
+        }
+        
+        // Cargar reporte diario
+        const reportResponse = await fetch('/api/v1/reports/daily-summary', { headers });
+        if (reportResponse.ok) {
+            const report = await reportResponse.json();
+            updateCharts(report);
+            updateWaiterPerformance(report.waiter_performance);
+        }
+        
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+// Update stats cards
+function updateStatsCards(stats) {
+    document.getElementById('pending-orders').textContent = stats.orders.pending;
+    document.getElementById('preparing-orders').textContent = stats.orders.preparing;
+    document.getElementById('ready-orders').textContent = stats.orders.ready;
+    document.getElementById('table-occupancy').textContent = stats.tables.occupancy_rate + '%';
+}
+
+// Update notifications
+function updateNotifications(notificationsData) {
+    const container = document.getElementById('notifications-container');
+    const countBadge = document.getElementById('notifications-count');
+    
+    countBadge.textContent = notificationsData.unread_count;
+    
+    if (notificationsData.notifications.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No hay notificaciones</p>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    notificationsData.notifications.slice(0, 5).forEach(notification => {
+        const notificationDiv = document.createElement('div');
+        notificationDiv.className = `notification-item ${notification.priority}`;
+        
+        notificationDiv.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="mb-1">
+                        <i class="bi bi-${notification.icon}"></i> 
+                        ${notification.title}
+                    </h6>
+                    <p class="mb-1">${notification.message}</p>
+                    <small class="text-muted">
+                        ${new Date(notification.created_at).toLocaleTimeString()}
+                    </small>
+                </div>
+                <span class="badge bg-${notification.color}">${notification.priority}</span>
+            </div>
+        `;
+        
+        container.appendChild(notificationDiv);
+    });
+}
+
+// Initialize charts
+function initializeCharts() {
+    // Órdenes por hora
+    const ordersCtx = document.getElementById('ordersChart').getContext('2d');
+    ordersChart = new Chart(ordersCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Órdenes',
+                data: [],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Estado de mesas
+    const tablesCtx = document.getElementById('tablesChart').getContext('2d');
+    tablesChart = new Chart(tablesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Libres', 'Ocupadas', 'Mantenimiento'],
+            datasets: [{
+                data: [0, 0, 0],
+                backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+// Update charts
+function updateCharts(report) {
+    // Actualizar gráfico de órdenes por hora
+    const hourlyData = report.hourly_distribution;
+    const hours = hourlyData.map(h => h.hour + ':00');
+    const counts = hourlyData.map(h => h.orders_count);
+    
+    ordersChart.data.labels = hours;
+    ordersChart.data.datasets[0].data = counts;
+    ordersChart.update();
+    
+    // Actualizar gráfico de mesas (datos ficticios por ahora)
+    // En una implementación real, esto vendría de la API
+    tablesChart.data.datasets[0].data = [15, 8, 2]; // Ejemplo
+    tablesChart.update();
+}
+
+// Update waiter performance table
+function updateWaiterPerformance(waiters) {
+    const tbody = document.querySelector('#waiterPerformanceTable tbody');
+    tbody.innerHTML = '';
+    
+    waiters.forEach(waiter => {
+        const row = document.createElement('tr');
+        const efficiency = Math.round((waiter.orders_count > 0 ? 90 : 0)); // Cálculo simplificado
+        
+        row.innerHTML = `
+            <td>${waiter.waiter_name}</td>
+            <td>${waiter.orders_count}</td>
+            <td>${waiter.orders_count}</td>
+            <td>$${waiter.total_sales.toFixed(2)}</td>
+            <td>25 min</td>
+            <td>
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar bg-${efficiency > 80 ? 'success' : efficiency > 60 ? 'warning' : 'danger'}" 
+                         style="width: ${efficiency}%">${efficiency}%</div>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+// Refresh chart
+function refreshChart() {
+    loadDashboardData();
+}
+
+// Quick actions
+function goToWaiters() {
+    window.location.href = '/waiters';
+}
+
+function goToKitchen() {
+    window.location.href = '/kitchen';
+}
+
+function goToReports() {
+    window.location.href = '/reports';
+}
+</script>
+{% endblock %}

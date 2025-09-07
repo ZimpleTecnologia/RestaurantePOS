@@ -10,7 +10,7 @@ from app.auth.security import verify_token
 from app.schemas.user import TokenData
 
 # Esquema de autenticación
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
@@ -23,6 +23,9 @@ def get_current_user(
         detail="No se pudieron validar las credenciales",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    if credentials is None:
+        raise credentials_exception
     
     token = credentials.credentials
     username = verify_token(token)
@@ -68,5 +71,15 @@ def require_supervisor_or_admin(current_user: User = Depends(get_current_user)) 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Se requieren permisos de supervisor o administrador"
+        )
+    return current_user
+
+
+def require_waiter_or_admin(current_user: User = Depends(get_current_user)) -> User:
+    """Requerir rol de mesero o administrador"""
+    if current_user.role not in [UserRole.ADMIN, UserRole.MESERO]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Se requieren permisos de mesero o administrador"
         )
     return current_user 

@@ -10,13 +10,18 @@ class Settings(BaseSettings):
     """Configuraciones del sistema POS"""
     
     # Database
-    database_url: str = "postgresql://username:password@localhost:5432/sistema_pos"
-    database_test_url: str = "postgresql://username:password@localhost:5432/sistema_pos_test"
+    database_url: str = "sqlite:///./restaurante_pos.db"
+    database_test_url: str = "sqlite:///./restaurante_pos_test.db"
     
     # Security
     secret_key: str = "your-secret-key-here-change-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+    
+    # Session Timeout
+    session_timeout_minutes: int = 30  # Timeout por inactividad
+    session_warning_minutes: int = 2   # Minutos antes del timeout para mostrar advertencia
+    session_check_interval: int = 60   # Segundos entre verificaciones de sesión
     
     # Application
     debug: bool = True

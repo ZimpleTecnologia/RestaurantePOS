@@ -3,73 +3,315 @@
 {% block title %}Configuración - Sistema POS{% endblock %}
 {% block page_title %}Configuración{% endblock %}
 
+{% block extra_css %}
+<style>
+    .color-picker {
+        width: 50px;
+        height: 50px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin: 5px;
+    }
+    .theme-preview {
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .theme-preview:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+    }
+    .theme-preview.selected {
+        border-color: #667eea;
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+    .theme-colors {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .color-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .preview-sidebar {
+        width: 60px;
+        height: 80px;
+        border-radius: 8px;
+        margin-right: 10px;
+    }
+    .preview-content {
+        flex: 1;
+        height: 80px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    }
+    .settings-section {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .settings-section h5 {
+        color: #333;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    .form-floating {
+        margin-bottom: 20px;
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 30px;
+        font-weight: 500;
+    }
+    .btn-save:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-1px);
+    }
+    .btn-reset {
+        background: #6c757d;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 30px;
+        font-weight: 500;
+    }
+    .btn-reset:hover {
+        background: #5a6268;
+    }
+    
+    .print-preview-container {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        line-height: 1.2;
+        white-space: pre-line;
+    }
+    
+    .print-preview-container hr {
+        border: none;
+        border-top: 1px dashed #ccc;
+        margin: 8px 0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="container-fluid">
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold">Configuración del Sistema</h6>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">Configuración del Sistema</h4>
+                <div>
+                    <button type="button" class="btn btn-reset me-2" onclick="resetSettings()">
+                        <i class="bi bi-arrow-clockwise"></i> Restablecer
+                    </button>
+                    <button type="button" class="btn btn-save" onclick="saveAllSettings()">
+                        <i class="bi bi-check-circle"></i> Guardar Cambios
+                    </button>
+                </div>
             </div>
-            <div class="card-body">
+
+            <!-- Configuración General -->
+            <div class="settings-section">
+                <h5><i class="bi bi-gear"></i> Configuración General</h5>
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="m-0 font-weight-bold">Configuración General</h6>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="companyName" placeholder="Nombre de la empresa">
+                            <label for="companyName">Nombre de la Empresa</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="appTitle" placeholder="Título de la aplicación">
+                            <label for="appTitle">Título de la Aplicación</label>
+                        </div>
                             </div>
-                            <div class="card-body">
-                                <form>
-                                    <div class="mb-3">
-                                        <label class="form-label">Nombre de la Empresa</label>
-                                        <input type="text" class="form-control" value="Mi Empresa">
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Moneda</label>
-                                        <select class="form-select">
-                                            <option>USD - Dólar</option>
-                                            <option>EUR - Euro</option>
-                                            <option>MXN - Peso Mexicano</option>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select class="form-select" id="currency">
+                                <option value="USD">USD - Dólar Estadounidense</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="MXN">MXN - Peso Mexicano</option>
+                                <option value="COP">COP - Peso Colombiano</option>
+                                <option value="ARS">ARS - Peso Argentino</option>
+                                <option value="CLP">CLP - Peso Chileno</option>
+                                <option value="PEN">PEN - Sol Peruano</option>
+                                <option value="BRL">BRL - Real Brasileño</option>
                                         </select>
+                            <label for="currency">Moneda</label>
+                        </div>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Zona Horaria</label>
-                                        <select class="form-select">
-                                            <option>UTC-5 (América Central)</option>
-                                            <option>UTC-6 (América Central)</option>
-                                            <option>UTC-8 (Pacífico)</option>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select class="form-select" id="timezone">
+                                <option value="UTC-5">UTC-5 (América Central)</option>
+                                <option value="UTC-6">UTC-6 (América Central)</option>
+                                <option value="UTC-8">UTC-8 (Pacífico)</option>
+                                <option value="UTC-3">UTC-3 (Brasil)</option>
+                                <option value="UTC-4">UTC-4 (Chile)</option>
+                                <option value="UTC-5">UTC-5 (Colombia)</option>
                                         </select>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                                </form>
+                            <label for="timezone">Zona Horaria</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuración de Tema -->
+            <div class="settings-section">
+                <h5><i class="bi bi-palette"></i> Personalización de Tema</h5>
+                
+                <!-- Temas Predefinidos -->
+                <div class="mb-4">
+                    <label class="form-label">Temas Predefinidos</label>
+                    <div class="row" id="themesContainer">
+                        <!-- Los temas se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Colores Personalizados -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Colores Personalizados</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label">Color Primario</label>
+                                <input type="color" class="color-picker" id="primaryColor" value="#667eea">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Color Secundario</label>
+                                <input type="color" class="color-picker" id="secondaryColor" value="#764ba2">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <label class="form-label">Color de Acento</label>
+                                <input type="color" class="color-picker" id="accentColor" value="#28a745">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Color del Sidebar</label>
+                                <input type="color" class="color-picker" id="sidebarColor" value="#667eea">
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="m-0 font-weight-bold">Configuración de Usuario</h6>
+                    <div class="col-md-6">
+                        <label class="form-label">Vista Previa</label>
+                        <div class="d-flex">
+                            <div class="preview-sidebar" id="previewSidebar"></div>
+                            <div class="preview-content" id="previewContent"></div>
+                        </div>
+                        <div class="mt-3">
+                            <small class="text-muted">Los cambios se aplicarán al guardar la configuración</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuración de Impresión -->
+            <div class="settings-section">
+                <h5><i class="bi bi-printer"></i> Configuración de Impresión</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <textarea class="form-control" id="printHeader" placeholder="Encabezado del ticket" style="height: 100px" oninput="updatePrintPreview()"></textarea>
+                            <label for="printHeader">Encabezado del Ticket</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <textarea class="form-control" id="printFooter" placeholder="Pie del ticket" style="height: 100px" oninput="updatePrintPreview()"></textarea>
+                            <label for="printFooter">Pie del Ticket</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <select class="form-control" id="ticketSize" onchange="updatePrintPreview()">
+                                <option value="58mm">58mm - Ticket Pequeño</option>
+                                <option value="80mm" selected>80mm - Ticket Estándar</option>
+                                <option value="112mm">112mm - Ticket Grande</option>
+                            </select>
+                            <label for="ticketSize">Tamaño del Ticket</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="number" class="form-control" id="printCopies" placeholder="Número de copias" min="1" max="5" value="1">
+                            <label for="printCopies">Número de Copias</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Vista Previa de Impresión -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6><i class="bi bi-eye"></i> Vista Previa del Ticket</h6>
+                        <div class="print-preview-container" style="padding: 20px; max-width: 300px; margin: 0 auto;">
+                            <div id="printPreviewHeader" class="text-center mb-3" style="font-size: 14px; font-weight: bold;"></div>
+                            <hr>
+                            <div class="text-center mb-2" style="font-size: 12px;">
+                                <strong>Ticket de Venta</strong><br>
+                                Fecha: <span id="printPreviewDate"></span><br>
+                                Ticket #: <span id="printPreviewTicket">001</span>
                             </div>
-                            <div class="card-body">
-                                <form>
-                                    <div class="mb-3">
-                                        <label class="form-label">Nombre Completo</label>
-                                        <input type="text" class="form-control" value="Administrador">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Email</label>
-                                        <input type="email" class="form-control" value="admin@sistema.com">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Nueva Contraseña</label>
-                                        <input type="password" class="form-control">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Confirmar Contraseña</label>
-                                        <input type="password" class="form-control">
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Actualizar Perfil</button>
-                                </form>
+                            <hr>
+                            <div style="font-size: 12px;">
+                                <div class="d-flex justify-content-between">
+                                    <span>Producto de Ejemplo</span>
+                                    <span>$10.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Cantidad: 1</span>
+                                    <span></span>
+                                </div>
                             </div>
+                            <hr>
+                            <div class="d-flex justify-content-between" style="font-weight: bold;">
+                                <span>TOTAL:</span>
+                                <span>$10.00</span>
+                            </div>
+                            <hr>
+                            <div id="printPreviewFooter" class="text-center mt-3" style="font-size: 12px;"></div>
+                        </div>
+                            </div>
+                                    </div>
+                                    </div>
+
+            <!-- Configuración de Notificaciones -->
+            <div class="settings-section">
+                <h5><i class="bi bi-bell"></i> Configuración de Notificaciones</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="enableNotifications" checked>
+                            <label class="form-check-label" for="enableNotifications">
+                                Habilitar Notificaciones
+                            </label>
+                                    </div>
+                                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="number" class="form-control" id="lowStockThreshold" placeholder="Umbral de stock bajo" min="1" max="100">
+                            <label for="lowStockThreshold">Umbral de Stock Bajo</label>
                         </div>
                     </div>
                 </div>
@@ -81,10 +323,500 @@
 
 {% block extra_js %}
 <script>
-// Funcionalidad básica de configuración
+let currentSettings = {};
+let themes = [];
+let currencies = [];
+
+// Cargar configuración al iniciar
 $(document).ready(function() {
-    // Aquí se puede agregar la lógica para cargar y guardar configuraciones
-    console.log('Página de configuración cargada');
+    loadSettings();
+    loadThemes();
+    loadCurrencies();
+    setupColorPickers();
+    
+    // Cargar configuración desde localStorage si existe
+    const savedSettings = localStorage.getItem('system_settings');
+    if (savedSettings) {
+        try {
+            const parsedSettings = JSON.parse(savedSettings);
+            console.log('Configuración cargada desde localStorage:', parsedSettings);
+        } catch (error) {
+            console.error('Error parseando configuración de localStorage:', error);
+        }
+    }
 });
+
+// Cargar configuración actual
+async function loadSettings() {
+    try {
+        const response = await fetch('/api/v1/settings/');
+        if (response.ok) {
+            currentSettings = await response.json();
+            populateForm(currentSettings);
+        } else {
+            // Si no hay configuración en la base de datos, usar configuración por defecto
+            console.log('No se encontró configuración en la base de datos, usando configuración por defecto');
+            currentSettings = {
+                company_name: 'Mi Empresa',
+                app_title: 'Sistema POS',
+                app_subtitle: 'Punto de Venta',
+                currency: 'USD',
+                timezone: 'UTC-5',
+                primary_color: '#667eea',
+                secondary_color: '#764ba2',
+                accent_color: '#28a745',
+                sidebar_color: '#667eea',
+                print_header: 'Mi Empresa\nDirección de la empresa\nTel: (123) 456-7890',
+                print_footer: '¡Gracias por su compra!\nVuelva pronto',
+                enable_notifications: true,
+                low_stock_threshold: 10
+            };
+            populateForm(currentSettings);
+        }
+    } catch (error) {
+        console.error('Error cargando configuración:', error);
+        // Usar configuración por defecto en caso de error
+        currentSettings = {
+            company_name: 'Mi Empresa',
+            app_title: 'Sistema POS',
+            app_subtitle: 'Punto de Venta',
+            currency: 'USD',
+            timezone: 'UTC-5',
+            primary_color: '#667eea',
+            secondary_color: '#764ba2',
+            accent_color: '#28a745',
+            sidebar_color: '#667eea',
+            print_header: 'Mi Empresa\nDirección de la empresa\nTel: (123) 456-7890',
+            print_footer: '¡Gracias por su compra!\nVuelva pronto',
+            enable_notifications: true,
+            low_stock_threshold: 10
+        };
+        populateForm(currentSettings);
+        showAlert('Error al cargar la configuración, usando valores por defecto', 'warning');
+    }
+}
+
+// Cargar temas disponibles
+async function loadThemes() {
+    try {
+        const response = await fetch('/api/v1/settings/themes');
+        if (response.ok) {
+            themes = await response.json();
+            renderThemes();
+        } else {
+            // Usar temas predefinidos si no se pueden cargar
+            themes = [
+                {
+                    name: "Azul Clásico",
+                    primary_color: "#667eea",
+                    secondary_color: "#764ba2",
+                    accent_color: "#28a745",
+                    sidebar_color: "#667eea"
+                },
+                {
+                    name: "Verde Naturaleza",
+                    primary_color: "#28a745",
+                    secondary_color: "#20c997",
+                    accent_color: "#ffc107",
+                    sidebar_color: "#28a745"
+                },
+                {
+                    name: "Naranja Energía",
+                    primary_color: "#fd7e14",
+                    secondary_color: "#e83e8c",
+                    accent_color: "#6f42c1",
+                    sidebar_color: "#fd7e14"
+                },
+                {
+                    name: "Rojo Pasión",
+                    primary_color: "#dc3545",
+                    secondary_color: "#fd7e14",
+                    accent_color: "#ffc107",
+                    sidebar_color: "#dc3545"
+                },
+                {
+                    name: "Púrpura Elegante",
+                    primary_color: "#6f42c1",
+                    secondary_color: "#e83e8c",
+                    accent_color: "#28a745",
+                    sidebar_color: "#6f42c1"
+                }
+            ];
+            renderThemes();
+        }
+    } catch (error) {
+        console.error('Error cargando temas:', error);
+        // Usar temas predefinidos en caso de error
+        themes = [
+            {
+                name: "Azul Clásico",
+                primary_color: "#667eea",
+                secondary_color: "#764ba2",
+                accent_color: "#28a745",
+                sidebar_color: "#667eea"
+            },
+            {
+                name: "Verde Naturaleza",
+                primary_color: "#28a745",
+                secondary_color: "#20c997",
+                accent_color: "#ffc107",
+                sidebar_color: "#28a745"
+            },
+            {
+                name: "Naranja Energía",
+                primary_color: "#fd7e14",
+                secondary_color: "#e83e8c",
+                accent_color: "#6f42c1",
+                sidebar_color: "#fd7e14"
+            },
+            {
+                name: "Rojo Pasión",
+                primary_color: "#dc3545",
+                secondary_color: "#fd7e14",
+                accent_color: "#ffc107",
+                sidebar_color: "#dc3545"
+            },
+            {
+                name: "Púrpura Elegante",
+                primary_color: "#6f42c1",
+                secondary_color: "#e83e8c",
+                accent_color: "#28a745",
+                sidebar_color: "#6f42c1"
+            }
+        ];
+        renderThemes();
+    }
+}
+
+// Cargar monedas disponibles
+async function loadCurrencies() {
+    try {
+        const response = await fetch('/api/v1/settings/currencies');
+        if (response.ok) {
+            currencies = await response.json();
+        }
+    } catch (error) {
+        console.error('Error cargando monedas:', error);
+    }
+}
+
+// Renderizar temas
+function renderThemes() {
+    const container = document.getElementById('themesContainer');
+    container.innerHTML = '';
+    
+    themes.forEach((theme, index) => {
+        const themeDiv = document.createElement('div');
+        themeDiv.className = 'col-md-4 col-lg-3 mb-3';
+        themeDiv.innerHTML = `
+            <div class="theme-preview" onclick="selectTheme(${index})">
+                <h6 class="mb-2">${theme.name}</h6>
+                <div class="theme-colors">
+                    <div class="color-dot" style="background-color: ${theme.primary_color}"></div>
+                    <div class="color-dot" style="background-color: ${theme.secondary_color}"></div>
+                    <div class="color-dot" style="background-color: ${theme.accent_color}"></div>
+                    <div class="color-dot" style="background-color: ${theme.sidebar_color}"></div>
+                </div>
+            </div>
+        `;
+        container.appendChild(themeDiv);
+    });
+}
+
+// Seleccionar tema
+function selectTheme(index) {
+    const theme = themes[index];
+    
+    // Remover selección anterior
+    document.querySelectorAll('.theme-preview').forEach(el => el.classList.remove('selected'));
+    
+    // Marcar como seleccionado
+    event.target.closest('.theme-preview').classList.add('selected');
+    
+    // Aplicar colores
+    document.getElementById('primaryColor').value = theme.primary_color;
+    document.getElementById('secondaryColor').value = theme.secondary_color;
+    document.getElementById('accentColor').value = theme.accent_color;
+    document.getElementById('sidebarColor').value = theme.sidebar_color;
+    
+    // Actualizar vista previa
+    updatePreview();
+}
+
+// Configurar color pickers
+function setupColorPickers() {
+    const colorPickers = document.querySelectorAll('.color-picker');
+    colorPickers.forEach(picker => {
+        picker.addEventListener('change', updatePreview);
+    });
+}
+
+// Actualizar vista previa
+function updatePreview() {
+    const primaryColor = document.getElementById('primaryColor').value;
+    const secondaryColor = document.getElementById('secondaryColor').value;
+    const sidebarColor = document.getElementById('sidebarColor').value;
+    
+    document.getElementById('previewSidebar').style.backgroundColor = sidebarColor;
+    document.getElementById('previewContent').style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+}
+
+// Actualizar vista previa de impresión
+function updatePrintPreview() {
+    const header = document.getElementById('printHeader').value;
+    const footer = document.getElementById('printFooter').value;
+    const ticketSize = document.getElementById('ticketSize').value;
+    
+    // Configuraciones de tamaño para la vista previa
+    const previewConfigs = {
+        '58mm': { width: '200px', fontSize: '8px' },
+        '80mm': { width: '280px', fontSize: '10px' },
+        '112mm': { width: '400px', fontSize: '12px' }
+    };
+    
+    const config = previewConfigs[ticketSize] || previewConfigs['80mm'];
+    
+    // Actualizar el contenedor de vista previa
+    const previewContainer = document.querySelector('.print-preview-container');
+    if (previewContainer) {
+        previewContainer.style.maxWidth = config.width;
+        previewContainer.style.fontSize = config.fontSize;
+    }
+    
+    document.getElementById('printPreviewHeader').textContent = header || 'Mi Empresa\nDirección de la empresa\nTel: (123) 456-7890';
+    document.getElementById('printPreviewFooter').textContent = footer || '¡Gracias por su compra!\nVuelva pronto';
+}
+
+// Actualizar fecha en la vista previa
+function updatePrintPreviewDate() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    document.getElementById('printPreviewDate').textContent = dateStr;
+}
+
+// Poblar formulario con datos
+function populateForm(settings) {
+    document.getElementById('companyName').value = settings.company_name || '';
+    document.getElementById('appTitle').value = settings.app_title || '';
+    document.getElementById('currency').value = settings.currency || 'USD';
+    document.getElementById('timezone').value = settings.timezone || 'UTC-5';
+    document.getElementById('primaryColor').value = settings.primary_color || '#667eea';
+    document.getElementById('secondaryColor').value = settings.secondary_color || '#764ba2';
+    document.getElementById('accentColor').value = settings.accent_color || '#28a745';
+    document.getElementById('sidebarColor').value = settings.sidebar_color || '#667eea';
+    document.getElementById('printHeader').value = settings.print_header || '';
+    document.getElementById('printFooter').value = settings.print_footer || '';
+    document.getElementById('ticketSize').value = settings.ticket_size || '80mm';
+    document.getElementById('printCopies').value = settings.print_copies || 1;
+    document.getElementById('enableNotifications').checked = settings.enable_notifications !== false;
+    document.getElementById('lowStockThreshold').value = settings.low_stock_threshold || 10;
+    
+    updatePreview();
+    updatePrintPreview();
+    updatePrintPreviewDate();
+}
+
+// Guardar toda la configuración
+async function saveAllSettings() {
+    const settings = {
+        company_name: document.getElementById('companyName').value,
+        app_title: document.getElementById('appTitle').value,
+        currency: document.getElementById('currency').value,
+        timezone: document.getElementById('timezone').value,
+        primary_color: document.getElementById('primaryColor').value,
+        secondary_color: document.getElementById('secondaryColor').value,
+        accent_color: document.getElementById('accentColor').value,
+        sidebar_color: document.getElementById('sidebarColor').value,
+        print_header: document.getElementById('printHeader').value,
+        print_footer: document.getElementById('printFooter').value,
+        ticket_size: document.getElementById('ticketSize').value,
+        print_copies: parseInt(document.getElementById('printCopies').value),
+        enable_notifications: document.getElementById('enableNotifications').checked,
+        low_stock_threshold: parseInt(document.getElementById('lowStockThreshold').value)
+    };
+    
+    try {
+        const response = await fetch('/api/v1/settings/', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        if (response.ok) {
+            showAlert('Configuración guardada exitosamente', 'success');
+            currentSettings = await response.json();
+            
+            // Aplicar cambios inmediatamente
+            applyThemeChanges(settings);
+        } else {
+            // Si no se puede guardar en la base de datos, guardar localmente
+            console.log('No se pudo guardar en la base de datos, guardando localmente');
+            currentSettings = settings;
+            
+            // Guardar en localStorage como respaldo
+            localStorage.setItem('system_settings', JSON.stringify(settings));
+            
+            // Aplicar cambios inmediatamente
+            applyThemeChanges(settings);
+            showAlert('Configuración guardada localmente', 'success');
+        }
+    } catch (error) {
+        console.error('Error guardando configuración:', error);
+        
+        // Guardar localmente en caso de error
+        currentSettings = settings;
+        localStorage.setItem('system_settings', JSON.stringify(settings));
+        
+        // Aplicar cambios inmediatamente
+        applyThemeChanges(settings);
+        showAlert('Configuración guardada localmente', 'success');
+    }
+}
+
+// Aplicar cambios de tema
+function applyThemeChanges(settings) {
+    // Actualizar variables CSS
+    document.documentElement.style.setProperty('--primary-color', settings.primary_color);
+    document.documentElement.style.setProperty('--secondary-color', settings.secondary_color);
+    document.documentElement.style.setProperty('--accent-color', settings.accent_color);
+    document.documentElement.style.setProperty('--sidebar-color', settings.sidebar_color);
+    
+    // Actualizar título de la aplicación
+    document.title = settings.app_title + ' - Sistema POS';
+    
+    // Actualizar nombre en el sidebar
+    const sidebarTitle = document.querySelector('.sidebar h4');
+    if (sidebarTitle) {
+        sidebarTitle.textContent = settings.app_title;
+    }
+    
+    // Actualizar subtítulo en el sidebar
+    const sidebarSubtitle = document.querySelector('.sidebar small');
+    if (sidebarSubtitle) {
+        sidebarSubtitle.textContent = settings.app_subtitle || 'Punto de Venta';
+    }
+    
+    // Guardar configuración de impresión en localStorage para uso global
+    localStorage.setItem('print_header', settings.print_header || '');
+    localStorage.setItem('print_footer', settings.print_footer || '');
+    localStorage.setItem('company_name', settings.company_name || '');
+    localStorage.setItem('ticket_size', settings.ticket_size || '80mm');
+    localStorage.setItem('print_copies', settings.print_copies || 1);
+    
+    // Guardar configuración del tema en localStorage para sincronización
+    localStorage.setItem('theme_settings', JSON.stringify(settings));
+    
+    // Forzar re-renderizado de elementos con gradientes
+    const elementsToUpdate = document.querySelectorAll('.sidebar, .btn-primary, .stats-card, .login-header, .btn-login');
+    elementsToUpdate.forEach(element => {
+        element.style.animation = 'none';
+        element.offsetHeight; // Trigger reflow
+        element.style.animation = null;
+    });
+    
+    // Disparar evento personalizado para notificar cambios
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: settings }));
+}
+
+// Restablecer configuración
+async function resetSettings() {
+    if (confirm('¿Estás seguro de que quieres restablecer toda la configuración a los valores por defecto?')) {
+        try {
+            const response = await fetch('/api/v1/settings/reset', {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                currentSettings = await response.json();
+                populateForm(currentSettings);
+                showAlert('Configuración restablecida exitosamente', 'success');
+            } else {
+                showAlert('Error al restablecer la configuración', 'danger');
+            }
+        } catch (error) {
+            console.error('Error restableciendo configuración:', error);
+            showAlert('Error al restablecer la configuración', 'danger');
+        }
+    }
+}
+
+// Mostrar alerta
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Función global para obtener configuración de impresión
+function getPrintSettings() {
+    return {
+        header: localStorage.getItem('print_header') || 'Mi Empresa\nDirección de la empresa\nTel: (123) 456-7890',
+        footer: localStorage.getItem('print_footer') || '¡Gracias por su compra!\nVuelva pronto',
+        company_name: localStorage.getItem('company_name') || 'Mi Empresa'
+    };
+}
+
+// Función global para generar contenido de ticket
+function generateTicketContent(saleData) {
+    const printSettings = getPrintSettings();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    let ticketContent = '';
+    
+    // Encabezado
+    ticketContent += printSettings.header + '\n';
+    ticketContent += '='.repeat(32) + '\n';
+    
+    // Información del ticket
+    ticketContent += 'TICKET DE VENTA\n';
+    ticketContent += `Fecha: ${dateStr}\n`;
+    ticketContent += `Ticket #: ${saleData.ticket_number || '001'}\n`;
+    ticketContent += '='.repeat(32) + '\n';
+    
+    // Productos
+    if (saleData.items && saleData.items.length > 0) {
+        saleData.items.forEach(item => {
+            ticketContent += `${item.name}\n`;
+            ticketContent += `${item.quantity} x $${item.price.toFixed(2)} = $${(item.quantity * item.price).toFixed(2)}\n`;
+        });
+    }
+    
+    ticketContent += '='.repeat(32) + '\n';
+    ticketContent += `TOTAL: $${saleData.total.toFixed(2)}\n`;
+    ticketContent += '='.repeat(32) + '\n';
+    
+    // Pie de página
+    ticketContent += printSettings.footer + '\n';
+    
+    return ticketContent;
+}
 </script>
 {% endblock %}

@@ -1,0 +1,755 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Recetas - Sistema POS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-book"></i> Gestión de Recetas</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#recipeModal">
+                    <i class="bi bi-plus-circle"></i> Nueva Receta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Filtros</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="productFilter" class="form-label">Producto</label>
+                            <select class="form-select" id="productFilter">
+                                <option value="">Todos los productos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="statusFilter" class="form-label">Estado</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">Todos</option>
+                                <option value="active">Activas</option>
+                                <option value="inactive">Inactivas</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Estadísticas</h5>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h4 class="text-primary" id="totalRecipes">0</h4>
+                            <small>Total Recetas</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-success" id="activeRecipes">0</h4>
+                            <small>Activas</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-warning" id="avgCost">$0</h4>
+                            <small>Costo Promedio</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Recetas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="recipesTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Producto</th>
+                                    <th>Ingredientes</th>
+                                    <th>Tiempo Prep.</th>
+                                    <th>Costo Total</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Los datos se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear/Editar Receta -->
+<div class="modal fade" id="recipeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recipeModalTitle">Nueva Receta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="recipeForm">
+                    <input type="hidden" id="recipeId">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="recipeName" class="form-label">Nombre de la Receta *</label>
+                                <input type="text" class="form-control" id="recipeName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="recipeProduct" class="form-label">Producto de Venta *</label>
+                                <select class="form-select" id="recipeProduct" required>
+                                    <option value="">Seleccionar producto...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="preparationTime" class="form-label">Tiempo de Preparación (min)</label>
+                                <input type="number" class="form-control" id="preparationTime" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="recipeStatus" class="form-label">Estado</label>
+                                <select class="form-select" id="recipeStatus">
+                                    <option value="true">Activa</option>
+                                    <option value="false">Inactiva</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="recipeDescription" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="recipeDescription" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="recipeInstructions" class="form-label">Instrucciones de Preparación</label>
+                        <textarea class="form-control" id="recipeInstructions" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="recipeNotes" class="form-label">Notas</label>
+                        <textarea class="form-control" id="recipeNotes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveRecipe()">Guardar Receta</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Gestionar Ingredientes -->
+<div class="modal fade" id="ingredientsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ingredientes de la Receta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <h6>Agregar Ingrediente</h6>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-success btn-sm" onclick="addIngredient()">
+                            <i class="bi bi-plus"></i> Agregar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm" id="ingredientsTable">
+                        <thead>
+                            <tr>
+                                <th>Ingrediente</th>
+                                <th>Cantidad</th>
+                                <th>Unidad</th>
+                                <th>Costo Unit.</th>
+                                <th>Costo Total</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Los ingredientes se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6>Costo Total de la Receta</h6>
+                                <h4 class="text-success" id="totalRecipeCost">$0.00</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6>Ingredientes Disponibles</h6>
+                                <p class="mb-0" id="availableIngredients">0 ingredientes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="saveIngredients()">Guardar Ingredientes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Agregar Ingrediente -->
+<div class="modal fade" id="addIngredientModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Ingrediente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="ingredientForm">
+                    <div class="mb-3">
+                        <label for="ingredientProduct" class="form-label">Ingrediente *</label>
+                        <select class="form-select" id="ingredientProduct" required>
+                            <option value="">Seleccionar ingrediente...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="ingredientQuantity" class="form-label">Cantidad *</label>
+                                <input type="number" class="form-control" id="ingredientQuantity" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="ingredientUnit" class="form-label">Unidad</label>
+                                <input type="text" class="form-control" id="ingredientUnit" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="ingredientUnitCost" class="form-label">Costo Unitario</label>
+                                <input type="number" class="form-control" id="ingredientUnitCost" step="0.01" min="0" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="ingredientTotalCost" class="form-label">Costo Total</label>
+                                <input type="number" class="form-control" id="ingredientTotalCost" step="0.01" min="0" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveIngredient()">Agregar Ingrediente</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let recipes = [];
+let currentRecipe = null;
+let currentIngredients = [];
+let salesProducts = [];
+let inventoryProducts = [];
+
+// Cargar datos al inicializar la página
+document.addEventListener('DOMContentLoaded', function() {
+    loadSalesProducts();
+    loadInventoryProducts();
+    loadRecipes();
+});
+
+// Cargar productos de venta
+async function loadSalesProducts() {
+    try {
+        const response = await fetch('/api/v1/products/sales');
+        salesProducts = await response.json();
+        
+        const productSelect = document.getElementById('recipeProduct');
+        const productFilter = document.getElementById('productFilter');
+        
+        productSelect.innerHTML = '<option value="">Seleccionar producto...</option>';
+        productFilter.innerHTML = '<option value="">Todos los productos</option>';
+        
+        salesProducts.forEach(product => {
+            const option1 = new Option(product.name, product.id);
+            const option2 = new Option(product.name, product.id);
+            productSelect.add(option1);
+            productFilter.add(option2);
+        });
+    } catch (error) {
+        console.error('Error cargando productos de venta:', error);
+        showAlert('Error cargando productos de venta', 'danger');
+    }
+}
+
+// Cargar productos de inventario
+async function loadInventoryProducts() {
+    try {
+        const response = await fetch('/api/v1/products/inventory');
+        inventoryProducts = await response.json();
+        
+        const ingredientSelect = document.getElementById('ingredientProduct');
+        ingredientSelect.innerHTML = '<option value="">Seleccionar ingrediente...</option>';
+        
+        inventoryProducts.forEach(product => {
+            const option = new Option(`${product.name} (${product.stock_quantity} ${product.unit})`, product.id);
+            option.dataset.unit = product.unit;
+            option.dataset.cost = product.purchase_price || 0;
+            ingredientSelect.add(option);
+        });
+    } catch (error) {
+        console.error('Error cargando productos de inventario:', error);
+        showAlert('Error cargando productos de inventario', 'danger');
+    }
+}
+
+// Cargar recetas
+async function loadRecipes() {
+    try {
+        const response = await fetch('/api/v1/recipes/');
+        recipes = await response.json();
+        renderRecipes();
+        updateStatistics();
+    } catch (error) {
+        console.error('Error cargando recetas:', error);
+        showAlert('Error cargando recetas', 'danger');
+    }
+}
+
+// Renderizar tabla de recetas
+function renderRecipes() {
+    const tbody = document.querySelector('#recipesTable tbody');
+    tbody.innerHTML = '';
+    
+    recipes.forEach(recipe => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${recipe.id}</td>
+            <td>${recipe.name}</td>
+            <td>${getProductName(recipe.product_id)}</td>
+            <td>${recipe.items ? recipe.items.length : 0} ingredientes</td>
+            <td>${recipe.preparation_time || 0} min</td>
+            <td>$${recipe.total_cost || 0}</td>
+            <td>
+                <span class="badge ${recipe.is_active ? 'bg-success' : 'bg-secondary'}">
+                    ${recipe.is_active ? 'Activa' : 'Inactiva'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="editRecipe(${recipe.id})">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="manageIngredients(${recipe.id})">
+                    <i class="bi bi-list-ul"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteRecipe(${recipe.id})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Obtener nombre del producto
+function getProductName(productId) {
+    const product = salesProducts.find(p => p.id === productId);
+    return product ? product.name : 'Producto no encontrado';
+}
+
+// Actualizar estadísticas
+function updateStatistics() {
+    const total = recipes.length;
+    const active = recipes.filter(r => r.is_active).length;
+    const avgCost = recipes.length > 0 ? 
+        recipes.reduce((sum, r) => sum + (r.total_cost || 0), 0) / recipes.length : 0;
+    
+    document.getElementById('totalRecipes').textContent = total;
+    document.getElementById('activeRecipes').textContent = active;
+    document.getElementById('avgCost').textContent = `$${avgCost.toFixed(2)}`;
+}
+
+// Abrir modal para nueva receta
+function newRecipe() {
+    currentRecipe = null;
+    document.getElementById('recipeModalTitle').textContent = 'Nueva Receta';
+    document.getElementById('recipeForm').reset();
+    document.getElementById('recipeId').value = '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('recipeModal'));
+    modal.show();
+}
+
+// Editar receta
+async function editRecipe(recipeId) {
+    try {
+        const response = await fetch(`/api/v1/recipes/${recipeId}`);
+        currentRecipe = await response.json();
+        
+        document.getElementById('recipeModalTitle').textContent = 'Editar Receta';
+        document.getElementById('recipeId').value = currentRecipe.id;
+        document.getElementById('recipeName').value = currentRecipe.name;
+        document.getElementById('recipeProduct').value = currentRecipe.product_id;
+        document.getElementById('preparationTime').value = currentRecipe.preparation_time || 0;
+        document.getElementById('recipeStatus').value = currentRecipe.is_active.toString();
+        document.getElementById('recipeDescription').value = currentRecipe.description || '';
+        document.getElementById('recipeInstructions').value = currentRecipe.instructions || '';
+        document.getElementById('recipeNotes').value = currentRecipe.notes || '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('recipeModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Error cargando receta:', error);
+        showAlert('Error cargando receta', 'danger');
+    }
+}
+
+// Guardar receta
+async function saveRecipe() {
+    const form = document.getElementById('recipeForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const recipeData = {
+        name: document.getElementById('recipeName').value,
+        product_id: parseInt(document.getElementById('recipeProduct').value),
+        preparation_time: parseInt(document.getElementById('preparationTime').value) || 0,
+        is_active: document.getElementById('recipeStatus').value === 'true',
+        description: document.getElementById('recipeDescription').value,
+        instructions: document.getElementById('recipeInstructions').value,
+        notes: document.getElementById('recipeNotes').value
+    };
+    
+    try {
+        const url = currentRecipe ? `/api/v1/recipes/${currentRecipe.id}` : '/api/v1/recipes/';
+        const method = currentRecipe ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(recipeData)
+        });
+        
+        if (response.ok) {
+            showAlert('Receta guardada exitosamente', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('recipeModal')).hide();
+            loadRecipes();
+        } else {
+            const error = await response.json();
+            showAlert(`Error: ${error.detail}`, 'danger');
+        }
+    } catch (error) {
+        console.error('Error guardando receta:', error);
+        showAlert('Error guardando receta', 'danger');
+    }
+}
+
+// Gestionar ingredientes
+async function manageIngredients(recipeId) {
+    try {
+        const response = await fetch(`/api/v1/recipes/${recipeId}`);
+        currentRecipe = await response.json();
+        currentIngredients = currentRecipe.items || [];
+        
+        renderIngredients();
+        updateTotalCost();
+        
+        const modal = new bootstrap.Modal(document.getElementById('ingredientsModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Error cargando ingredientes:', error);
+        showAlert('Error cargando ingredientes', 'danger');
+    }
+}
+
+// Renderizar ingredientes
+function renderIngredients() {
+    const tbody = document.querySelector('#ingredientsTable tbody');
+    tbody.innerHTML = '';
+    
+    currentIngredients.forEach((ingredient, index) => {
+        const product = inventoryProducts.find(p => p.id === ingredient.product_id);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${product ? product.name : 'Producto no encontrado'}</td>
+            <td>${ingredient.quantity}</td>
+            <td>${ingredient.unit}</td>
+            <td>$${ingredient.unit_cost || 0}</td>
+            <td>$${ingredient.total_cost || 0}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeIngredient(${index})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Agregar ingrediente
+function addIngredient() {
+    document.getElementById('ingredientForm').reset();
+    const modal = new bootstrap.Modal(document.getElementById('addIngredientModal'));
+    modal.show();
+}
+
+// Guardar ingrediente
+function saveIngredient() {
+    const form = document.getElementById('ingredientForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const productId = parseInt(document.getElementById('ingredientProduct').value);
+    const quantity = parseFloat(document.getElementById('ingredientQuantity').value);
+    const unit = document.getElementById('ingredientUnit').value;
+    const unitCost = parseFloat(document.getElementById('ingredientUnitCost').value);
+    const totalCost = parseFloat(document.getElementById('ingredientTotalCost').value);
+    
+    const ingredient = {
+        product_id: productId,
+        quantity: quantity,
+        unit: unit,
+        unit_cost: unitCost,
+        total_cost: totalCost
+    };
+    
+    currentIngredients.push(ingredient);
+    renderIngredients();
+    updateTotalCost();
+    
+    bootstrap.Modal.getInstance(document.getElementById('addIngredientModal')).hide();
+}
+
+// Remover ingrediente
+function removeIngredient(index) {
+    currentIngredients.splice(index, 1);
+    renderIngredients();
+    updateTotalCost();
+}
+
+// Actualizar costo total
+function updateTotalCost() {
+    const total = currentIngredients.reduce((sum, ingredient) => sum + (ingredient.total_cost || 0), 0);
+    document.getElementById('totalRecipeCost').textContent = `$${total.toFixed(2)}`;
+    document.getElementById('availableIngredients').textContent = `${currentIngredients.length} ingredientes`;
+}
+
+// Guardar ingredientes
+async function saveIngredients() {
+    if (!currentRecipe) return;
+    
+    try {
+        // Primero actualizar la receta con el costo total
+        const totalCost = currentIngredients.reduce((sum, ingredient) => sum + (ingredient.total_cost || 0), 0);
+        
+        const recipeData = {
+            ...currentRecipe,
+            total_cost: totalCost
+        };
+        
+        await fetch(`/api/v1/recipes/${currentRecipe.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(recipeData)
+        });
+        
+        // Luego actualizar los ingredientes
+        for (const ingredient of currentIngredients) {
+            const ingredientData = {
+                ...ingredient,
+                recipe_id: currentRecipe.id
+            };
+            
+            if (ingredient.id) {
+                // Actualizar ingrediente existente
+                await fetch(`/api/v1/recipes/items/${ingredient.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(ingredientData)
+                });
+            } else {
+                // Crear nuevo ingrediente
+                await fetch(`/api/v1/recipes/${currentRecipe.id}/items`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(ingredientData)
+                });
+            }
+        }
+        
+        showAlert('Ingredientes guardados exitosamente', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('ingredientsModal')).hide();
+        loadRecipes();
+    } catch (error) {
+        console.error('Error guardando ingredientes:', error);
+        showAlert('Error guardando ingredientes', 'danger');
+    }
+}
+
+// Eliminar receta
+async function deleteRecipe(recipeId) {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta receta?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/v1/recipes/${recipeId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            showAlert('Receta eliminada exitosamente', 'success');
+            loadRecipes();
+        } else {
+            const error = await response.json();
+            showAlert(`Error: ${error.detail}`, 'danger');
+        }
+    } catch (error) {
+        console.error('Error eliminando receta:', error);
+        showAlert('Error eliminando receta', 'danger');
+    }
+}
+
+// Event listeners para ingredientes
+document.getElementById('ingredientProduct').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption.value) {
+        document.getElementById('ingredientUnit').value = selectedOption.dataset.unit || '';
+        document.getElementById('ingredientUnitCost').value = selectedOption.dataset.cost || 0;
+        calculateIngredientTotal();
+    }
+});
+
+document.getElementById('ingredientQuantity').addEventListener('input', calculateIngredientTotal);
+
+function calculateIngredientTotal() {
+    const quantity = parseFloat(document.getElementById('ingredientQuantity').value) || 0;
+    const unitCost = parseFloat(document.getElementById('ingredientUnitCost').value) || 0;
+    const total = quantity * unitCost;
+    document.getElementById('ingredientTotalCost').value = total.toFixed(2);
+}
+
+// Mostrar alertas
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Event listeners para filtros
+document.getElementById('productFilter').addEventListener('change', filterRecipes);
+document.getElementById('statusFilter').addEventListener('change', filterRecipes);
+
+function filterRecipes() {
+    const productFilter = document.getElementById('productFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    let filteredRecipes = recipes;
+    
+    if (productFilter) {
+        filteredRecipes = filteredRecipes.filter(r => r.product_id === parseInt(productFilter));
+    }
+    
+    if (statusFilter) {
+        const isActive = statusFilter === 'active';
+        filteredRecipes = filteredRecipes.filter(r => r.is_active === isActive);
+    }
+    
+    // Renderizar recetas filtradas
+    const tbody = document.querySelector('#recipesTable tbody');
+    tbody.innerHTML = '';
+    
+    filteredRecipes.forEach(recipe => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${recipe.id}</td>
+            <td>${recipe.name}</td>
+            <td>${getProductName(recipe.product_id)}</td>
+            <td>${recipe.items ? recipe.items.length : 0} ingredientes</td>
+            <td>${recipe.preparation_time || 0} min</td>
+            <td>$${recipe.total_cost || 0}</td>
+            <td>
+                <span class="badge ${recipe.is_active ? 'bg-success' : 'bg-secondary'}">
+                    ${recipe.is_active ? 'Activa' : 'Inactiva'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="editRecipe(${recipe.id})">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="manageIngredients(${recipe.id})">
+                    <i class="bi bi-list-ul"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteRecipe(${recipe.id})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+</script>
+{% endblock %}

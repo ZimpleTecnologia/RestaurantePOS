@@ -11,151 +11,334 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Custom CSS -->
     <style>
-        .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        :root {
+            --primary-color: #ff6b35;
+            --secondary-color: #2c3e50;
+            --accent-color: #28a745;
+            --header-orange: #ff6b35;
+            --header-dark: #2c3e50;
         }
-        .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
-            border-radius: 8px;
-            margin: 2px 0;
-        }
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            color: white;
-            background-color: rgba(255,255,255,0.1);
-        }
-        .main-content {
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
-            min-height: 100vh;
         }
+        
+        /* Header horizontal */
+        .main-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 70px;
+            display: flex;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-left {
+            background-color: var(--header-orange);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            min-width: 300px;
+        }
+        
+        .header-right {
+            background-color: var(--header-dark);
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            overflow-x: auto;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 26px;
+            color: var(--header-orange);
+        }
+        
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+            line-height: 1;
+        }
+        
+        .logo-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+            margin: 0;
+            line-height: 1;
+        }
+        
+        .nav-modules {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .nav-module {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .nav-module:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .nav-module.active {
+            background-color: var(--header-orange);
+        }
+        
+        /* Botón de logout */
+        .logout-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            margin-left: auto;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+        }
+        
+        .logout-btn i {
+            font-size: 16px;
+        }
+        
+        .nav-module i {
+            font-size: 23px;
+            margin-right: 8px;
+            color: var(--header-orange);
+        }
+        
+        .nav-module.active i {
+            color: white;
+        }
+        
+        .nav-module-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        /* Contenido principal */
+        .main-content {
+            margin-top: 70px;
+            min-height: calc(100vh - 70px);
+            padding: 20px;
+        }
+        
         .card {
             border: none;
             border-radius: 15px;
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
         }
+        
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
             border-radius: 8px;
         }
+        
         .btn-primary:hover {
-            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            background-color: #e55a2b;
+            border-color: #e55a2b;
         }
-        .navbar-brand {
-            font-weight: bold;
-            color: #667eea !important;
-        }
+        
         .stats-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #e55a2b 100%);
             color: white;
         }
+        
         .table-responsive {
             border-radius: 10px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-left {
+                min-width: 200px;
+                padding: 0 15px;
+            }
+            
+            .nav-modules {
+                gap: 15px;
+            }
+            
+            .nav-module-text {
+                display: none;
+            }
+            
+            .nav-module i {
+                margin-right: 0;
+            }
+        }
+        
+        /* Scrollbar personalizada para navegación */
+        .header-right::-webkit-scrollbar {
+            height: 4px;
+        }
+        
+        .header-right::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .header-right::-webkit-scrollbar-thumb {
+            background: var(--header-orange);
+            border-radius: 2px;
+        }
+        
+        /* Transiciones suaves para cambios de tema */
+        .sidebar, .btn-primary, .stats-card {
+            transition: all 0.3s ease;
+        }
+        
+        /* Efectos hover para las tarjetas de módulos */
+        .hover-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+        }
+        
+        .hover-card:hover .card-title {
+            color: var(--primary-color) !important;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <div class="text-center mb-4">
-                        <h4 class="text-white">Sistema POS</h4>
-                        <small class="text-white-50">Punto de Venta</small>
-                    </div>
-                    
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="/">
-                                <i class="bi bi-house-door"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/sales">
-                                <i class="bi bi-cart"></i> Ventas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/products">
-                                <i class="bi bi-box"></i> Productos
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/customers">
-                                <i class="bi bi-people"></i> Clientes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/inventory">
-                                <i class="bi bi-archive"></i> Inventario
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/cash-register">
-                                <i class="bi bi-cash-stack"></i> Sistema de Caja
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/reports">
-                                <i class="bi bi-graph-up"></i> Reportes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/settings">
-                                <i class="bi bi-gear"></i> Configuración
-                            </a>
-                        </li>
-                    </ul>
-                    
-                    <hr class="text-white-50">
-                    
-                    <div class="text-center">
-                        <small class="text-white-50">Usuario: <span id="current-user">Admin</span></small>
-                        <br>
-                        <button class="btn btn-outline-light btn-sm mt-2" onclick="logout()">
-                            <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
-                        </button>
-                    </div>
+    <!-- Header horizontal -->
+    <header class="main-header">
+        <!-- Sección izquierda con logo -->
+        <div class="header-left">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    🍽️
                 </div>
-            </nav>
-
-            <!-- Main content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-                <!-- Top navbar -->
-                <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm rounded-bottom mb-4">
-                    <div class="container-fluid">
-                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".sidebar">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
-                        
-                        <span class="navbar-brand">{% block page_title %}Dashboard{% endblock %}</span>
-                        
-                        <div class="navbar-nav ms-auto">
-                            <div class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-person-circle"></i> Admin
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/profile">Perfil</a></li>
-                                    <li><a class="dropdown-item" href="/settings">Configuración</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="#" onclick="logout()">Cerrar Sesión</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-
-                <!-- Page content -->
-                <div class="container-fluid">
-                    {% block content %}{% endblock %}
+                <div class="logo-text">
+                    <h1 class="logo-title">RESTAURANTE</h1>
+                    <p class="logo-subtitle">Sistema POS</p>
                 </div>
-            </main>
+            </div>
         </div>
-    </div>
+        
+        <!-- Sección derecha con navegación -->
+        <div class="header-right">
+            <ul class="nav-modules">
+                <li>
+                    <a href="/" class="nav-module" id="nav-dashboard">
+                        <i class="bi bi-house-door"></i>
+                        <span class="nav-module-text">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/products" class="nav-module" id="nav-products">
+                        <i class="bi bi-box"></i>
+                        <span class="nav-module-text">Productos</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/kitchen" class="nav-module" id="nav-kitchen">
+                        <i class="bi bi-fire"></i>
+                        <span class="nav-module-text">Cocina</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/waiters" class="nav-module" id="nav-waiters">
+                        <i class="bi bi-person-badge"></i>
+                        <span class="nav-module-text">Meseros</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/inventory" class="nav-module" id="nav-inventory">
+                        <i class="bi bi-archive"></i>
+                        <span class="nav-module-text">Inventario</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/recipes" class="nav-module" id="nav-recipes">
+                        <i class="bi bi-book"></i>
+                        <span class="nav-module-text">Recetas</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/caja-ventas" class="nav-module" id="nav-sales">
+                        <i class="bi bi-cash-coin"></i>
+                        <span class="nav-module-text">Caja y Ventas</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/reports" class="nav-module" id="nav-reports">
+                        <i class="bi bi-graph-up"></i>
+                        <span class="nav-module-text">Reportes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/settings" class="nav-module" id="nav-settings">
+                        <i class="bi bi-gear"></i>
+                        <span class="nav-module-text">Configuración</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- Botón de logout -->
+            <button class="logout-btn" onclick="logout()" title="Cerrar sesión">
+                <i class="bi bi-box-arrow-right"></i>
+                <span class="nav-module-text">Salir</span>
+            </button>
+        </div>
+    </header>
+    
+    <!-- Contenido principal -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -165,35 +348,443 @@
     <script>
         // Función para cerrar sesión
         function logout() {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('token_type');
-            window.location.href = '/login';
-        }
-
-        // Verificar autenticación
-        function checkAuth() {
-            const token = localStorage.getItem('access_token');
-            if (!token && window.location.pathname !== '/login') {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_info');
                 window.location.href = '/login';
             }
         }
 
-        // Marcar enlace activo
-        function setActiveNav() {
+        // Marcar enlace activo basado en la URL actual
+        document.addEventListener('DOMContentLoaded', function() {
             const currentPath = window.location.pathname;
-            document.querySelectorAll('.nav-link').forEach(link => {
-                if (link.getAttribute('href') === currentPath) {
-                    link.classList.add('active');
+            const navModules = document.querySelectorAll('.nav-module');
+            
+            // Remover clase active de todos los módulos
+            navModules.forEach(module => {
+                module.classList.remove('active');
+            });
+            
+            // Agregar clase active al módulo actual
+            navModules.forEach(module => {
+                const href = module.getAttribute('href');
+                if (href === currentPath || (currentPath.startsWith(href) && href !== '/')) {
+                    module.classList.add('active');
                 }
+            });
+            
+            // Si estamos en la raíz, marcar dashboard como activo
+            if (currentPath === '/') {
+                const dashboardModule = document.getElementById('nav-dashboard');
+                if (dashboardModule) {
+                    dashboardModule.classList.add('active');
+                }
+            }
+        });
+        
+        // Función para manejar el scroll horizontal en móviles
+        function handleHorizontalScroll() {
+            const headerRight = document.querySelector('.header-right');
+            if (headerRight) {
+                headerRight.addEventListener('wheel', function(e) {
+                    if (e.deltaY !== 0) {
+                        e.preventDefault();
+                        headerRight.scrollLeft += e.deltaY;
+                    }
+                });
+            }
+        }
+        
+        // Inicializar scroll horizontal
+        document.addEventListener('DOMContentLoaded', handleHorizontalScroll);
+
+        // Cargar configuración del tema
+        async function loadThemeSettings() {
+            try {
+                const response = await fetch('/api/v1/settings/');
+                if (response.ok) {
+                    const settings = await response.json();
+                    applyThemeSettings(settings);
+                    
+                    // Guardar configuración en localStorage para uso offline
+                    localStorage.setItem('theme_settings', JSON.stringify(settings));
+                }
+            } catch (error) {
+                console.error('Error cargando configuración del tema:', error);
+                // Intentar cargar desde localStorage si hay error de red
+                const savedSettings = localStorage.getItem('theme_settings');
+                if (savedSettings) {
+                    try {
+                        const settings = JSON.parse(savedSettings);
+                        applyThemeSettings(settings);
+                    } catch (e) {
+                        console.error('Error cargando configuración guardada:', e);
+                    }
+                }
+            }
+        }
+        
+        // Aplicar configuración del tema
+        function applyThemeSettings(settings) {
+            if (settings.primary_color) {
+                document.documentElement.style.setProperty('--primary-color', settings.primary_color);
+            }
+            if (settings.secondary_color) {
+                document.documentElement.style.setProperty('--secondary-color', settings.secondary_color);
+            }
+            if (settings.accent_color) {
+                document.documentElement.style.setProperty('--accent-color', settings.accent_color);
+            }
+            if (settings.sidebar_color) {
+                document.documentElement.style.setProperty('--sidebar-color', settings.sidebar_color);
+            }
+            
+            // Actualizar título de la aplicación
+            if (settings.app_title) {
+                const sidebarTitle = document.querySelector('.sidebar h4');
+                if (sidebarTitle) {
+                    sidebarTitle.textContent = settings.app_title;
+                }
+                
+                // Actualizar título de la página
+                const pageTitle = document.querySelector('title');
+                if (pageTitle) {
+                    const currentTitle = pageTitle.textContent;
+                    const baseTitle = currentTitle.includes(' - ') ? 
+                        currentTitle.split(' - ')[1] : currentTitle;
+                    pageTitle.textContent = `${settings.app_title} - ${baseTitle}`;
+                }
+            }
+            
+            // Actualizar subtítulo si existe
+            if (settings.app_subtitle) {
+                const sidebarSubtitle = document.querySelector('.sidebar small');
+                if (sidebarSubtitle) {
+                    sidebarSubtitle.textContent = settings.app_subtitle;
+                }
+            }
+            
+            // Forzar re-renderizado de elementos con gradientes
+            const elementsToUpdate = document.querySelectorAll('.sidebar, .btn-primary, .stats-card, .login-header, .btn-login');
+            elementsToUpdate.forEach(element => {
+                element.style.animation = 'none';
+                element.offsetHeight; // Trigger reflow
+                element.style.animation = null;
+            });
+        }
+        
+        // Función global para obtener configuración de impresión
+        function getPrintSettings() {
+            return {
+                header: localStorage.getItem('print_header') || 'Mi Empresa\nDirección de la empresa\nTel: (123) 456-7890',
+                footer: localStorage.getItem('print_footer') || '¡Gracias por su compra!\nVuelva pronto',
+                company_name: localStorage.getItem('company_name') || 'Mi Empresa',
+                ticket_size: localStorage.getItem('ticket_size') || '80mm',
+                print_copies: parseInt(localStorage.getItem('print_copies')) || 1
+            };
+        }
+
+        // Función global para generar contenido de ticket
+        function generateTicketContent(saleData) {
+            const printSettings = getPrintSettings();
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            let ticketContent = '';
+            
+            // Encabezado
+            ticketContent += printSettings.header + '\n';
+            ticketContent += '='.repeat(32) + '\n';
+            
+            // Información del ticket
+            ticketContent += 'TICKET DE VENTA\n';
+            ticketContent += `Fecha: ${dateStr}\n`;
+            ticketContent += `Ticket #: ${saleData.ticket_number || saleData.sale_number || '001'}\n`;
+            ticketContent += '='.repeat(32) + '\n';
+            
+            // Productos - Manejar diferentes estructuras de datos
+            let items = [];
+            if (saleData.items && saleData.items.length > 0) {
+                items = saleData.items;
+            } else if (saleData.sale_items && saleData.sale_items.length > 0) {
+                items = saleData.sale_items;
+            }
+            
+            if (items.length > 0) {
+                items.forEach(item => {
+                    // Obtener nombre del producto
+                    const productName = item.name || item.product_name || 'Producto';
+                    
+                    // Obtener cantidad
+                    const quantity = parseFloat(item.quantity) || 1;
+                    
+                    // Obtener precio - manejar diferentes formatos
+                    let price = 0;
+                    if (item.price !== undefined && item.price !== null) {
+                        price = parseFloat(item.price);
+                    } else if (item.unit_price !== undefined && item.unit_price !== null) {
+                        price = parseFloat(item.unit_price);
+                    }
+                    
+                    // Calcular total del item
+                    const itemTotal = quantity * price;
+                    
+                    ticketContent += `${productName}\n`;
+                    ticketContent += `${quantity} x $${price.toFixed(2)} = $${itemTotal.toFixed(2)}\n`;
+                });
+            }
+            
+            ticketContent += '='.repeat(32) + '\n';
+            
+            // Calcular total si no está disponible
+            let total = 0;
+            if (saleData.total !== undefined && saleData.total !== null) {
+                total = parseFloat(saleData.total);
+            } else {
+                // Calcular total sumando los items
+                total = items.reduce((sum, item) => {
+                    const quantity = parseFloat(item.quantity) || 1;
+                    let price = 0;
+                    if (item.price !== undefined && item.price !== null) {
+                        price = parseFloat(item.price);
+                    } else if (item.unit_price !== undefined && item.unit_price !== null) {
+                        price = parseFloat(item.unit_price);
+                    }
+                    return sum + (quantity * price);
+                }, 0);
+            }
+            
+            ticketContent += `TOTAL: $${total.toFixed(2)}\n`;
+            ticketContent += '='.repeat(32) + '\n';
+            
+            // Pie de página
+            ticketContent += printSettings.footer + '\n';
+            
+            return ticketContent;
+        }
+
+        // Función global para imprimir ticket
+        function printTicket(saleData) {
+            const printSettings = getPrintSettings();
+            const ticketSize = printSettings.ticket_size || '80mm';
+            const printCopies = printSettings.print_copies || 1;
+            const ticketContent = generateTicketContent(saleData);
+            
+            // Configuraciones de tamaño según el tipo de ticket
+            const ticketConfigs = {
+                '58mm': {
+                    pageSize: '58mm 200mm',
+                    bodyWidth: '48mm',
+                    printWidth: '54mm',
+                    fontSize: '8px',
+                    padding: '3mm',
+                    printPadding: '1mm'
+                },
+                '80mm': {
+                    pageSize: '80mm 200mm',
+                    bodyWidth: '70mm',
+                    printWidth: '76mm',
+                    fontSize: '10px',
+                    padding: '5mm',
+                    printPadding: '2mm'
+                },
+                '112mm': {
+                    pageSize: '112mm 200mm',
+                    bodyWidth: '102mm',
+                    printWidth: '108mm',
+                    fontSize: '12px',
+                    padding: '5mm',
+                    printPadding: '2mm'
+                }
+            };
+            
+            const config = ticketConfigs[ticketSize] || ticketConfigs['80mm'];
+            
+            // Crear ventana de impresión
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Ticket de Venta</title>
+                    <style>
+                        @page {
+                            size: ${config.pageSize};
+                            margin: 0;
+                        }
+                        
+                        body {
+                            font-family: 'Courier New', monospace;
+                            font-size: ${config.fontSize};
+                            line-height: 1.1;
+                            margin: 0;
+                            padding: ${config.padding};
+                            white-space: pre-line;
+                            width: ${config.bodyWidth};
+                            max-width: ${config.bodyWidth};
+                            overflow: hidden;
+                        }
+                        
+                        @media print {
+                            body { 
+                                margin: 0; 
+                                padding: ${config.printPadding};
+                                width: ${config.printWidth};
+                                max-width: ${config.printWidth};
+                            }
+                            
+                            /* Ocultar elementos innecesarios */
+                            * {
+                                -webkit-print-color-adjust: exact;
+                                color-adjust: exact;
+                            }
+                            
+                            /* Asegurar que solo se imprima el contenido del ticket */
+                            html, body {
+                                height: auto;
+                                min-height: auto;
+                            }
+                        }
+                        
+                        /* Estilos específicos para el ticket */
+                        .ticket-content {
+                            width: 100%;
+                            max-width: 100%;
+                            word-wrap: break-word;
+                            overflow-wrap: break-word;
+                        }
+                        
+                        /* Asegurar que el texto no se desborde */
+                        pre {
+                            margin: 0;
+                            padding: 0;
+                            white-space: pre-line;
+                            font-family: inherit;
+                            font-size: inherit;
+                            line-height: inherit;
+                        }
+                        
+                        /* Ocultar en pantalla pero mostrar en impresión */
+                        @media screen {
+                            body {
+                                background: #f0f0f0;
+                                border: 1px solid #ccc;
+                                margin: 20px auto;
+                                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="ticket-content">
+                        <pre>${ticketContent}</pre>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            
+            // Función para imprimir una copia
+            function printCopy(copyNumber) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        printWindow.print();
+                        setTimeout(() => {
+                            resolve();
+                        }, 1000);
+                    }, 500);
+                });
+            }
+            
+            // Imprimir múltiples copias si está configurado
+            async function printMultipleCopies() {
+                for (let i = 0; i < printCopies; i++) {
+                    await printCopy(i + 1);
+                    // Pequeña pausa entre copias
+                    if (i < printCopies - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+                printWindow.close();
+            }
+            
+            // Iniciar impresión
+            printMultipleCopies();
+        }
+
+        // Función para verificar cambios en la configuración
+        function checkForThemeUpdates() {
+            // Verificar cambios cada 30 segundos
+            setInterval(async () => {
+                try {
+                    const response = await fetch('/api/v1/settings/');
+                    if (response.ok) {
+                        const newSettings = await response.json();
+                        const savedSettings = localStorage.getItem('theme_settings');
+                        
+                        if (savedSettings) {
+                            const currentSettings = JSON.parse(savedSettings);
+                            // Comparar si hay cambios
+                            if (JSON.stringify(newSettings) !== JSON.stringify(currentSettings)) {
+                                console.log('Detectados cambios en la configuración del tema');
+                                applyThemeSettings(newSettings);
+                                localStorage.setItem('theme_settings', JSON.stringify(newSettings));
+                            }
+                        } else {
+                            // Primera carga
+                            applyThemeSettings(newSettings);
+                            localStorage.setItem('theme_settings', JSON.stringify(newSettings));
+                        }
+                    }
+                } catch (error) {
+                    // Error silencioso para no interrumpir la experiencia del usuario
+                }
+            }, 30000); // 30 segundos
+        }
+
+        // Escuchar cambios en localStorage para sincronización entre pestañas
+        function setupThemeSync() {
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'theme_settings') {
+                    try {
+                        const newSettings = JSON.parse(e.newValue);
+                        console.log('Cambios de tema detectados desde otra pestaña');
+                        applyThemeSettings(newSettings);
+                    } catch (error) {
+                        console.error('Error aplicando configuración desde otra pestaña:', error);
+                    }
+                }
+            });
+            
+            // Escuchar evento personalizado para cambios de tema
+            window.addEventListener('themeChanged', function(e) {
+                console.log('Cambios de tema detectados desde la misma página');
+                applyThemeSettings(e.detail);
             });
         }
 
         // Inicializar
         $(document).ready(function() {
-            checkAuth();
-            setActiveNav();
+            loadThemeSettings();
+            checkForThemeUpdates();
+            setupThemeSync();
+            checkAuthentication(); // Verificar autenticación al cargar la página
+            resetInactivityTimer(); // Iniciar el timer de inactividad
+            setupActivityDetection(); // Configurar detección de actividad
+            checkTokenExpiration(); // Verificar expiración del token
+            
+            // Configurar verificación periódica del token
+            setInterval(checkTokenExpiration, 60000); // Verificar cada minuto
         });
     </script>
+    <!-- Sistema de Autenticación -->
+    <script src="/static/js/auth.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html> 

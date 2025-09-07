@@ -54,6 +54,7 @@ check_network_connectivity() {
 check_port() {
     echo "🔌 Verificando puerto PostgreSQL..."
     
+
     if nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null; then
         echo "✅ Puerto $DB_PORT está abierto en $DB_HOST"
     else
@@ -106,6 +107,7 @@ check_database() {
     fi
     
     unset PGPASSWORD
+
 }
 
 # Función principal
@@ -134,7 +136,7 @@ main() {
         exit 1
     fi
     echo ""
-    
+
     # Verificar PostgreSQL
     if ! check_postgres_connection; then
         echo "❌ Falló la verificación de PostgreSQL"
@@ -158,6 +160,7 @@ main() {
     
     echo "🎉 ¡Todas las verificaciones pasaron exitosamente!"
     echo "✅ La aplicación puede conectarse a PostgreSQL"
+
 }
 
 # Ejecutar función principal
