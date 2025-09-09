@@ -772,72 +772,72 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">Código del Producto</label>
                             <p class="form-control-plaintext" id="viewProductCode">-</p>
-                        </div>
+            </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Nombre</label>
                             <p class="form-control-plaintext" id="viewProductName">-</p>
-                        </div>
+            </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Categoría</label>
                             <p class="form-control-plaintext" id="viewProductCategory">-</p>
-                        </div>
+        </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Tipo de Medida</label>
                             <p class="form-control-plaintext" id="viewProductUnit">-</p>
-                        </div>
-                    </div>
+    </div>
+</div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Stock Actual</label>
                             <p class="form-control-plaintext" id="viewProductStock">-</p>
-                        </div>
+            </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Stock Mínimo</label>
                             <p class="form-control-plaintext" id="viewProductMinStock">-</p>
-                        </div>
+                </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Precio de Compra</label>
                             <p class="form-control-plaintext" id="viewProductPurchasePrice">-</p>
-                        </div>
+            </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Proveedor</label>
                             <p class="form-control-plaintext" id="viewProductSupplier">-</p>
-                        </div>
-                    </div>
-                </div>
+        </div>
+    </div>
+</div>
                 <div class="row">
                     <div class="col-12">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Descripción</label>
                             <p class="form-control-plaintext" id="viewProductDescription">-</p>
-                        </div>
-                    </div>
+            </div>
+                </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="mb-3">
+                <div class="mb-3">
                             <label class="form-label fw-bold">Estado del Stock</label>
                             <p class="form-control-plaintext" id="viewProductStockStatus">-</p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Fecha de Creación</label>
-                            <p class="form-control-plaintext" id="viewProductCreatedAt">-</p>
-                        </div>
                     </div>
                 </div>
-            </div>
+                    <div class="col-md-6">
+                <div class="mb-3">
+                            <label class="form-label fw-bold">Fecha de Creación</label>
+                            <p class="form-control-plaintext" id="viewProductCreatedAt">-</p>
+                    </div>
+                </div>
+                    </div>
+                </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 <button type="button" class="btn btn-primary-custom" onclick="editProductFromView()">
                     <i class="bi bi-pencil me-2"></i>Editar Producto
-                </button>
+                    </button>
             </div>
         </div>
     </div>
-</div>
-
+                </div>
+                
 <!-- Modal para crear/editar categoría -->
 <div class="modal fade" id="categoryModal" tabindex="-1">
     <div class="modal-dialog">
@@ -847,7 +847,7 @@
                     <i class="bi bi-plus-circle me-2"></i>Nueva Categoría
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
+                    </div>
             <div class="modal-body">
                 <form id="categoryForm">
                     <input type="hidden" id="categoryId">
@@ -855,7 +855,7 @@
                 <div class="mb-3">
                         <label class="form-label">Nombre de la Categoría *</label>
                         <input type="text" class="form-control" id="categoryName" placeholder="Ej: Carnes, Verduras, Lácteos..." required>
-                </div>
+                    </div>
                 
                 <div class="mb-3">
                         <label class="form-label">Descripción</label>
@@ -868,7 +868,7 @@
                             <label class="form-check-label" for="categoryActive">
                                 Categoría activa
                         </label>
-                    </div>
+                </div>
                 </div>
                 </form>
             </div>
@@ -1113,9 +1113,9 @@ async function saveProduct() {
         if (!token) {
             showAlert('Sesión expirada. Por favor, inicia sesión nuevamente.', 'warning');
             window.location.href = '/login';
-            return;
-        }
-
+        return;
+    }
+    
         const response = await fetch(url, {
             method: method,
             headers: {
@@ -1264,7 +1264,7 @@ async function editProduct(productId) {
         document.getElementById('productDescription').value = product.description || '';
         
         const modal = new bootstrap.Modal(document.getElementById('productModal'));
-        modal.show();
+    modal.show();
         
         // Manejar etiquetas flotantes después de cargar los datos
         setTimeout(() => {
@@ -1425,7 +1425,7 @@ function handleFloatingLabels() {
             textarea.addEventListener('input', function() {
                 if (this.value.trim() !== '') {
                     label.classList.add('floating');
-                } else {
+        } else {
                     label.classList.remove('floating');
                 }
             });

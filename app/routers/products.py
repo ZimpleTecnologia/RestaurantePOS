@@ -170,8 +170,19 @@ def get_sales_statistics(db: Session = Depends(get_db)):
 
 # Configuración para imágenes
 UPLOAD_DIR = "uploads/products"
-if not os.path.exists(UPLOAD_DIR):
-    os.makedirs(UPLOAD_DIR)
+
+def ensure_upload_dir():
+    """Asegurar que el directorio de uploads existe"""
+    try:
+        if not os.path.exists(UPLOAD_DIR):
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+    except PermissionError:
+        # Si no hay permisos, continuar sin crear el directorio
+        # El script de inicio se encargará de crearlo
+        pass
+
+# Llamar a la función al importar el módulo
+ensure_upload_dir()
 
 def generate_product_code() -> str:
     """Generar código único para producto"""

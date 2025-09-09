@@ -136,8 +136,8 @@ class Product(Base):
     category_rel = relationship("Category", back_populates="products")
     subcategory_rel = relationship("SubCategory", back_populates="products")
     inventory_lots = relationship("InventoryLot", back_populates="product")
-    order_items = relationship("OrderItem")
-    sale_items = relationship("SaleItem")
+    order_items = relationship("OrderItem", overlaps="order_items")
+    sale_items = relationship("SaleItem", overlaps="sale_items")
     recipe_items = relationship("RecipeItem", back_populates="product")
     recipe = relationship("Recipe", back_populates="product", uselist=False)
     
