@@ -72,7 +72,8 @@ class ProductBase(BaseModel):
     code: Optional[str] = None
     name: str
     description: Optional[str] = None
-    price: Optional[float] = None
+    price: Optional[float] = None  # Mantener para compatibilidad
+    precio_base: Optional[float] = None  # Nuevo campo
     cost_price: Optional[float] = None
     stock: int = 0
     min_stock: int = 0
@@ -90,6 +91,8 @@ class ProductBase(BaseModel):
     image_url: Optional[str] = None
     has_recipe: bool = False
     is_active: bool = True
+    es_fijo: bool = True  # Nuevo campo
+    activo: bool = True   # Nuevo campo
 
 
 class ProductCreate(ProductBase):

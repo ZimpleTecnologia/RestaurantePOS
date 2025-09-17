@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Menús - Productos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .menu-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        
+        .menu-card.active {
+            border-left-color: #28a745;
+        }
+        
+        .menu-card.inactive {
+            border-left-color: #6c757d;
+            opacity: 0.7;
+        }
+        
+        .category-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .option-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #667eea;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+        
+        .btn-menu {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-menu:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .alert-custom {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: ">";
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row">
+            <div class="col-12">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="#">
+                            <i class="fas fa-cogs me-2"></i>
+                            Gestión de Menús
+                        </a>
+                        <div class="navbar-nav ms-auto">
+                            <span class="navbar-text me-3">
+                                <i class="fas fa-user me-1"></i>
+                                <span id="admin-name">Administrador</span>
+                            </span>
+                            <button class="btn btn-outline-light" onclick="goToProducts()">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Volver a Productos
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Breadcrumb -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/products">Productos</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Gestión de Menús</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Botones de Acción -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2><i class="fas fa-calendar-day me-2"></i>Menús del Día</h2>
+                    <div>
+                        <button class="btn btn-success me-2" onclick="showCreateMenuModal()">
+                            <i class="fas fa-plus me-2"></i>
+                            Crear Menú del Día
+                        </button>
+                        <button class="btn btn-primary" onclick="loadMenus()">
+                            <i class="fas fa-sync me-2"></i>
+                            Actualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lista de Menús -->
+        <div class="row">
+            <div class="col-12">
+                <div id="menus-container">
+                    <div class="loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2">Cargando menús...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Crear/Editar Menú -->
+    <div class="modal fade" id="menuModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="menuModalTitle">Crear Menú del Día</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="menuForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="menuDate" class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" id="menuDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="menuPrice" class="form-label">Precio</label>
+                                    <input type="number" class="form-control" id="menuPrice" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="menuName" class="form-label">Nombre del Menú</label>
+                            <input type="text" class="form-control" id="menuName" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="menuDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="menuDescription" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Opciones del Menú</label>
+                            <div id="menuOptions">
+                                <!-- Las opciones se cargarán dinámicamente -->
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addMenuOption()">
+                                <i class="fas fa-plus me-1"></i>
+                                Agregar Opción
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="saveMenu()">
+                        <i class="fas fa-save me-2"></i>
+                        Guardar Menú
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alertas -->
+    <div id="alerts-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales
+        let allMenus = [];
+        let allCategories = [];
+        let currentMenuId = null;
+        
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAdminUser();
+            loadCategories();
+            loadMenus();
+        });
+        
+        // Cargar información del usuario administrador
+        async function loadAdminUser() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const response = await fetch('/api/v1/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById('admin-name').textContent = user.full_name;
+                }
+            } catch (error) {
+                console.error('Error cargando usuario:', error);
+            }
+        }
+        
+        // Cargar categorías
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/v1/menu/categorias', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    allCategories = await response.json();
+                }
+            } catch (error) {
+                console.error('Error cargando categorías:', error);
+            }
+        }
+        
+        // Cargar menús
+        async function loadMenus() {
+            try {
+                const response = await fetch('/api/v1/menu/', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    allMenus = await response.json();
+                    renderMenus();
+                } else {
+                    showAlert('Error cargando menús', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cargando menús:', error);
+                showAlert('Error cargando menús', 'danger');
+            }
+        }
+        
+        // Renderizar menús
+        function renderMenus() {
+            const container = document.getElementById('menus-container');
+            
+            if (allMenus.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-day"></i>
+                        <h4>No hay menús creados</h4>
+                        <p>Crea tu primer menú del día para comenzar</p>
+                        <button class="btn btn-success" onclick="showCreateMenuModal()">
+                            <i class="fas fa-plus me-2"></i>
+                            Crear Menú
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = allMenus.map(menu => `
+                <div class="menu-card ${menu.estado === 'activo' ? 'active' : 'inactive'}">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h4>${menu.nombre}</h4>
+                                    <p class="mb-1">
+                                        <i class="fas fa-calendar me-2"></i>
+                                        ${new Date(menu.fecha).toLocaleDateString('es-ES')}
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-tag me-2"></i>
+                                        Precio: $${menu.precio}
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Estado: <span class="badge bg-${menu.estado === 'activo' ? 'success' : 'secondary'}">${menu.estado}</span>
+                                    </p>
+                                    ${menu.descripcion ? `<p class="text-muted">${menu.descripcion}</p>` : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="menu-options">
+                                <h6><i class="fas fa-list me-2"></i>Opciones del Menú:</h6>
+                                ${renderMenuOptions(menu.opciones)}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column gap-2">
+                                ${menu.estado === 'activo' ? 
+                                    `<button class="btn btn-warning" onclick="deactivateMenu(${menu.id})">
+                                        <i class="fas fa-pause me-2"></i>Desactivar
+                                    </button>` :
+                                    `<button class="btn btn-success" onclick="activateMenu(${menu.id})">
+                                        <i class="fas fa-play me-2"></i>Activar
+                                    </button>`
+                                }
+                                <button class="btn btn-primary" onclick="editMenu(${menu.id})">
+                                    <i class="fas fa-edit me-2"></i>Editar
+                                </button>
+                                <button class="btn btn-danger" onclick="deleteMenu(${menu.id})">
+                                    <i class="fas fa-trash me-2"></i>Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Renderizar opciones del menú
+        function renderMenuOptions(opciones) {
+            if (!opciones || opciones.length === 0) {
+                return '<p class="text-muted">No hay opciones configuradas</p>';
+            }
+            
+            // Agrupar por categoría
+            const groupedOptions = {};
+            opciones.forEach(opcion => {
+                const categoria = opcion.categoria.nombre;
+                if (!groupedOptions[categoria]) {
+                    groupedOptions[categoria] = [];
+                }
+                groupedOptions[categoria].push(opcion);
+            });
+            
+            return Object.keys(groupedOptions).map(categoria => `
+                <div class="category-section">
+                    <h6 class="text-primary">${categoria}</h6>
+                    ${groupedOptions[categoria].map(opcion => `
+                        <div class="option-item">
+                            <span>${opcion.nombre}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+        
+        // Mostrar modal para crear menú
+        function showCreateMenuModal() {
+            currentMenuId = null;
+            document.getElementById('menuModalTitle').textContent = 'Crear Menú del Día';
+            document.getElementById('menuForm').reset();
+            document.getElementById('menuDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('menuOptions').innerHTML = '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('menuModal'));
+            modal.show();
+        }
+        
+        // Agregar opción al menú
+        function addMenuOption() {
+            const optionsContainer = document.getElementById('menuOptions');
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'row mb-3';
+            optionDiv.innerHTML = `
+                <div class="col-md-6">
+                    <select class="form-select" required>
+                        <option value="">Seleccionar categoría...</option>
+                        ${allCategories.map(cat => `
+                            <option value="${cat.id}">${cat.nombre}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <input type="text" class="form-control" placeholder="Nombre de la opción" required>
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeMenuOption(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            optionsContainer.appendChild(optionDiv);
+        }
+        
+        // Remover opción del menú
+        function removeMenuOption(button) {
+            button.closest('.row').remove();
+        }
+        
+        // Guardar menú
+        async function saveMenu() {
+            const form = document.getElementById('menuForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const menuData = {
+                fecha: document.getElementById('menuDate').value,
+                nombre: document.getElementById('menuName').value,
+                precio: parseFloat(document.getElementById('menuPrice').value),
+                descripcion: document.getElementById('menuDescription').value,
+                opciones: []
+            };
+            
+            // Recopilar opciones
+            const optionRows = document.querySelectorAll('#menuOptions .row');
+            optionRows.forEach(row => {
+                const categoriaSelect = row.querySelector('select');
+                const nombreInput = row.querySelector('input[type="text"]');
+                
+                if (categoriaSelect.value && nombreInput.value) {
+                    menuData.opciones.push({
+                        categoria_id: parseInt(categoriaSelect.value),
+                        nombre: nombreInput.value,
+                        descripcion: '',
+                        is_active: true
+                    });
+                }
+            });
+            
+            try {
+                const url = currentMenuId ? `/api/v1/menu/${currentMenuId}` : '/api/v1/menu/';
+                const method = currentMenuId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify(menuData)
+                });
+                
+                if (response.ok) {
+                    showAlert('Menú guardado exitosamente', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('menuModal'));
+                    modal.hide();
+                    loadMenus();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Error: ${error.detail}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error guardando menú:', error);
+                showAlert('Error guardando menú', 'danger');
+            }
+        }
+        
+        // Activar menú
+        async function activateMenu(menuId) {
+            try {
+                const response = await fetch(`/api/v1/menu/${menuId}/activate`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showAlert('Menú activado exitosamente', 'success');
+                    loadMenus();
+                } else {
+                    showAlert('Error activando menú', 'danger');
+                }
+            } catch (error) {
+                console.error('Error activando menú:', error);
+                showAlert('Error activando menú', 'danger');
+            }
+        }
+        
+        // Desactivar menú
+        async function deactivateMenu(menuId) {
+            try {
+                const response = await fetch(`/api/v1/menu/${menuId}/deactivate`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showAlert('Menú desactivado exitosamente', 'success');
+                    loadMenus();
+                } else {
+                    showAlert('Error desactivando menú', 'danger');
+                }
+            } catch (error) {
+                console.error('Error desactivando menú:', error);
+                showAlert('Error desactivando menú', 'danger');
+            }
+        }
+        
+        // Eliminar menú
+        async function deleteMenu(menuId) {
+            if (!confirm('¿Está seguro de que desea eliminar este menú?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/v1/menu/${menuId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showAlert('Menú eliminado exitosamente', 'success');
+                    loadMenus();
+                } else {
+                    showAlert('Error eliminando menú', 'danger');
+                }
+            } catch (error) {
+                console.error('Error eliminando menú:', error);
+                showAlert('Error eliminando menú', 'danger');
+            }
+        }
+        
+        // Editar menú
+        function editMenu(menuId) {
+            const menu = allMenus.find(m => m.id === menuId);
+            if (!menu) return;
+            
+            currentMenuId = menuId;
+            document.getElementById('menuModalTitle').textContent = 'Editar Menú del Día';
+            document.getElementById('menuDate').value = menu.fecha;
+            document.getElementById('menuName').value = menu.nombre;
+            document.getElementById('menuPrice').value = menu.precio;
+            document.getElementById('menuDescription').value = menu.descripcion || '';
+            
+            // Cargar opciones existentes
+            const optionsContainer = document.getElementById('menuOptions');
+            optionsContainer.innerHTML = '';
+            
+            if (menu.opciones && menu.opciones.length > 0) {
+                menu.opciones.forEach(opcion => {
+                    addMenuOption();
+                    const lastRow = optionsContainer.lastElementChild;
+                    const categoriaSelect = lastRow.querySelector('select');
+                    const nombreInput = lastRow.querySelector('input[type="text"]');
+                    categoriaSelect.value = opcion.categoria_id;
+                    nombreInput.value = opcion.nombre;
+                });
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('menuModal'));
+            modal.show();
+        }
+        
+        // Mostrar alerta
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts-container');
+            const alertId = 'alert-' + Date.now();
+            
+            const alert = document.createElement('div');
+            alert.id = alertId;
+            alert.className = `alert alert-${type} alert-dismissible fade show alert-custom`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            alertsContainer.appendChild(alert);
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    alertElement.remove();
+                }
+            }, 5000);
+        }
+        
+        // Volver a productos
+        function goToProducts() {
+            window.location.href = '/products';
+        }
+    </script>
+</body>
+</html>

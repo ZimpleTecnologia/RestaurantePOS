@@ -9,6 +9,8 @@ from .inventory import InventoryMovement
 from .recipe import Recipe, RecipeItem
 from .settings import SystemSettings
 from .order import Order, OrderItem
+from .menu import MenuDayOld, CategoriaMenu, OpcionMenu, MenuStatus as OldMenuStatus, MenuStatus
+from .carta_restaurante import CartaRestaurante, MenuDia as MenuDiaCarta, MenuOpcion, TipoPlato, CategoriaPlato
 
 __all__ = [
     "User",
@@ -32,5 +34,15 @@ __all__ = [
     "RecipeItem",
     "SystemSettings",
     "Order",
-    "OrderItem"
+    "OrderItem",
+    "MenuDayOld",
+    "CategoriaMenu", 
+    "OpcionMenu",
+    "OldMenuStatus",
+    "MenuStatus",
+    "CartaRestaurante",
+    "MenuDiaCarta",
+    "MenuOpcion",
+    "TipoPlato",
+    "CategoriaPlato"
 ] 

@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos - Carta e Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        
+        .product-card.carta {
+            border-left-color: #28a745;
+        }
+        
+        .product-card.inventario {
+            border-left-color: #17a2b8;
+        }
+        
+        .product-card.inactive {
+            border-left-color: #6c757d;
+            opacity: 0.7;
+        }
+        
+        .btn-modern {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .filter-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .nav-tabs .nav-link {
+            border-radius: 10px 10px 0 0;
+            border: none;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">
+                            <i class="fas fa-boxes text-primary me-3"></i>
+                            Gestión de Productos
+                        </h2>
+                        <p class="text-muted mb-0">Carta del Restaurante e Inventario de Materias Primas</p>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="me-3">
+                            <i class="fas fa-user-circle text-primary me-2"></i>
+                            <span id="adminUser">Administrador</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-utensils fs-1 mb-3"></i>
+                        <h3 id="total-carta">0</h3>
+                        <p class="mb-0">Platos en Carta</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-boxes fs-1 mb-3"></i>
+                        <h3 id="total-inventario">0</h3>
+                        <p class="mb-0">Materias Primas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-check-circle fs-1 mb-3"></i>
+                        <h3 id="active-products">0</h3>
+                        <p class="mb-0">Productos Activos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fs-1 mb-3"></i>
+                        <h3 id="low-stock">0</h3>
+                        <p class="mb-0">Stock Bajo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestañas para Carta e Inventario -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="carta-tab" data-bs-toggle="tab" data-bs-target="#carta" type="button" role="tab" aria-controls="carta" aria-selected="true">
+                                    <i class="fas fa-utensils me-2"></i>Carta del Restaurante
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="inventario-tab" data-bs-toggle="tab" data-bs-target="#inventario" type="button" role="tab" aria-controls="inventario" aria-selected="false">
+                                    <i class="fas fa-boxes me-2"></i>Inventario (Materias Primas)
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido de las pestañas -->
+        <div class="tab-content" id="productTabsContent">
+            <!-- Pestaña Carta -->
+            <div class="tab-pane fade show active" id="carta" role="tabpanel" aria-labelledby="carta-tab">
+                <!-- Filtros para Carta -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="filter-card">
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                        <input type="text" class="form-control border-start-0" id="searchCartaInput" placeholder="Buscar platos...">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="cartaTypeFilter">
+                                        <option value="">Todos los tipos</option>
+                                        <option value="fixed">Productos Fijos</option>
+                                        <option value="menu">Para Menús</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="cartaStatusFilter">
+                                        <option value="">Todos los estados</option>
+                                        <option value="active">Activos</option>
+                                        <option value="inactive">Inactivos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-success btn-modern w-100" onclick="showCreateProductModal('carta')">
+                                        <i class="fas fa-plus me-2"></i>Nuevo Plato
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de Productos de Carta -->
+                <div class="row">
+                    <div class="col-12">
+                        <div id="carta-products-container">
+                            <div class="loading">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2">Cargando carta...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pestaña Inventario -->
+            <div class="tab-pane fade" id="inventario" role="tabpanel" aria-labelledby="inventario-tab">
+                <!-- Filtros para Inventario -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="filter-card">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                        <input type="text" class="form-control border-start-0" id="searchInventarioInput" placeholder="Buscar materias primas...">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select" id="inventarioStatusFilter">
+                                        <option value="">Todos los estados</option>
+                                        <option value="active">Activos</option>
+                                        <option value="inactive">Inactivos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-info btn-modern w-100" onclick="showCreateProductModal('inventario')">
+                                        <i class="fas fa-plus me-2"></i>Nueva Materia Prima
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de Productos de Inventario -->
+                <div class="row">
+                    <div class="col-12">
+                        <div id="inventario-products-container">
+                            <div class="loading">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2">Cargando inventario...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Producto -->
+    <div class="modal fade" id="productModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productModalTitle">Crear Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productForm">
+                        <input type="hidden" id="productId">
+                        <input type="hidden" id="productType">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productName" class="form-label">Nombre *</label>
+                                    <input type="text" class="form-control" id="productName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productCode" class="form-label">Código</label>
+                                    <input type="text" class="form-control" id="productCode">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="productDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="productDescription" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productPrice" class="form-label">Precio Base *</label>
+                                    <input type="number" class="form-control" id="productPrice" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productCost" class="form-label">Precio de Costo</label>
+                                    <input type="number" class="form-control" id="productCost" step="0.01" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row" id="cartaSpecificFields">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="productEsFijo">
+                                        <label class="form-check-label" for="productEsFijo">
+                                            Producto Fijo (Siempre en carta)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row" id="inventarioSpecificFields" style="display: none;">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productStock" class="form-label">Stock Actual</label>
+                                    <input type="number" class="form-control" id="productStock" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productMinStock" class="form-label">Stock Mínimo</label>
+                                    <input type="number" class="form-control" id="productMinStock" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="productActivo" checked>
+                                        <label class="form-check-label" for="productActivo">
+                                            Producto Activo
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveProduct()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allCartaProducts = [];
+        let allInventarioProducts = [];
+        let currentProductId = null;
+        let currentProductType = null;
+
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAdminUser();
+            loadCartaProducts();
+            loadInventarioProducts();
+            loadStats();
+            
+            // Event listeners para filtros
+            document.getElementById('searchCartaInput').addEventListener('input', filterCartaProducts);
+            document.getElementById('cartaTypeFilter').addEventListener('change', filterCartaProducts);
+            document.getElementById('cartaStatusFilter').addEventListener('change', filterCartaProducts);
+            
+            document.getElementById('searchInventarioInput').addEventListener('input', filterInventarioProducts);
+            document.getElementById('inventarioStatusFilter').addEventListener('change', filterInventarioProducts);
+        });
+
+        // Cargar usuario administrador
+        async function loadAdminUser() {
+            try {
+                const response = await fetch('/api/v1/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById('adminUser').textContent = user.full_name || user.username;
+                }
+            } catch (error) {
+                console.error('Error cargando usuario:', error);
+            }
+        }
+
+        // Cargar productos de carta
+        async function loadCartaProducts() {
+            try {
+                const response = await fetch('/api/v1/products-new/carta/', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    allCartaProducts = await response.json();
+                    renderCartaProducts();
+                } else {
+                    showAlert('Error cargando carta', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cargando carta:', error);
+                showAlert('Error cargando carta', 'danger');
+            }
+        }
+
+        // Cargar productos de inventario
+        async function loadInventarioProducts() {
+            try {
+                const response = await fetch('/api/v1/products-new/inventario/', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    allInventarioProducts = await response.json();
+                    renderInventarioProducts();
+                } else {
+                    showAlert('Error cargando inventario', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cargando inventario:', error);
+                showAlert('Error cargando inventario', 'danger');
+            }
+        }
+
+        // Cargar estadísticas
+        async function loadStats() {
+            try {
+                // Estadísticas de carta
+                const cartaResponse = await fetch('/api/v1/products-new/carta/', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (cartaResponse.ok) {
+                    const cartaProducts = await cartaResponse.json();
+                    document.getElementById('total-carta').textContent = cartaProducts.length;
+                }
+                
+                // Estadísticas de inventario
+                const inventarioResponse = await fetch('/api/v1/products-new/inventario/', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (inventarioResponse.ok) {
+                    const inventarioProducts = await inventarioResponse.json();
+                    document.getElementById('total-inventario').textContent = inventarioProducts.length;
+                }
+                
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        // Renderizar productos de carta
+        function renderCartaProducts(products = allCartaProducts) {
+            const container = document.getElementById('carta-products-container');
+            
+            if (products.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-utensils"></i>
+                        <h4>No hay platos en la carta</h4>
+                        <p>Agrega platos para comenzar a construir tu carta</p>
+                        <button class="btn btn-success btn-modern" onclick="showCreateProductModal('carta')">
+                            <i class="fas fa-plus me-2"></i>Agregar Primer Plato
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = products.map(product => `
+                <div class="product-card carta ${!product.activo ? 'inactive' : ''}">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-utensils fa-2x text-success"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">${product.name}</h5>
+                                    <p class="text-muted mb-1">${product.description || 'Sin descripción'}</p>
+                                    <div class="d-flex gap-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-tag me-1"></i>
+                                            Código: ${product.code || 'N/A'}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-dollar-sign me-1"></i>
+                                            Precio: $${product.precio_base || 0}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            ${product.es_fijo ? 'Fijo' : 'Para Menús'}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-primary btn-sm" onclick="editProduct(${product.id}, 'carta')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-${product.activo ? 'warning' : 'success'} btn-sm" onclick="toggleProductStatus(${product.id})">
+                                    <i class="fas fa-${product.activo ? 'pause' : 'play'}"></i>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteProduct(${product.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Renderizar productos de inventario
+        function renderInventarioProducts(products = allInventarioProducts) {
+            const container = document.getElementById('inventario-products-container');
+            
+            if (products.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-boxes"></i>
+                        <h4>No hay materias primas</h4>
+                        <p>Agrega materias primas para gestionar tu inventario</p>
+                        <button class="btn btn-info btn-modern" onclick="showCreateProductModal('inventario')">
+                            <i class="fas fa-plus me-2"></i>Agregar Primera Materia Prima
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = products.map(product => `
+                <div class="product-card inventario ${!product.activo ? 'inactive' : ''}">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-boxes fa-2x text-info"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">${product.name}</h5>
+                                    <p class="text-muted mb-1">${product.description || 'Sin descripción'}</p>
+                                    <div class="d-flex gap-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-tag me-1"></i>
+                                            Código: ${product.code || 'N/A'}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-dollar-sign me-1"></i>
+                                            Costo: $${product.cost_price || 0}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-boxes me-1"></i>
+                                            Stock: ${product.stock_quantity || 0}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-primary btn-sm" onclick="editProduct(${product.id}, 'inventario')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-${product.activo ? 'warning' : 'success'} btn-sm" onclick="toggleProductStatus(${product.id})">
+                                    <i class="fas fa-${product.activo ? 'pause' : 'play'}"></i>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteProduct(${product.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filtrar productos de carta
+        function filterCartaProducts() {
+            const search = document.getElementById('searchCartaInput').value.toLowerCase();
+            const typeFilter = document.getElementById('cartaTypeFilter').value;
+            const statusFilter = document.getElementById('cartaStatusFilter').value;
+            
+            let filtered = allCartaProducts.filter(product => {
+                const matchesSearch = product.name.toLowerCase().includes(search) || 
+                                    (product.description && product.description.toLowerCase().includes(search));
+                
+                const matchesType = !typeFilter || 
+                                  (typeFilter === 'fixed' && product.es_fijo) ||
+                                  (typeFilter === 'menu' && !product.es_fijo);
+                
+                const matchesStatus = !statusFilter ||
+                                    (statusFilter === 'active' && product.activo) ||
+                                    (statusFilter === 'inactive' && !product.activo);
+                
+                return matchesSearch && matchesType && matchesStatus;
+            });
+            
+            renderCartaProducts(filtered);
+        }
+
+        // Filtrar productos de inventario
+        function filterInventarioProducts() {
+            const search = document.getElementById('searchInventarioInput').value.toLowerCase();
+            const statusFilter = document.getElementById('inventarioStatusFilter').value;
+            
+            let filtered = allInventarioProducts.filter(product => {
+                const matchesSearch = product.name.toLowerCase().includes(search) || 
+                                    (product.description && product.description.toLowerCase().includes(search));
+                
+                const matchesStatus = !statusFilter ||
+                                    (statusFilter === 'active' && product.activo) ||
+                                    (statusFilter === 'inactive' && !product.activo);
+                
+                return matchesSearch && matchesStatus;
+            });
+            
+            renderInventarioProducts(filtered);
+        }
+
+        // Mostrar modal para crear/editar producto
+        function showCreateProductModal(type) {
+            currentProductId = null;
+            currentProductType = type;
+            
+            document.getElementById('productModalTitle').textContent = 
+                type === 'carta' ? 'Crear Plato' : 'Crear Materia Prima';
+            
+            document.getElementById('productType').value = type;
+            
+            // Mostrar/ocultar campos específicos
+            if (type === 'carta') {
+                document.getElementById('cartaSpecificFields').style.display = 'block';
+                document.getElementById('inventarioSpecificFields').style.display = 'none';
+            } else {
+                document.getElementById('cartaSpecificFields').style.display = 'none';
+                document.getElementById('inventarioSpecificFields').style.display = 'block';
+            }
+            
+            // Limpiar formulario
+            document.getElementById('productForm').reset();
+            document.getElementById('productActivo').checked = true;
+            
+            const modal = new bootstrap.Modal(document.getElementById('productModal'));
+            modal.show();
+        }
+
+        // Editar producto
+        function editProduct(productId, type) {
+            const products = type === 'carta' ? allCartaProducts : allInventarioProducts;
+            const product = products.find(p => p.id === productId);
+            
+            if (!product) return;
+            
+            currentProductId = productId;
+            currentProductType = type;
+            
+            document.getElementById('productModalTitle').textContent = 
+                type === 'carta' ? 'Editar Plato' : 'Editar Materia Prima';
+            
+            // Llenar formulario
+            document.getElementById('productId').value = product.id;
+            document.getElementById('productType').value = type;
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productCode').value = product.code || '';
+            document.getElementById('productDescription').value = product.description || '';
+            document.getElementById('productPrice').value = product.precio_base || 0;
+            document.getElementById('productCost').value = product.cost_price || 0;
+            document.getElementById('productActivo').checked = product.activo;
+            
+            if (type === 'carta') {
+                document.getElementById('cartaSpecificFields').style.display = 'block';
+                document.getElementById('inventarioSpecificFields').style.display = 'none';
+                document.getElementById('productEsFijo').checked = product.es_fijo;
+            } else {
+                document.getElementById('cartaSpecificFields').style.display = 'none';
+                document.getElementById('inventarioSpecificFields').style.display = 'block';
+                document.getElementById('productStock').value = product.stock_quantity || 0;
+                document.getElementById('productMinStock').value = product.min_stock_level || 0;
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('productModal'));
+            modal.show();
+        }
+
+        // Guardar producto
+        async function saveProduct() {
+            const formData = {
+                name: document.getElementById('productName').value,
+                code: document.getElementById('productCode').value,
+                description: document.getElementById('productDescription').value,
+                precio_base: parseFloat(document.getElementById('productPrice').value),
+                cost_price: parseFloat(document.getElementById('productCost').value),
+                activo: document.getElementById('productActivo').checked,
+                product_type: currentProductType === 'carta' ? 'sales' : 'inventory'
+            };
+            
+            if (currentProductType === 'carta') {
+                formData.es_fijo = document.getElementById('productEsFijo').checked;
+            } else {
+                formData.stock_quantity = parseInt(document.getElementById('productStock').value);
+                formData.min_stock_level = parseInt(document.getElementById('productMinStock').value);
+            }
+            
+            try {
+                const url = currentProductId ? 
+                    `/api/v1/products-new/${currentProductId}` : 
+                    '/api/v1/products-new/';
+                const method = currentProductId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    showAlert('Producto guardado exitosamente', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+                    modal.hide();
+                    
+                    if (currentProductType === 'carta') {
+                        loadCartaProducts();
+                    } else {
+                        loadInventarioProducts();
+                    }
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Error: ${error.detail}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error guardando producto:', error);
+                showAlert('Error guardando producto', 'danger');
+            }
+        }
+
+        // Cambiar estado del producto
+        async function toggleProductStatus(productId) {
+            const products = [...allCartaProducts, ...allInventarioProducts];
+            const product = products.find(p => p.id === productId);
+            
+            if (!product) return;
+            
+            try {
+                const response = await fetch(`/api/v1/products-new/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({ activo: !product.activo })
+                });
+                
+                if (response.ok) {
+                    showAlert(`Producto ${!product.activo ? 'activado' : 'desactivado'} exitosamente`, 'success');
+                    loadCartaProducts();
+                    loadInventarioProducts();
+                    loadStats();
+                } else {
+                    showAlert('Error cambiando estado del producto', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cambiando estado:', error);
+                showAlert('Error cambiando estado del producto', 'danger');
+            }
+        }
+
+        // Eliminar producto
+        async function deleteProduct(productId) {
+            if (!confirm('¿Está seguro de que desea eliminar este producto?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/v1/products-new/${productId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showAlert('Producto eliminado exitosamente', 'success');
+                    loadCartaProducts();
+                    loadInventarioProducts();
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Error: ${error.detail}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error eliminando producto:', error);
+                showAlert('Error eliminando producto', 'danger');
+            }
+        }
+
+        // Mostrar alerta
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

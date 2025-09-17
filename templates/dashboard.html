@@ -66,12 +66,12 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-uppercase mb-1">
-                            Ocupación de Mesas
+                            Pedidos Menú Hoy
                         </div>
-                        <div class="h5 mb-0 font-weight-bold" id="table-occupancy">0%</div>
+                        <div class="h5 mb-0 font-weight-bold" id="menu-orders-today">0</div>
                     </div>
                     <div class="col-auto">
-                        <i class="bi bi-table fa-2x text-white-50"></i>
+                        <i class="bi bi-menu-button-wide fa-2x text-white-50"></i>
                     </div>
                 </div>
             </div>
@@ -165,6 +165,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Rendimiento de Meseros -->
 <div class="row">
@@ -297,6 +298,9 @@ async function loadDashboardData() {
             updateStatsCards(stats);
         }
         
+        // Cargar estadísticas del menú del día
+        await loadMenuStats();
+        
         // Cargar notificaciones
         const notificationsResponse = await fetch('/api/v1/notifications/', { headers });
         if (notificationsResponse.ok) {
@@ -314,6 +318,50 @@ async function loadDashboardData() {
         
     } catch (error) {
         console.error('Error loading dashboard data:', error);
+    }
+}
+
+// Cargar estadísticas del menú del día
+async function loadMenuStats() {
+    try {
+        // Cargar menú del día actual
+        const menuResponse = await fetch('/api/v1/menu/today', { headers });
+        if (menuResponse.ok) {
+            const menu = await menuResponse.json();
+            // Si hay menú del día, cargar estadísticas de pedidos
+            if (menu && menu.menu) {
+                await loadMenuOrdersStats();
+            }
+        }
+    } catch (error) {
+        console.error('Error loading menu stats:', error);
+    }
+}
+
+// Cargar estadísticas de pedidos del menú
+async function loadMenuOrdersStats() {
+    try {
+        // Contar pedidos del menú por estado
+        const estados = ['Pendiente', 'En preparación', 'Listo para servir', 'Servido'];
+        let totalMenuOrders = 0;
+        
+        for (const estado of estados) {
+            try {
+                const response = await fetch(`/api/v1/menu/pedidos/estado/${estado}`, { headers });
+                if (response.ok) {
+                    const orders = await response.json();
+                    totalMenuOrders += orders.length;
+                }
+            } catch (error) {
+                console.error(`Error loading orders for estado ${estado}:`, error);
+            }
+        }
+        
+        // Actualizar la tarjeta de estadísticas
+        document.getElementById('menu-orders-today').textContent = totalMenuOrders;
+        
+    } catch (error) {
+        console.error('Error loading menu orders stats:', error);
     }
 }
 
@@ -470,5 +518,6 @@ function goToKitchen() {
 function goToReports() {
     window.location.href = '/reports';
 }
+
 </script>
 {% endblock %}

@@ -347,7 +347,7 @@ async def debug_create_product(
         product_data = {
             "code": code,
             "name": product.name,
-            "price": product.price,
+            "price": product.precio_base,
             "cost_price": product.cost_price or 0,
             "stock": product.stock_quantity or product.stock or 0,
             "min_stock": product.min_stock_level or product.min_stock or 0,
@@ -415,7 +415,7 @@ async def create_product(
     product_data = {
         "code": code,
         "name": product.name,
-        "price": product.price,
+        "price": product.precio_base,
         "cost_price": product.cost_price or 0,
         "stock": product.stock or 0,
         "min_stock": product.min_stock or 0,
@@ -472,7 +472,7 @@ def get_product_statistics(
     ).count()
     
     # Valor total del inventario
-    total_value = db.query(func.sum(Product.stock_quantity * Product.price))\
+    total_value = db.query(func.sum(Product.stock_quantity * Product.precio_base))\
         .filter(Product.is_active == True).scalar() or 0
     
     return {
@@ -563,7 +563,7 @@ def export_products(
     for row, product in enumerate(products, 1):
         worksheet.write(row, 0, product.code)
         worksheet.write(row, 1, product.name)
-        worksheet.write(row, 2, product.price)
+        worksheet.write(row, 2, product.precio_base)
         worksheet.write(row, 3, product.cost_price or 0)
         worksheet.write(row, 4, product.stock)
         worksheet.write(row, 5, product.min_stock or 0)
@@ -653,7 +653,7 @@ async def update_product(
         if product.name is not None:
             update_data["name"] = product.name
         if product.price is not None:
-            update_data["price"] = product.price
+            update_data["precio_base"] = product.price
         if product.cost_price is not None:
             update_data["cost_price"] = product.cost_price
         if product.stock is not None:

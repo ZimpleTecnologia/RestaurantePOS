@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos - Administrador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        
+        .product-card.fixed {
+            border-left-color: #28a745;
+        }
+        
+        .product-card.menu-only {
+            border-left-color: #ffc107;
+        }
+        
+        .product-card.inactive {
+            border-left-color: #6c757d;
+            opacity: 0.7;
+        }
+        
+        .btn-modern {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .alert-custom {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: ">";
+        }
+        
+        .badge-status {
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border-radius: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row">
+            <div class="col-12">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="#">
+                            <i class="fas fa-box me-2"></i>
+                            Gestión de Productos
+                        </a>
+                        <div class="navbar-nav ms-auto">
+                            <span class="navbar-text me-3">
+                                <i class="fas fa-user me-1"></i>
+                                <span id="admin-name">Administrador</span>
+                            </span>
+                            <button class="btn btn-outline-light" onclick="goToProducts()">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Volver a Productos
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Breadcrumb -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/products">Productos</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Gestión de Productos</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-box fs-1 mb-3"></i>
+                        <h3 id="total-products">0</h3>
+                        <p class="mb-0">Total Productos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-check-circle fs-1 mb-3"></i>
+                        <h3 id="active-products">0</h3>
+                        <p class="mb-0">Productos Activos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-star fs-1 mb-3"></i>
+                        <h3 id="fixed-products">0</h3>
+                        <p class="mb-0">Productos Fijos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-calendar-day fs-1 mb-3"></i>
+                        <h3 id="menu-products">0</h3>
+                        <p class="mb-0">Para Menús</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="filter-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-end-0">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Buscar productos...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="typeFilter">
+                                <option value="">Todos los tipos</option>
+                                <option value="fixed">Productos Fijos</option>
+                                <option value="menu">Para Menús</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">Todos los estados</option>
+                                <option value="active">Activos</option>
+                                <option value="inactive">Inactivos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary btn-modern w-100" onclick="showCreateProductModal()">
+                                <i class="fas fa-plus me-2"></i>Nuevo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lista de Productos -->
+        <div class="row">
+            <div class="col-12">
+                <div id="products-container">
+                    <div class="loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2">Cargando productos...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Crear/Editar Producto -->
+    <div class="modal fade" id="productModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productModalTitle">Nuevo Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productName" class="form-label">Nombre del Producto *</label>
+                                    <input type="text" class="form-control" id="productName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productPrice" class="form-label">Precio Base *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="productPrice" step="0.01" min="0" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productCostPrice" class="form-label">Precio de Costo</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="productCostPrice" step="0.01" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="productStock" class="form-label">Stock Inicial</label>
+                                    <input type="number" class="form-control" id="productStock" value="0" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="productDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="productDescription" rows="3" placeholder="Describe el producto..."></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="productFixed" checked>
+                                    <label class="form-check-label">Producto Fijo (Carta Permanente)</label>
+                                    <small class="form-text text-muted d-block">Si está marcado, aparecerá en la carta permanente</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="productActive" checked>
+                                    <label class="form-check-label">Producto Activo</label>
+                                    <small class="form-text text-muted d-block">Si está desmarcado, no estará disponible</small>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="saveProduct()">
+                        <i class="fas fa-save me-2"></i>Guardar Producto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alertas -->
+    <div id="alerts-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales
+        let allProducts = [];
+        let currentProductId = null;
+        
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAdminUser();
+            loadProducts();
+            loadStats();
+            setupEventListeners();
+        });
+        
+        // Configurar event listeners
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', debounce(filterProducts, 300));
+            document.getElementById('typeFilter').addEventListener('change', filterProducts);
+            document.getElementById('statusFilter').addEventListener('change', filterProducts);
+        }
+        
+        // Función debounce
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // Cargar información del usuario administrador
+        async function loadAdminUser() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const response = await fetch('/api/v1/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById('admin-name').textContent = user.full_name;
+                }
+            } catch (error) {
+                console.error('Error cargando usuario:', error);
+            }
+        }
+        
+        // Cargar productos
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/v1/products-new/', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    allProducts = await response.json();
+                    renderProducts(allProducts);
+                } else {
+                    showAlert('Error cargando productos', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cargando productos:', error);
+                showAlert('Error cargando productos', 'danger');
+            }
+        }
+        
+        // Cargar estadísticas
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/v1/products-new/stats/summary', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('total-products').textContent = stats.total_productos;
+                    document.getElementById('active-products').textContent = stats.productos_activos;
+                    document.getElementById('fixed-products').textContent = stats.productos_fijos;
+                    document.getElementById('menu-products').textContent = stats.productos_menu;
+                }
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+        
+        // Renderizar productos
+        function renderProducts(products) {
+            const container = document.getElementById('products-container');
+            
+            if (products.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-box"></i>
+                        <h4>No hay productos registrados</h4>
+                        <p>Crea tu primer producto para comenzar</p>
+                        <button class="btn btn-success" onclick="showCreateProductModal()">
+                            <i class="fas fa-plus me-2"></i>
+                            Crear Producto
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = products.map(product => `
+                <div class="product-card ${getProductCardClass(product)}">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h4>${product.name}</h4>
+                                    <p class="mb-1">
+                                        <i class="fas fa-tag me-2"></i>
+                                        Precio: <strong>$${product.precio_base}</strong>
+                                    </p>
+                                    ${product.cost_price ? `
+                                        <p class="mb-1">
+                                            <i class="fas fa-dollar-sign me-2"></i>
+                                            Costo: $${product.cost_price}
+                                        </p>
+                                    ` : ''}
+                                    <p class="mb-1">
+                                        <i class="fas fa-box me-2"></i>
+                                        Stock: ${product.stock_quantity || 0} unidades
+                                    </p>
+                                    <div class="mb-2">
+                                        <span class="badge badge-status bg-${product.es_fijo ? 'success' : 'warning'}">
+                                            ${product.es_fijo ? 'Producto Fijo' : 'Para Menús'}
+                                        </span>
+                                        <span class="badge badge-status bg-${product.activo ? 'success' : 'secondary'}">
+                                            ${product.activo ? 'Activo' : 'Inactivo'}
+                                        </span>
+                                    </div>
+                                    ${product.description ? `<p class="text-muted">${product.description}</p>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column gap-2">
+                                <button class="btn btn-primary" onclick="editProduct(${product.id})">
+                                    <i class="fas fa-edit me-2"></i>Editar
+                                </button>
+                                ${product.activo ? 
+                                    `<button class="btn btn-warning" onclick="toggleProductStatus(${product.id}, false)">
+                                        <i class="fas fa-pause me-2"></i>Desactivar
+                                    </button>` :
+                                    `<button class="btn btn-success" onclick="toggleProductStatus(${product.id}, true)">
+                                        <i class="fas fa-play me-2"></i>Activar
+                                    </button>`
+                                }
+                                <button class="btn btn-danger" onclick="deleteProduct(${product.id})">
+                                    <i class="fas fa-trash me-2"></i>Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Obtener clase CSS para la tarjeta del producto
+        function getProductCardClass(product) {
+            if (!product.activo) return 'inactive';
+            if (product.es_fijo) return 'fixed';
+            return 'menu-only';
+        }
+        
+        // Filtrar productos
+        function filterProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            let filtered = allProducts.filter(product => {
+                // Filtro de búsqueda
+                const matchesSearch = !searchTerm || 
+                    product.name.toLowerCase().includes(searchTerm) ||
+                    (product.description && product.description.toLowerCase().includes(searchTerm));
+                
+                // Filtro de tipo
+                let matchesType = true;
+                if (typeFilter === 'fixed') {
+                    matchesType = product.es_fijo;
+                } else if (typeFilter === 'menu') {
+                    matchesType = !product.es_fijo;
+                }
+                
+                // Filtro de estado
+                let matchesStatus = true;
+                if (statusFilter === 'active') {
+                    matchesStatus = product.activo;
+                } else if (statusFilter === 'inactive') {
+                    matchesStatus = !product.activo;
+                }
+                
+                return matchesSearch && matchesType && matchesStatus;
+            });
+            
+            renderProducts(filtered);
+        }
+        
+        // Mostrar modal para crear producto
+        function showCreateProductModal() {
+            currentProductId = null;
+            document.getElementById('productModalTitle').textContent = 'Nuevo Producto';
+            document.getElementById('productForm').reset();
+            document.getElementById('productFixed').checked = true;
+            document.getElementById('productActive').checked = true;
+            
+            const modal = new bootstrap.Modal(document.getElementById('productModal'));
+            modal.show();
+        }
+        
+        // Editar producto
+        function editProduct(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+            
+            currentProductId = productId;
+            document.getElementById('productModalTitle').textContent = 'Editar Producto';
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productPrice').value = product.precio_base;
+            document.getElementById('productCostPrice').value = product.cost_price || '';
+            document.getElementById('productStock').value = product.stock_quantity || 0;
+            document.getElementById('productDescription').value = product.description || '';
+            document.getElementById('productFixed').checked = product.es_fijo;
+            document.getElementById('productActive').checked = product.activo;
+            
+            const modal = new bootstrap.Modal(document.getElementById('productModal'));
+            modal.show();
+        }
+        
+        // Guardar producto
+        async function saveProduct() {
+            const form = document.getElementById('productForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            
+            const productData = {
+                name: document.getElementById('productName').value,
+                precio_base: parseFloat(document.getElementById('productPrice').value),
+                cost_price: document.getElementById('productCostPrice').value ? 
+                    parseFloat(document.getElementById('productCostPrice').value) : null,
+                stock_quantity: parseInt(document.getElementById('productStock').value) || 0,
+                description: document.getElementById('productDescription').value,
+                es_fijo: document.getElementById('productFixed').checked,
+                activo: document.getElementById('productActive').checked
+            };
+            
+            try {
+                const url = currentProductId ? 
+                    `/api/v1/products-new/${currentProductId}` : 
+                    '/api/v1/products-new/';
+                const method = currentProductId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify(productData)
+                });
+                
+                if (response.ok) {
+                    showAlert('Producto guardado exitosamente', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+                    modal.hide();
+                    loadProducts();
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Error: ${error.detail}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error guardando producto:', error);
+                showAlert('Error guardando producto', 'danger');
+            }
+        }
+        
+        // Cambiar estado del producto
+        async function toggleProductStatus(productId, newStatus) {
+            try {
+                const response = await fetch(`/api/v1/products-new/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({ activo: newStatus })
+                });
+                
+                if (response.ok) {
+                    showAlert(`Producto ${newStatus ? 'activado' : 'desactivado'} exitosamente`, 'success');
+                    loadProducts();
+                    loadStats();
+                } else {
+                    showAlert('Error cambiando estado del producto', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cambiando estado:', error);
+                showAlert('Error cambiando estado del producto', 'danger');
+            }
+        }
+        
+        // Eliminar producto
+        async function deleteProduct(productId) {
+            if (!confirm('¿Está seguro de que desea eliminar este producto?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/v1/products-new/${productId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showAlert('Producto eliminado exitosamente', 'success');
+                    loadProducts();
+                    loadStats();
+                } else {
+                    showAlert('Error eliminando producto', 'danger');
+                }
+            } catch (error) {
+                console.error('Error eliminando producto:', error);
+                showAlert('Error eliminando producto', 'danger');
+            }
+        }
+        
+        // Mostrar alerta
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts-container');
+            const alertId = 'alert-' + Date.now();
+            
+            const alert = document.createElement('div');
+            alert.id = alertId;
+            alert.className = `alert alert-${type} alert-dismissible fade show alert-custom`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            alertsContainer.appendChild(alert);
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    alertElement.remove();
+                }
+            }, 5000);
+        }
+        
+        // Volver a productos
+        function goToProducts() {
+            window.location.href = '/products';
+        }
+    </script>
+</body>
+</html>

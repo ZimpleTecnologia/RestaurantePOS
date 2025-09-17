@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú del Día - Sistema POS Reestructurado</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .menu-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .menu-category {
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+        }
+        
+        .menu-option {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .menu-option.selected {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+        
+        .menu-option.required {
+            border-left: 5px solid #ffc107;
+        }
+        
+        .menu-option.optional {
+            border-left: 5px solid #17a2b8;
+        }
+        
+        .order-summary {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .table-selector {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .btn-modern {
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .alert-custom {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: ">";
+        }
+        
+        .price-badge {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .category-title {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .option-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row">
+            <div class="col-12">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="#">
+                            <i class="fas fa-utensils me-2"></i>
+                            Menú del Día
+                        </a>
+                        <div class="navbar-nav ms-auto">
+                            <span class="navbar-text me-3">
+                                <i class="fas fa-user me-1"></i>
+                                <span id="waiter-name">Mesero</span>
+                            </span>
+                            <button class="btn btn-outline-light" onclick="goToWaiters()">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Volver a Meseros
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Breadcrumb -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/waiters">Meseros</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Menú del Día</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Selector de Mesa -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="table-selector">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <label for="tableSelect" class="form-label">Seleccionar Mesa:</label>
+                            <select class="form-select" id="tableSelect" required>
+                                <option value="">Seleccionar mesa...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="customerName" class="form-label">Nombre del Cliente (opcional):</label>
+                            <input type="text" class="form-control" id="customerName" placeholder="Nombre del cliente">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Menú del Día -->
+            <div class="col-md-8">
+                <div id="menu-container">
+                    <div class="loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2">Cargando menú del día...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Resumen del Pedido -->
+            <div class="col-md-4">
+                <div class="order-summary">
+                    <h5><i class="fas fa-shopping-cart me-2"></i>Resumen del Pedido</h5>
+                    <div id="order-items">
+                        <p class="text-muted">No hay items en el pedido</p>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <strong>Total:</strong>
+                        <span class="price-badge" id="order-total">$0.00</span>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <label for="orderNotes" class="form-label">Notas del Pedido:</label>
+                        <textarea class="form-control" id="orderNotes" rows="3" placeholder="Observaciones especiales..."></textarea>
+                    </div>
+                    <button class="btn btn-success btn-modern w-100" onclick="placeOrder()" id="placeOrderBtn" disabled>
+                        <i class="fas fa-check me-2"></i>
+                        Confirmar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alertas -->
+    <div id="alerts-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales
+        let currentMenu = null;
+        let selectedOptions = {};
+        let orderItems = [];
+        let tables = [];
+        
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadWaiterUser();
+            loadTables();
+            loadTodayMenu();
+        });
+        
+        // Cargar información del mesero
+        async function loadWaiterUser() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const response = await fetch('/api/v1/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById('waiter-name').textContent = user.full_name;
+                }
+            } catch (error) {
+                console.error('Error cargando usuario:', error);
+            }
+        }
+        
+        // Cargar mesas
+        async function loadTables() {
+            try {
+                const response = await fetch('/api/v1/tables/', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    tables = await response.json();
+                    const tableSelect = document.getElementById('tableSelect');
+                    tableSelect.innerHTML = '<option value="">Seleccionar mesa...</option>';
+                    
+                    tables.forEach(table => {
+                        const option = document.createElement('option');
+                        option.value = table.id;
+                        option.textContent = `Mesa ${table.number} - ${table.capacity} personas`;
+                        tableSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando mesas:', error);
+            }
+        }
+        
+        // Cargar menú del día
+        async function loadTodayMenu() {
+            try {
+                const response = await fetch('/api/v1/products-new/menus/today', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const menuData = await response.json();
+                    if (menuData.menu) {
+                        currentMenu = menuData;
+                        renderMenu(menuData);
+                    } else {
+                        showNoMenuMessage();
+                    }
+                } else {
+                    showNoMenuMessage();
+                }
+            } catch (error) {
+                console.error('Error cargando menú:', error);
+                showNoMenuMessage();
+            }
+        }
+        
+        // Mostrar mensaje cuando no hay menú
+        function showNoMenuMessage() {
+            const container = document.getElementById('menu-container');
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-calendar-day"></i>
+                    <h4>No hay menú del día</h4>
+                    <p>No se ha configurado un menú para hoy</p>
+                    <button class="btn btn-primary" onclick="loadTodayMenu()">
+                        <i class="fas fa-sync me-2"></i>
+                        Actualizar
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Renderizar menú
+        function renderMenu(menuData) {
+            const container = document.getElementById('menu-container');
+            const menu = menuData.menu;
+            const opciones = menuData.opciones_por_categoria;
+            
+            let html = `
+                <div class="menu-header">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h2>${menu.nombre}</h2>
+                            <p class="mb-0">${new Date(menu.fecha).toLocaleDateString('es-ES')}</p>
+                            ${menu.descripcion ? `<p class="mb-0 mt-2">${menu.descripcion}</p>` : ''}
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="price-badge fs-4">$${menu.precio}</div>
+                            <p class="mb-0 mt-2">Precio del Menú</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Mostrar productos fijos
+            if (menuData.productos_fijos && menuData.productos_fijos.length > 0) {
+                html += `
+                    <div class="menu-category">
+                        <h5 class="category-title">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Productos Incluidos
+                        </h5>
+                        <p class="text-muted">Estos productos se incluyen automáticamente en el menú</p>
+                `;
+                
+                menuData.productos_fijos.forEach(producto => {
+                    html += `
+                        <div class="menu-option required">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${producto.producto.name}</strong>
+                                    ${producto.producto.description ? `<div class="option-description">${producto.producto.description}</div>` : ''}
+                                </div>
+                                <span class="price-badge">Incluido</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+            
+            // Mostrar opciones por categoría
+            Object.keys(opciones).forEach(categoria => {
+                const categoriaData = opciones[categoria];
+                html += `
+                    <div class="menu-category">
+                        <h5 class="category-title">
+                            <i class="fas fa-list-ul me-2"></i>
+                            ${categoria}
+                        </h5>
+                        <p class="text-muted">Selecciona una opción de esta categoría</p>
+                `;
+                
+                categoriaData.opciones.forEach(opcion => {
+                    html += `
+                        <div class="menu-option optional" onclick="selectOption('${categoria}', ${opcion.id}, '${opcion.nombre}')">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${opcion.nombre}</strong>
+                                    ${opcion.descripcion ? `<div class="option-description">${opcion.descripcion}</div>` : ''}
+                                </div>
+                                <i class="fas fa-circle text-muted" id="option-${opcion.id}"></i>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Seleccionar opción
+        function selectOption(categoria, opcionId, opcionNombre) {
+            // Deseleccionar opciones anteriores de la misma categoría
+            Object.keys(selectedOptions).forEach(cat => {
+                if (cat === categoria) {
+                    const prevOptionId = selectedOptions[cat].id;
+                    const prevElement = document.getElementById(`option-${prevOptionId}`);
+                    if (prevElement) {
+                        prevElement.className = 'fas fa-circle text-muted';
+                    }
+                    const prevOptionElement = prevElement?.closest('.menu-option');
+                    if (prevOptionElement) {
+                        prevOptionElement.classList.remove('selected');
+                    }
+                }
+            });
+            
+            // Seleccionar nueva opción
+            selectedOptions[categoria] = {
+                id: opcionId,
+                nombre: opcionNombre
+            };
+            
+            const element = document.getElementById(`option-${opcionId}`);
+            if (element) {
+                element.className = 'fas fa-check-circle text-success';
+            }
+            
+            const optionElement = element?.closest('.menu-option');
+            if (optionElement) {
+                optionElement.classList.add('selected');
+            }
+            
+            updateOrderSummary();
+        }
+        
+        // Actualizar resumen del pedido
+        function updateOrderSummary() {
+            const orderItemsContainer = document.getElementById('order-items');
+            const orderTotalElement = document.getElementById('order-total');
+            const placeOrderBtn = document.getElementById('placeOrderBtn');
+            
+            if (!currentMenu) {
+                orderItemsContainer.innerHTML = '<p class="text-muted">No hay menú disponible</p>';
+                orderTotalElement.textContent = '$0.00';
+                placeOrderBtn.disabled = true;
+                return;
+            }
+            
+            let html = '';
+            let total = parseFloat(currentMenu.menu.precio);
+            
+            // Agregar menú base
+            html += `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>${currentMenu.menu.nombre}</span>
+                    <span class="price-badge">$${currentMenu.menu.precio}</span>
+                </div>
+            `;
+            
+            // Agregar opciones seleccionadas
+            Object.keys(selectedOptions).forEach(categoria => {
+                const opcion = selectedOptions[categoria];
+                html += `
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted">${categoria}: ${opcion.nombre}</span>
+                        <span class="text-muted">Incluido</span>
+                    </div>
+                `;
+            });
+            
+            orderItemsContainer.innerHTML = html;
+            orderTotalElement.textContent = `$${total.toFixed(2)}`;
+            
+            // Habilitar botón si hay mesa seleccionada
+            const tableSelect = document.getElementById('tableSelect');
+            placeOrderBtn.disabled = !tableSelect.value;
+        }
+        
+        // Realizar pedido
+        async function placeOrder() {
+            const tableSelect = document.getElementById('tableSelect');
+            const customerName = document.getElementById('customerName').value;
+            const orderNotes = document.getElementById('orderNotes').value;
+            
+            if (!tableSelect.value) {
+                showAlert('Por favor selecciona una mesa', 'warning');
+                return;
+            }
+            
+            if (!currentMenu) {
+                showAlert('No hay menú disponible', 'error');
+                return;
+            }
+            
+            // Verificar que se hayan seleccionado todas las categorías requeridas
+            const opciones = currentMenu.opciones_por_categoria;
+            const categoriasRequeridas = Object.keys(opciones);
+            const categoriasSeleccionadas = Object.keys(selectedOptions);
+            
+            if (categoriasRequeridas.length > 0 && categoriasRequeridas.length !== categoriasSeleccionadas.length) {
+                showAlert('Por favor selecciona una opción de cada categoría', 'warning');
+                return;
+            }
+            
+            const orderData = {
+                table_id: parseInt(tableSelect.value),
+                customer_name: customerName || null,
+                items: [{
+                    menu_id: currentMenu.menu.menu_id,
+                    productos_fijos: currentMenu.productos_fijos.map(p => p.producto_id),
+                    opciones_elegidas: Object.values(selectedOptions).map(o => o.id),
+                    observaciones: orderNotes || null
+                }],
+                notes: orderNotes || null
+            };
+            
+            try {
+                const response = await fetch('/api/v1/products-new/orders/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify(orderData)
+                });
+                
+                if (response.ok) {
+                    const order = await response.json();
+                    showAlert(`Pedido #${order.order_number} creado exitosamente`, 'success');
+                    
+                    // Limpiar formulario
+                    resetOrder();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Error: ${error.detail}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error creando pedido:', error);
+                showAlert('Error creando pedido', 'danger');
+            }
+        }
+        
+        // Resetear pedido
+        function resetOrder() {
+            selectedOptions = {};
+            document.getElementById('customerName').value = '';
+            document.getElementById('orderNotes').value = '';
+            document.getElementById('tableSelect').value = '';
+            
+            // Limpiar selecciones visuales
+            document.querySelectorAll('.menu-option.selected').forEach(element => {
+                element.classList.remove('selected');
+            });
+            
+            document.querySelectorAll('.fas.fa-check-circle').forEach(element => {
+                element.className = 'fas fa-circle text-muted';
+            });
+            
+            updateOrderSummary();
+        }
+        
+        // Mostrar alerta
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts-container');
+            const alertId = 'alert-' + Date.now();
+            
+            const alert = document.createElement('div');
+            alert.id = alertId;
+            alert.className = `alert alert-${type} alert-dismissible fade show alert-custom`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            alertsContainer.appendChild(alert);
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    alertElement.remove();
+                }
+            }, 5000);
+        }
+        
+        // Volver a meseros
+        function goToWaiters() {
+            window.location.href = '/waiters';
+        }
+        
+        // Event listeners
+        document.getElementById('tableSelect').addEventListener('change', updateOrderSummary);
+    </script>
+</body>
+</html>

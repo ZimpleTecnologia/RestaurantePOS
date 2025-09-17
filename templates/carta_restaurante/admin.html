@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carta Restaurante - Administrador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .plato-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        
+        .plato-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        
+        .plato-card.fijo {
+            border-left-color: #28a745;
+        }
+        
+        .plato-card.variable {
+            border-left-color: #ffc107;
+        }
+        
+        .plato-card.inactive {
+            border-left-color: #6c757d;
+            opacity: 0.7;
+        }
+        
+        .btn-modern {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .filter-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .nav-tabs .nav-link {
+            border-radius: 10px 10px 0 0;
+            border: none;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-0">
+                            <i class="fas fa-utensils text-primary me-3"></i>
+                            Carta Restaurante
+                        </h2>
+                        <p class="text-muted mb-0">Gestión de platos fijos y variables</p>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="me-3">
+                            <i class="fas fa-user-circle text-primary me-2"></i>
+                            <span id="adminUser">Administrador</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-utensils fs-1 mb-3"></i>
+                        <h3 id="total-platos">0</h3>
+                        <p class="mb-0">Total Platos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-lock fs-1 mb-3"></i>
+                        <h3 id="platos-fijos">0</h3>
+                        <p class="mb-0">Platos Fijos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-random fs-1 mb-3"></i>
+                        <h3 id="platos-variables">0</h3>
+                        <p class="mb-0">Platos Variables</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="text-center">
+                        <i class="fas fa-check-circle fs-1 mb-3"></i>
+                        <h3 id="platos-activos">0</h3>
+                        <p class="mb-0">Platos Activos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestañas -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="cartaTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="carta-tab" data-bs-toggle="tab" data-bs-target="#carta" type="button" role="tab" aria-controls="carta" aria-selected="true">
+                                    <i class="fas fa-utensils me-2"></i>Carta del Restaurante
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="menu-tab" data-bs-toggle="tab" data-bs-target="#menu" type="button" role="tab" aria-controls="menu" aria-selected="false">
+                                    <i class="fas fa-calendar-day me-2"></i>Menú del Día
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido de las pestañas -->
+        <div class="tab-content" id="cartaTabsContent">
+            <!-- Pestaña Carta -->
+            <div class="tab-pane fade show active" id="carta" role="tabpanel" aria-labelledby="carta-tab">
+                <!-- Filtros para Carta -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="filter-card">
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                        <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Buscar platos...">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="tipoFilter">
+                                        <option value="">Todos los tipos</option>
+                                        <option value="Fijo">Platos Fijos</option>
+                                        <option value="Variable">Platos Variables</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="categoriaFilter">
+                                        <option value="">Todas las categorías</option>
+                                        <option value="Entrada">Entrada</option>
+                                        <option value="Plato Principal">Plato Principal</option>
+                                        <option value="Acompañamiento">Acompañamiento</option>
+                                        <option value="Bebida">Bebida</option>
+                                        <option value="Postre">Postre</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-primary btn-modern w-100" onclick="showCreatePlatoModal()">
+                                        <i class="fas fa-plus me-2"></i>Nuevo Plato
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de Platos -->
+                <div class="row">
+                    <div class="col-12">
+                        <div id="platos-container">
+                            <div class="loading">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2">Cargando carta...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pestaña Menú del Día -->
+            <div class="tab-pane fade" id="menu" role="tabpanel" aria-labelledby="menu-tab">
+                <!-- Filtros para Menú -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="filter-card">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="fas fa-calendar"></i>
+                                        </span>
+                                        <input type="date" class="form-control border-start-0" id="fechaFilter">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select" id="menuStatusFilter">
+                                        <option value="">Todos los estados</option>
+                                        <option value="active">Activos</option>
+                                        <option value="inactive">Inactivos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-success btn-modern w-100" onclick="showCreateMenuModal()">
+                                        <i class="fas fa-plus me-2"></i>Nuevo Menú
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de Menús -->
+                <div class="row">
+                    <div class="col-12">
+                        <div id="menus-container">
+                            <div class="loading">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2">Cargando menús...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Plato -->
+    <div class="modal fade" id="platoModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="platoModalTitle">Crear Plato</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="platoForm">
+                        <input type="hidden" id="platoId">
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="platoNombre" class="form-label">Nombre del Plato *</label>
+                                    <input type="text" class="form-control" id="platoNombre" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="platoTipo" class="form-label">Tipo *</label>
+                                    <select class="form-select" id="platoTipo" required>
+                                        <option value="">Seleccionar tipo</option>
+                                        <option value="Fijo">Fijo</option>
+                                        <option value="Variable">Variable</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="platoDescripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="platoDescripcion" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="platoPrecio" class="form-label">Precio Base *</label>
+                                    <input type="number" class="form-control" id="platoPrecio" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="platoCategoria" class="form-label">Categoría</label>
+                                    <select class="form-select" id="platoCategoria">
+                                        <option value="">Seleccionar categoría</option>
+                                        <option value="Entrada">Entrada</option>
+                                        <option value="Plato Principal">Plato Principal</option>
+                                        <option value="Acompañamiento">Acompañamiento</option>
+                                        <option value="Bebida">Bebida</option>
+                                        <option value="Postre">Postre</option>
+                                        <option value="Otro">Otro</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="platoActivo" checked>
+                                <label class="form-check-label" for="platoActivo">
+                                    Plato Activo
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="savePlato()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Menú -->
+    <div class="modal fade" id="menuModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="menuModalTitle">Crear Menú del Día</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="menuForm">
+                        <input type="hidden" id="menuId">
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="menuFecha" class="form-label">Fecha *</label>
+                                    <input type="date" class="form-control" id="menuFecha" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="menuNombre" class="form-label">Nombre del Menú *</label>
+                                    <input type="text" class="form-control" id="menuNombre" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="menuPrecio" class="form-label">Precio Total *</label>
+                                    <input type="number" class="form-control" id="menuPrecio" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="menuDescripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="menuDescripcion" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-lock text-success me-2"></i>
+                                            Platos Fijos (Se incluyen automáticamente)
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="platosFijosList" class="list-group">
+                                            <!-- Se llenará dinámicamente -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-random text-warning me-2"></i>
+                                            Platos Variables (Seleccionar opciones)
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="platosVariablesList" class="list-group">
+                                            <!-- Se llenará dinámicamente -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="menuActivo" checked>
+                                <label class="form-check-label" for="menuActivo">
+                                    Menú Activo
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveMenu()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allPlatos = [];
+        let allMenus = [];
+        let currentPlatoId = null;
+        let currentMenuId = null;
+
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAdminUser();
+            loadCarta();
+            loadMenus();
+            loadStats();
+            
+            // Event listeners para filtros
+            document.getElementById('searchInput').addEventListener('input', filterPlatos);
+            document.getElementById('tipoFilter').addEventListener('change', filterPlatos);
+            document.getElementById('categoriaFilter').addEventListener('change', filterPlatos);
+            
+            document.getElementById('fechaFilter').addEventListener('change', filterMenus);
+            document.getElementById('menuStatusFilter').addEventListener('change', filterMenus);
+        });
+
+        // Cargar usuario administrador
+        async function loadAdminUser() {
+            try {
+                const response = await fetch('/api/v1/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById('adminUser').textContent = user.full_name || user.username;
+                }
+            } catch (error) {
+                console.error('Error cargando usuario:', error);
+            }
+        }
+
+        // Cargar carta
+        async function loadCarta() {
+            try {
+                const response = await fetch('/api/v1/carta/', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    allPlatos = await response.json();
+                    renderPlatos();
+                } else {
+                    showAlert('Error cargando carta', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cargando carta:', error);
+                showAlert('Error cargando carta', 'danger');
+            }
+        }
+
+        // Cargar menús
+        async function loadMenus() {
+            try {
+                const response = await fetch('/api/v1/carta/menus/', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    allMenus = await response.json();
+                    renderMenus();
+                } else {
+                    showAlert('Error cargando menús', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cargando menús:', error);
+                showAlert('Error cargando menús', 'danger');
+            }
+        }
+
+        // Cargar estadísticas
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/v1/carta/stats/carta', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('total-platos').textContent = stats.total_platos;
+                    document.getElementById('platos-fijos').textContent = stats.platos_fijos;
+                    document.getElementById('platos-variables').textContent = stats.platos_variables;
+                    document.getElementById('platos-activos').textContent = stats.platos_activos;
+                }
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        // Renderizar platos
+        function renderPlatos(platos = allPlatos) {
+            const container = document.getElementById('platos-container');
+            
+            if (platos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-utensils"></i>
+                        <h4>No hay platos en la carta</h4>
+                        <p>Agrega platos para comenzar a construir tu carta</p>
+                        <button class="btn btn-primary btn-modern" onclick="showCreatePlatoModal()">
+                            <i class="fas fa-plus me-2"></i>Agregar Primer Plato
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = platos.map(plato => `
+                <div class="plato-card ${plato.tipo.toLowerCase()} ${!plato.activo ? 'inactive' : ''}">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-${plato.tipo === 'Fijo' ? 'lock' : 'random'} fa-2x text-${plato.tipo === 'Fijo' ? 'success' : 'warning'}"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">${plato.nombre}</h5>
+                                    <p class="text-muted mb-1">${plato.descripcion || 'Sin descripción'}</p>
+                                    <div class="d-flex gap-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-tag me-1"></i>
+                                            ${plato.categoria || 'Sin categoría'}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-dollar-sign me-1"></i>
+                                            $${plato.precio_base}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            ${plato.tipo}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-primary btn-sm" onclick="editPlato(${plato.producto_id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-${plato.activo ? 'warning' : 'success'} btn-sm" onclick="togglePlatoStatus(${plato.producto_id})">
+                                    <i class="fas fa-${plato.activo ? 'pause' : 'play'}"></i>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deletePlato(${plato.producto_id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Renderizar menús
+        function renderMenus(menus = allMenus) {
+            const container = document.getElementById('menus-container');
+            
+            if (menus.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-day"></i>
+                        <h4>No hay menús creados</h4>
+                        <p>Crea menús del día para organizar tus platos</p>
+                        <button class="btn btn-success btn-modern" onclick="showCreateMenuModal()">
+                            <i class="fas fa-plus me-2"></i>Crear Primer Menú
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = menus.map(menu => `
+                <div class="plato-card ${!menu.activo ? 'inactive' : ''}">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-calendar-day fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">${menu.nombre}</h5>
+                                    <p class="text-muted mb-1">${menu.descripcion || 'Sin descripción'}</p>
+                                    <div class="d-flex gap-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            ${menu.fecha}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-dollar-sign me-1"></i>
+                                            $${menu.precio}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-utensils me-1"></i>
+                                            ${menu.platos_fijos.length + menu.platos_variables.length} platos
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-primary btn-sm" onclick="editMenu(${menu.menu_id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-${menu.activo ? 'warning' : 'success'} btn-sm" onclick="toggleMenuStatus(${menu.menu_id})">
+                                    <i class="fas fa-${menu.activo ? 'pause' : 'play'}"></i>
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteMenu(${menu.menu_id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filtrar platos
+        function filterPlatos() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const tipoFilter = document.getElementById('tipoFilter').value;
+            const categoriaFilter = document.getElementById('categoriaFilter').value;
+            
+            let filtered = allPlatos.filter(plato => {
+                const matchesSearch = plato.nombre.toLowerCase().includes(search) || 
+                                    (plato.descripcion && plato.descripcion.toLowerCase().includes(search));
+                
+                const matchesTipo = !tipoFilter || plato.tipo === tipoFilter;
+                const matchesCategoria = !categoriaFilter || plato.categoria === categoriaFilter;
+                
+                return matchesSearch && matchesTipo && matchesCategoria;
+            });
+            
+            renderPlatos(filtered);
+        }
+
+        // Filtrar menús
+        function filterMenus() {
+            const fechaFilter = document.getElementById('fechaFilter').value;
+            const statusFilter = document.getElementById('menuStatusFilter').value;
+            
+            let filtered = allMenus.filter(menu => {
+                const matchesFecha = !fechaFilter || menu.fecha === fechaFilter;
+                const matchesStatus = !statusFilter || 
+                                    (statusFilter === 'active' && menu.activo) ||
+                                    (statusFilter === 'inactive' && !menu.activo);
+                
+                return matchesFecha && matchesStatus;
+            });
+            
+            renderMenus(filtered);
+        }
+
+        // Mostrar modal para crear/editar plato
+        function showCreatePlatoModal() {
+            currentPlatoId = null;
+            document.getElementById('platoModalTitle').textContent = 'Crear Plato';
+            document.getElementById('platoForm').reset();
+            document.getElementById('platoActivo').checked = true;
+            
+            const modal = new bootstrap.Modal(document.getElementById('platoModal'));
+            modal.show();
+        }
+
+        // Editar plato
+        function editPlato(platoId) {
+            const plato = allPlatos.find(p => p.producto_id === platoId);
+            if (!plato) return;
+            
+            currentPlatoId = platoId;
+            document.getElementById('platoModalTitle').textContent = 'Editar Plato';
+            
+            // Llenar formulario
+            document.getElementById('platoId').value = plato.producto_id;
+            document.getElementById('platoNombre').value = plato.nombre;
+            document.getElementById('platoDescripcion').value = plato.descripcion || '';
+            document.getElementById('platoPrecio').value = plato.precio_base;
+            document.getElementById('platoTipo').value = plato.tipo;
+            document.getElementById('platoCategoria').value = plato.categoria || '';
+            document.getElementById('platoActivo').checked = plato.activo;
+            
+            const modal = new bootstrap.Modal(document.getElementById('platoModal'));
+            modal.show();
+        }
+
+        // Guardar plato
+        async function savePlato() {
+            const formData = {
+                nombre: document.getElementById('platoNombre').value,
+                descripcion: document.getElementById('platoDescripcion').value,
+                precio_base: parseFloat(document.getElementById('platoPrecio').value),
+                tipo: document.getElementById('platoTipo').value,
+                categoria: document.getElementById('platoCategoria').value,
+                activo: document.getElementById('platoActivo').checked
+            };
+            
+            try {
+                const url = currentPlatoId ? 
+                    `/api/v1/carta/${currentPlatoId}` : 
+                    '/api/v1/carta/';
+                const method = currentPlatoId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    showAlert('Plato guardado exitosamente', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('platoModal'));
+                    modal.hide();
+                    loadCarta();
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Error: ${error.detail}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error guardando plato:', error);
+                showAlert('Error guardando plato', 'danger');
+            }
+        }
+
+        // Cambiar estado del plato
+        async function togglePlatoStatus(platoId) {
+            const plato = allPlatos.find(p => p.producto_id === platoId);
+            if (!plato) return;
+            
+            try {
+                const response = await fetch(`/api/v1/carta/${platoId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({ activo: !plato.activo })
+                });
+                
+                if (response.ok) {
+                    showAlert(`Plato ${!plato.activo ? 'activado' : 'desactivado'} exitosamente`, 'success');
+                    loadCarta();
+                    loadStats();
+                } else {
+                    showAlert('Error cambiando estado del plato', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cambiando estado:', error);
+                showAlert('Error cambiando estado del plato', 'danger');
+            }
+        }
+
+        // Eliminar plato
+        async function deletePlato(platoId) {
+            if (!confirm('¿Está seguro de que desea eliminar este plato?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/v1/carta/${platoId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showAlert('Plato eliminado exitosamente', 'success');
+                    loadCarta();
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Error: ${error.detail}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error eliminando plato:', error);
+                showAlert('Error eliminando plato', 'danger');
+            }
+        }
+
+        // Mostrar modal para crear/editar menú
+        function showCreateMenuModal() {
+            currentMenuId = null;
+            document.getElementById('menuModalTitle').textContent = 'Crear Menú del Día';
+            document.getElementById('menuForm').reset();
+            document.getElementById('menuActivo').checked = true;
+            
+            // Establecer fecha de hoy por defecto
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('menuFecha').value = today;
+            
+            // Cargar platos para selección
+            loadPlatosForMenu();
+            
+            const modal = new bootstrap.Modal(document.getElementById('menuModal'));
+            modal.show();
+        }
+
+        // Cargar platos para selección en menú
+        function loadPlatosForMenu() {
+            const platosFijos = allPlatos.filter(p => p.tipo === 'Fijo' && p.activo);
+            const platosVariables = allPlatos.filter(p => p.tipo === 'Variable' && p.activo);
+            
+            // Renderizar platos fijos
+            const fijosContainer = document.getElementById('platosFijosList');
+            fijosContainer.innerHTML = platosFijos.map(plato => `
+                <div class="list-group-item">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="${plato.producto_id}" id="fijo_${plato.producto_id}" checked disabled>
+                        <label class="form-check-label" for="fijo_${plato.producto_id}">
+                            <strong>${plato.nombre}</strong> - $${plato.precio_base}
+                            <br><small class="text-muted">${plato.categoria || 'Sin categoría'}</small>
+                        </label>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Renderizar platos variables
+            const variablesContainer = document.getElementById('platosVariablesList');
+            variablesContainer.innerHTML = platosVariables.map(plato => `
+                <div class="list-group-item">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="${plato.producto_id}" id="variable_${plato.producto_id}">
+                        <label class="form-check-label" for="variable_${plato.producto_id}">
+                            <strong>${plato.nombre}</strong> - $${plato.precio_base}
+                            <br><small class="text-muted">${plato.categoria || 'Sin categoría'}</small>
+                        </label>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Guardar menú
+        async function saveMenu() {
+            const formData = {
+                fecha: document.getElementById('menuFecha').value,
+                nombre: document.getElementById('menuNombre').value,
+                precio: parseFloat(document.getElementById('menuPrecio').value),
+                descripcion: document.getElementById('menuDescripcion').value,
+                activo: document.getElementById('menuActivo').checked,
+                platos_fijos: Array.from(document.querySelectorAll('#platosFijosList input:checked')).map(cb => parseInt(cb.value)),
+                platos_variables: Array.from(document.querySelectorAll('#platosVariablesList input:checked')).map(cb => parseInt(cb.value))
+            };
+            
+            try {
+                const url = currentMenuId ? 
+                    `/api/v1/carta/menus/${currentMenuId}` : 
+                    '/api/v1/carta/menus/';
+                const method = currentMenuId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    showAlert('Menú guardado exitosamente', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('menuModal'));
+                    modal.hide();
+                    loadMenus();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Error: ${error.detail}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error guardando menú:', error);
+                showAlert('Error guardando menú', 'danger');
+            }
+        }
+
+        // Mostrar alerta
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
