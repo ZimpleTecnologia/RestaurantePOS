@@ -26,34 +26,36 @@ RUN apt-get update && apt-get install -y \
 # Copiar archivo de dependencias primero
 COPY requirements.txt .
 
-# Instalar dependencias de Python con orden específico para bcrypt
+# Instalar dependencias de Python
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir bcrypt==4.0.1 && \
-    pip install --no-cache-dir passlib==1.7.4 && \
     pip install --no-cache-dir -r requirements.txt
-
-# Crear directorios necesarios con permisos correctos
-RUN mkdir -p uploads static templates logs && \
-    chown -R appuser:appuser /app && \
-    chmod 755 uploads logs
 
 # Copiar código de la aplicación
 COPY app/ ./app/
 COPY static/ ./static/
 COPY templates/ ./templates/
-
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
 
 # Copiar scripts de utilidad
 COPY create_admin.py ./
 COPY create_test_data.py ./
 COPY init_db.py ./
+COPY reset_admin_password.py ./
+COPY migrate_database.py ./
+COPY verify_database.py ./
 
-# Cambiar propietario de todos los archivos
-RUN chown -R appuser:appuser /app
+# Script de inicio que espera a que la BD esté disponible
+COPY scripts/start.sh /app/start.sh
+
+# Crear directorios necesarios con permisos correctos
+RUN mkdir -p uploads/products uploads/reports static templates logs && \
+    chown -R appuser:appuser /app && \
+    chmod -R 755 uploads logs && \
+    chmod +x /app/start.sh
 
 # Cambiar al usuario no-root
 USER appuser
-
 
 # Exponer puerto
 EXPOSE 8000
@@ -66,10 +68,6 @@ ENV DEBUG=false
 # Health check mejorado para servicios independientes
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
-
-# Script de inicio que espera a que la BD esté disponible
-COPY --chown=appuser:appuser scripts/start.sh /app/start.sh
-RUN chmod +x /app/start.sh
 
 # Comando para ejecutar la aplicación
 

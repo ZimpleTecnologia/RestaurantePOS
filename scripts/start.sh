@@ -43,37 +43,70 @@ wait_for_postgres() {
 run_migrations() {
     echo "🔄 Ejecutando migraciones de base de datos..."
     
+    # Verificar base de datos primero
+    if [ -f "verify_database.py" ]; then
+        echo "🔍 Verificando estructura de base de datos..."
+        if python verify_database.py; then
+            echo "✅ Base de datos ya está actualizada"
+            return 0
+        else
+            echo "⚠️  Base de datos necesita migración"
+        fi
+    fi
+    
+    # Ejecutar migración personalizada
+    if [ -f "migrate_database.py" ]; then
+        echo "🔧 Ejecutando migración personalizada..."
+        if python migrate_database.py; then
+            echo "✅ Migración personalizada completada"
+        else
+            echo "⚠️  Error en migración personalizada"
+        fi
+    fi
+    
     # Verificar si alembic está disponible
     if command -v alembic &> /dev/null; then
-        alembic upgrade head || echo "⚠️  No se pudieron ejecutar las migraciones automáticamente"
+        echo "🔧 Ejecutando migraciones de Alembic..."
+        alembic upgrade head || echo "⚠️  No se pudieron ejecutar las migraciones de Alembic"
     else
-        echo "ℹ️  Alembic no está disponible, saltando migraciones"
+        echo "ℹ️  Alembic no está disponible, saltando migraciones de Alembic"
+    fi
+    
+    # Verificar nuevamente después de las migraciones
+    if [ -f "verify_database.py" ]; then
+        echo "🔍 Verificando base de datos después de migraciones..."
+        python verify_database.py || echo "⚠️  Base de datos aún necesita atención"
     fi
 }
 
-# Función para crear directorios necesarios
-create_directories() {
-    echo "📁 Creando directorios necesarios..."
+# Función para verificar directorios necesarios
+verify_directories() {
+    echo "📁 Verificando directorios necesarios..."
     
-    # Crear directorios si no existen
-    mkdir -p uploads logs
-    
-    # Intentar cambiar permisos solo si es posible
-    if [ -w uploads ]; then
-        chmod 755 uploads 2>/dev/null || echo "ℹ️  No se pudieron cambiar permisos de uploads"
+    # Verificar que los directorios existen
+    if [ ! -d "uploads/products" ]; then
+        echo "⚠️  Directorio uploads/products no existe"
+    else
+        echo "✅ Directorio uploads/products existe"
     fi
     
-    if [ -w logs ]; then
-        chmod 755 logs 2>/dev/null || echo "ℹ️  No se pudieron cambiar permisos de logs"
+    if [ ! -d "uploads/reports" ]; then
+        echo "⚠️  Directorio uploads/reports no existe"
+    else
+        echo "✅ Directorio uploads/reports existe"
     fi
     
-    echo "✅ Directorios creados/verificados"
+    if [ ! -d "logs" ]; then
+        echo "⚠️  Directorio logs no existe"
+    else
+        echo "✅ Directorio logs existe"
+    fi
 }
 
 # Función principal
 main() {
-    # Crear directorios
-    create_directories
+    # Verificar directorios
+    verify_directories
     
     # Esperar a PostgreSQL
     wait_for_postgres

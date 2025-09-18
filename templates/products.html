@@ -258,6 +258,124 @@
     </div>
 </div>
 
+<!-- Gestión de Productos -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-gear"></i> Gestión de Productos
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card hover-card h-100" onclick="goToAdminProducts()">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="bi bi-box fa-2x text-primary"></i>
+                                </div>
+                                <h6 class="card-title">Administrar Productos</h6>
+                                <p class="card-text text-muted small">CRUD completo de productos</p>
+                                <button class="btn btn-primary btn-sm">
+                                    <i class="bi bi-arrow-right me-1"></i>Acceder
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card hover-card h-100" onclick="goToAdminMenus()">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="bi bi-calendar-day fa-2x text-success"></i>
+                                </div>
+                                <h6 class="card-title">Gestión de Menús</h6>
+                                <p class="card-text text-muted small">Crear menús del día</p>
+                                <button class="btn btn-success btn-sm">
+                                    <i class="bi bi-arrow-right me-1"></i>Acceder
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card hover-card h-100" onclick="showTodayMenu()">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="bi bi-eye fa-2x text-info"></i>
+                                </div>
+                                <h6 class="card-title">Ver Menú de Hoy</h6>
+                                <p class="card-text text-muted small">Vista previa del menú actual</p>
+                                <button class="btn btn-info btn-sm">
+                                    <i class="bi bi-eye me-1"></i>Ver
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Submódulo de Menú del Día -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-menu-button-wide"></i> Menú del Día
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card hover-card h-100" onclick="goToMenuWaiters()">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="bi bi-menu-button-wide fa-2x text-primary"></i>
+                                </div>
+                                <h6 class="card-title">Tomar Pedidos</h6>
+                                <p class="card-text text-muted small">Acceso para meseros</p>
+                                <button class="btn btn-primary btn-sm">
+                                    <i class="bi bi-arrow-right me-1"></i>Acceder
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card hover-card h-100" onclick="goToKitchenMenuOrders()">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="bi bi-list-check fa-2x text-warning"></i>
+                                </div>
+                                <h6 class="card-title">Pedidos Cocina</h6>
+                                <p class="card-text text-muted small">Gestión para cocina</p>
+                                <button class="btn btn-warning btn-sm">
+                                    <i class="bi bi-arrow-right me-1"></i>Acceder
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card hover-card h-100" onclick="goToMenuManagement()">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="bi bi-gear fa-2x text-success"></i>
+                                </div>
+                                <h6 class="card-title">Gestión Menús</h6>
+                                <p class="card-text text-muted small">Crear y administrar</p>
+                                <button class="btn btn-success btn-sm">
+                                    <i class="bi bi-arrow-right me-1"></i>Acceder
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Vista de tarjetas -->
 <div id="gridView" class="grid-view">
     <!-- Los productos se cargarán aquí dinámicamente -->
@@ -1085,6 +1203,133 @@ function showSuccess(message) {
 function showError(message) {
     // Implementar notificación de error
     alert('Error: ' + message);
+}
+
+// Funciones para gestión de productos
+function goToAdminProducts() {
+    window.location.href = '/products/admin-products';
+}
+
+function goToAdminMenus() {
+    window.location.href = '/products/admin-menus';
+}
+
+// Funciones para el menú del día
+function goToMenuWaiters() {
+    window.location.href = '/waiters/menu';
+}
+
+function goToKitchenMenuOrders() {
+    window.location.href = '/kitchen/menu-orders';
+}
+
+function goToMenuManagement() {
+    window.location.href = '/products/menu-management';
+}
+
+function showTodayMenu() {
+    // Mostrar modal con el menú del día actual
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('access_token');
+    if (!token) {
+        showError('No hay token de autenticación');
+        return;
+    }
+    
+    $.ajax({
+        url: '/api/v1/menu/today',
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token
+        },
+        success: function(menuData) {
+            if (menuData && menuData.menu) {
+                showMenuModal(menuData);
+            } else {
+                showError('No hay menú configurado para hoy');
+            }
+        },
+        error: function(xhr) {
+            if (xhr.status === 404) {
+                showError('No hay menú configurado para hoy');
+            } else {
+                showError('Error al cargar el menú del día');
+            }
+        }
+    });
+}
+
+function showMenuModal(menuData) {
+    const menu = menuData.menu;
+    const opciones = menuData.opciones_por_categoria;
+    
+    let modalContent = `
+        <div class="modal fade" id="todayMenuModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-calendar-day me-2"></i>${menu.nombre}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <strong>Fecha:</strong> ${new Date(menu.fecha).toLocaleDateString('es-ES')}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Precio:</strong> <span class="badge bg-success fs-6">$${menu.precio}</span>
+                            </div>
+                        </div>
+                        ${menu.descripcion ? `<p class="text-muted">${menu.descripcion}</p>` : ''}
+                        <hr>
+                        <h6><i class="bi bi-list-ul me-2"></i>Opciones del Menú:</h6>
+    `;
+    
+    Object.keys(opciones).forEach(categoria => {
+        const categoriaData = opciones[categoria];
+        modalContent += `
+            <div class="mb-3">
+                <h6 class="text-primary">${categoria}</h6>
+                <ul class="list-group list-group-flush">
+        `;
+        
+        categoriaData.opciones.forEach(opcion => {
+            modalContent += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${opcion.nombre}</span>
+                    ${opcion.descripcion ? `<small class="text-muted">${opcion.descripcion}</small>` : ''}
+                </li>
+            `;
+        });
+        
+        modalContent += `
+                </ul>
+            </div>
+        `;
+    });
+    
+    modalContent += `
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary" onclick="goToMenuWaiters()">
+                            <i class="bi bi-arrow-right me-2"></i>Tomar Pedido
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remover modal existente si existe
+    $('#todayMenuModal').remove();
+    
+    // Agregar el modal al body
+    $('body').append(modalContent);
+    
+    // Mostrar el modal
+    $('#todayMenuModal').modal('show');
 }
 </script>
 {% endblock %}

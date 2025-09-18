@@ -41,6 +41,7 @@ class Order(Base):
     # Información del pedido
     order_type = Column(Enum(OrderType), default=OrderType.DINE_IN)
     status = Column(Enum(OrderStatus), default=OrderStatus.PENDING)
+    estado_cocina = Column(String(20), default='Pendiente')  # Estado específico para cocina
     total_amount = Column(Numeric(10, 2), default=Decimal('0.00'))
     tax_amount = Column(Numeric(10, 2), default=Decimal('0.00'))
     discount_amount = Column(Numeric(10, 2), default=Decimal('0.00'))
@@ -101,7 +102,19 @@ class OrderItem(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=True)  # Nullable para items de menú
+    
+    # Campos del sistema de menú del día (sistema anterior)
+    menu_id_old = Column(Integer, ForeignKey("menus_dia.id"), nullable=True)
+    categoria_id = Column(Integer, ForeignKey("categorias_menu.id"), nullable=True)
+    opcion_id = Column(Integer, ForeignKey("opciones_menu.id"), nullable=True)
+    observaciones = Column(Text, nullable=True)  # Observaciones específicas del menú
+    
+    
+    # Campos del sistema de Carta Restaurante
+    carta_producto_id = Column(Integer, ForeignKey("carta_restaurante.producto_id"), nullable=True)
+    menu_id = Column(Integer, ForeignKey("menus_dia_carta.menu_id"), nullable=True)
+    observaciones_menu = Column(Text, nullable=True)  # Observaciones específicas del menú
     
     # Información del item
     quantity = Column(Integer, nullable=False, default=1)
@@ -123,6 +136,14 @@ class OrderItem(Base):
     # Relaciones
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
+    menu_old = relationship("MenuDayOld", back_populates="order_items", foreign_keys=[menu_id_old])
+    categoria = relationship("CategoriaMenu", back_populates="order_items")
+    opcion = relationship("OpcionMenu", back_populates="order_items")
+    
+    
+    # Relaciones para el sistema de Carta Restaurante
+    carta_producto = relationship("app.models.carta_restaurante.CartaRestaurante", back_populates="order_items", foreign_keys=[carta_producto_id])
+    menu = relationship("app.models.carta_restaurante.MenuDia", back_populates="order_items", foreign_keys=[menu_id])
     
     def __repr__(self):
         return f"<OrderItem(id={self.id}, product='{self.product.name}', quantity={self.quantity})>"

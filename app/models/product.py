@@ -67,14 +67,18 @@ class SubCategory(Base):
 
 
 class Product(Base):
-    """Modelo de Producto"""
+    """Modelo de Producto - Reestructurado según especificaciones"""
     __tablename__ = "products"
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False, index=True)
     description = Column(Text, nullable=True)
-    price = Column(Numeric(10, 2), nullable=False, default=Decimal('0.00'))
+    precio_base = Column(Numeric(10, 2), nullable=False, default=Decimal('0.00'))
     cost_price = Column(Numeric(10, 2), nullable=True)  # Precio de costo para cálculo de ganancias
+    
+    # Nuevos campos según especificaciones
+    es_fijo = Column(Boolean, default=True)  # TRUE si es parte de la carta permanente
+    activo = Column(Boolean, default=True)   # para habilitar/deshabilitar un plato sin borrarlo
     
     # Tipo de producto (materia prima o producto de venta)
     product_type = Column(Enum(ProductType), default=ProductType.SALES, nullable=False)
@@ -136,13 +140,14 @@ class Product(Base):
     category_rel = relationship("Category", back_populates="products")
     subcategory_rel = relationship("SubCategory", back_populates="products")
     inventory_lots = relationship("InventoryLot", back_populates="product")
-    order_items = relationship("OrderItem")
-    sale_items = relationship("SaleItem")
+    order_items = relationship("OrderItem", overlaps="order_items,product")
+    sale_items = relationship("SaleItem", overlaps="sale_items,product")
     recipe_items = relationship("RecipeItem", back_populates="product")
     recipe = relationship("Recipe", back_populates="product", uselist=False)
     
+    
     def __repr__(self):
-        return f"<Product(id={self.id}, name='{self.name}', price={self.price})>"
+        return f"<Product(id={self.id}, name='{self.name}', precio_base={self.precio_base})>"
     
     @property
     def is_low_stock(self):
@@ -185,8 +190,8 @@ class Product(Base):
     
     def calculate_margin(self):
         """Calcular margen de ganancia"""
-        if self.cost_price and self.price > 0:
-            return ((self.price - self.cost_price) / self.price) * 100
+        if self.cost_price and self.precio_base > 0:
+            return ((self.precio_base - self.cost_price) / self.precio_base) * 100
         return 0
     
     def get_stock_alert_message(self):

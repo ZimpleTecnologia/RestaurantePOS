@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos del Menú - Cocina</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .order-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        
+        .order-card.pendiente {
+            border-left-color: #ffc107;
+        }
+        
+        .order-card.en-preparacion {
+            border-left-color: #fd7e14;
+        }
+        
+        .order-card.listo {
+            border-left-color: #28a745;
+        }
+        
+        .order-card.servido {
+            border-left-color: #6c757d;
+        }
+        
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .status-pendiente {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-en-preparacion {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+        
+        .status-listo {
+            background: #d1f2eb;
+            color: #00b894;
+        }
+        
+        .status-servido {
+            background: #ddd6fe;
+            color: #6c5ce7;
+        }
+        
+        .menu-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .btn-status {
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-status:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-pendiente {
+            background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+            color: white;
+        }
+        
+        .btn-preparacion {
+            background: linear-gradient(135deg, #fd7e14 0%, #e74c3c 100%);
+            color: white;
+        }
+        
+        .btn-listo {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+        
+        .btn-servido {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .stats-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .filter-tabs {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .filter-tab {
+            background: none;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+            color: #6c757d;
+        }
+        
+        .filter-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .filter-tab:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        
+        .filter-tab.active:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .alert-custom {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .order-time {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        .order-number {
+            font-weight: 700;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row">
+            <div class="col-12">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="#">
+                            <i class="fas fa-fire me-2"></i>
+                            Cocina - Pedidos del Menú
+                        </a>
+                        <div class="navbar-nav ms-auto">
+                            <span class="navbar-text me-3">
+                                <i class="fas fa-user me-1"></i>
+                                <span id="kitchen-user">Cocina</span>
+                            </span>
+                            <button class="btn btn-outline-light" onclick="logout()">
+                                <i class="fas fa-sign-out-alt me-1"></i>
+                                Salir
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number" id="pending-count">0</div>
+                    <div>Pendientes</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number" id="preparing-count">0</div>
+                    <div>En Preparación</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number" id="ready-count">0</div>
+                    <div>Listos</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="stats-number" id="served-count">0</div>
+                    <div>Servidos</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-status="all">
+                <i class="fas fa-list me-2"></i>Todos
+            </button>
+            <button class="filter-tab" data-status="Pendiente">
+                <i class="fas fa-clock me-2"></i>Pendientes
+            </button>
+            <button class="filter-tab" data-status="En preparación">
+                <i class="fas fa-fire me-2"></i>En Preparación
+            </button>
+            <button class="filter-tab" data-status="Listo para servir">
+                <i class="fas fa-check me-2"></i>Listos
+            </button>
+            <button class="filter-tab" data-status="Servido">
+                <i class="fas fa-check-double me-2"></i>Servidos
+            </button>
+        </div>
+        
+        <!-- Lista de Pedidos -->
+        <div class="row">
+            <div class="col-12">
+                <div id="orders-container">
+                    <div class="loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2">Cargando pedidos...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Detalles del Pedido -->
+    <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles del Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="order-details-content">
+                    <!-- Contenido dinámico -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alertas -->
+    <div id="alerts-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales
+        let allOrders = [];
+        let currentFilter = 'all';
+        let websocket = null;
+        
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadKitchenUser();
+            loadOrders();
+            initializeWebSocket();
+            setupEventListeners();
+            
+            // Actualizar cada 30 segundos
+            setInterval(loadOrders, 30000);
+        });
+        
+        // Cargar información del usuario de cocina
+        async function loadKitchenUser() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const response = await fetch('/api/v1/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    document.getElementById('kitchen-user').textContent = user.full_name;
+                }
+            } catch (error) {
+                console.error('Error cargando usuario:', error);
+            }
+        }
+        
+        // Cargar pedidos
+        async function loadOrders() {
+            try {
+                const response = await fetch('/api/v1/menu/pedidos/estado/all', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    allOrders = await response.json();
+                    updateStats();
+                    renderOrders();
+                } else {
+                    showAlert('Error cargando pedidos', 'danger');
+                }
+            } catch (error) {
+                console.error('Error cargando pedidos:', error);
+                showAlert('Error cargando pedidos', 'danger');
+            }
+        }
+        
+        // Actualizar estadísticas
+        function updateStats() {
+            const stats = {
+                'Pendiente': 0,
+                'En preparación': 0,
+                'Listo para servir': 0,
+                'Servido': 0
+            };
+            
+            allOrders.forEach(order => {
+                if (stats.hasOwnProperty(order.estado_cocina)) {
+                    stats[order.estado_cocina]++;
+                }
+            });
+            
+            document.getElementById('pending-count').textContent = stats['Pendiente'];
+            document.getElementById('preparing-count').textContent = stats['En preparación'];
+            document.getElementById('ready-count').textContent = stats['Listo para servir'];
+            document.getElementById('served-count').textContent = stats['Servido'];
+        }
+        
+        // Renderizar pedidos
+        function renderOrders() {
+            const container = document.getElementById('orders-container');
+            
+            let filteredOrders = allOrders;
+            if (currentFilter !== 'all') {
+                filteredOrders = allOrders.filter(order => order.estado_cocina === currentFilter);
+            }
+            
+            if (filteredOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-utensils"></i>
+                        <h4>No hay pedidos</h4>
+                        <p>No se encontraron pedidos con el filtro seleccionado</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = filteredOrders.map(order => `
+                <div class="order-card ${getStatusClass(order.estado_cocina)}" data-order-id="${order.id}">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="order-number">Pedido #${order.order_number}</h5>
+                                    <p class="mb-1">
+                                        <i class="fas fa-table me-2"></i>
+                                        Mesa ${order.table_id || 'N/A'}
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-user me-2"></i>
+                                        Mesero: ${order.waiter_name || 'N/A'}
+                                    </p>
+                                    <p class="order-time mb-0">
+                                        <i class="fas fa-clock me-2"></i>
+                                        ${new Date(order.created_at).toLocaleString()}
+                                    </p>
+                                </div>
+                                <div>
+                                    <span class="status-badge status-${getStatusClass(order.estado_cocina)}">
+                                        ${order.estado_cocina}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="menu-items">
+                                <h6><i class="fas fa-list me-2"></i>Items del Menú:</h6>
+                                ${order.menu_items.map(item => `
+                                    <div class="menu-item">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <strong>${item.categoria.nombre}:</strong> ${item.opcion.nombre}
+                                                ${item.observaciones ? `<br><small class="text-muted"><i class="fas fa-sticky-note me-1"></i>${item.observaciones}</small>` : ''}
+                                            </div>
+                                            <span class="badge bg-primary">${item.quantity}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="d-flex flex-column gap-2">
+                                ${getStatusButtons(order)}
+                                <button class="btn btn-outline-info btn-sm" onclick="showOrderDetails(${order.id})">
+                                    <i class="fas fa-eye me-2"></i>Ver Detalles
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Obtener clase CSS para el estado
+        function getStatusClass(status) {
+            const statusMap = {
+                'Pendiente': 'pendiente',
+                'En preparación': 'en-preparacion',
+                'Listo para servir': 'listo',
+                'Servido': 'servido'
+            };
+            return statusMap[status] || 'pendiente';
+        }
+        
+        // Obtener botones de estado
+        function getStatusButtons(order) {
+            const currentStatus = order.estado_cocina;
+            const buttons = [];
+            
+            if (currentStatus === 'Pendiente') {
+                buttons.push(`
+                    <button class="btn btn-status btn-preparacion" onclick="updateOrderStatus(${order.id}, 'En preparación')">
+                        <i class="fas fa-play me-2"></i>Iniciar Preparación
+                    </button>
+                `);
+            }
+            
+            if (currentStatus === 'En preparación') {
+                buttons.push(`
+                    <button class="btn btn-status btn-listo" onclick="updateOrderStatus(${order.id}, 'Listo para servir')">
+                        <i class="fas fa-check me-2"></i>Marcar Listo
+                    </button>
+                `);
+            }
+            
+            if (currentStatus === 'Listo para servir') {
+                buttons.push(`
+                    <button class="btn btn-status btn-servido" onclick="updateOrderStatus(${order.id}, 'Servido')">
+                        <i class="fas fa-check-double me-2"></i>Marcar Servido
+                    </button>
+                `);
+            }
+            
+            return buttons.join('');
+        }
+        
+        // Actualizar estado del pedido
+        async function updateOrderStatus(orderId, newStatus) {
+            try {
+                const response = await fetch(`/api/v1/menu/pedidos/${orderId}/estado`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                    },
+                    body: JSON.stringify({
+                        nuevo_estado: newStatus
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showAlert(result.message, 'success');
+                    
+                    // Actualizar la lista de pedidos
+                    await loadOrders();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Error: ${error.detail}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error actualizando estado:', error);
+                showAlert('Error actualizando estado del pedido', 'danger');
+            }
+        }
+        
+        // Mostrar detalles del pedido
+        function showOrderDetails(orderId) {
+            const order = allOrders.find(o => o.id === orderId);
+            if (!order) return;
+            
+            const content = document.getElementById('order-details-content');
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-info-circle me-2"></i>Información del Pedido</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Número:</strong></td>
+                                <td>#${order.order_number}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mesa:</strong></td>
+                                <td>${order.table_id || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mesero:</strong></td>
+                                <td>${order.waiter_name || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Estado:</strong></td>
+                                <td><span class="status-badge status-${getStatusClass(order.estado_cocina)}">${order.estado_cocina}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Creado:</strong></td>
+                                <td>${new Date(order.created_at).toLocaleString()}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total:</strong></td>
+                                <td>$${order.final_amount}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-utensils me-2"></i>Items del Menú</h6>
+                        ${order.menu_items.map(item => `
+                            <div class="menu-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>${item.categoria.nombre}</strong><br>
+                                        <span>${item.opcion.nombre}</span>
+                                        ${item.observaciones ? `<br><small class="text-muted"><i class="fas fa-sticky-note me-1"></i>${item.observaciones}</small>` : ''}
+                                    </div>
+                                    <span class="badge bg-primary">${item.quantity}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+            modal.show();
+        }
+        
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Filtros
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remover clase active de todos los tabs
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    
+                    // Agregar clase active al tab clickeado
+                    this.classList.add('active');
+                    
+                    // Actualizar filtro
+                    currentFilter = this.dataset.status;
+                    renderOrders();
+                });
+            });
+        }
+        
+        // Inicializar WebSocket
+        function initializeWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/cocina`;
+            
+            websocket = new WebSocket(wsUrl);
+            
+            websocket.onopen = function() {
+                console.log('WebSocket conectado');
+            };
+            
+            websocket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                console.log('Mensaje WebSocket recibido:', data);
+                
+                if (data.type === 'nuevo_pedido') {
+                    showAlert(`Nuevo pedido #${data.data.order_number} - Mesa ${data.data.table_number}`, 'info');
+                    loadOrders(); // Recargar pedidos
+                } else if (data.type === 'pedido_estado_cambiado') {
+                    showAlert(`Pedido #${data.data.order_number} actualizado a ${data.data.estado_nuevo}`, 'info');
+                    loadOrders(); // Recargar pedidos
+                }
+            };
+            
+            websocket.onclose = function() {
+                console.log('WebSocket desconectado');
+                // Intentar reconectar después de 3 segundos
+                setTimeout(initializeWebSocket, 3000);
+            };
+            
+            websocket.onerror = function(error) {
+                console.error('Error WebSocket:', error);
+            };
+        }
+        
+        // Mostrar alerta
+        function showAlert(message, type) {
+            const alertsContainer = document.getElementById('alerts-container');
+            const alertId = 'alert-' + Date.now();
+            
+            const alert = document.createElement('div');
+            alert.id = alertId;
+            alert.className = `alert alert-${type} alert-dismissible fade show alert-custom`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            alertsContainer.appendChild(alert);
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    alertElement.remove();
+                }
+            }, 5000);
+        }
+        
+        // Logout
+        function logout() {
+            localStorage.removeItem('access_token');
+            window.location.href = '/login';
+        }
+    </script>
+</body>
+</html>
+
+

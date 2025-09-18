@@ -10,7 +10,7 @@ import os
 
 from app.config import settings as app_settings
 from app.database import create_tables
-from app.routers import auth, products, inventory, settings, notifications, reports, kitchen, caja_ventas, waiters, recipes
+from app.routers import auth, products, inventory, settings, notifications, reports, kitchen, caja_ventas, waiters, recipes, menu, websocket, carta_restaurante
 from app.models import *  # Importar todos los modelos para crear las tablas
 from app.middleware import AuthMiddleware, SessionTimeoutMiddleware
 
@@ -58,6 +58,9 @@ app.include_router(reports.router, prefix="/api/v1")
 app.include_router(kitchen.router, prefix="/api/v1")
 app.include_router(caja_ventas.router, prefix="/api/v1")
 app.include_router(waiters.router, prefix="/api/v1")
+app.include_router(menu.router, prefix="/api/v1")
+app.include_router(websocket.router)
+app.include_router(carta_restaurante.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
@@ -147,6 +150,66 @@ async def kitchen_page(request: Request):
     return templates.TemplateResponse("kitchen/index.html", {"request": request})
 
 
+@app.get("/kitchen/menu-orders", response_class=HTMLResponse)
+async def kitchen_menu_orders_page(request: Request):
+    """Página para cocina - Pedidos del menú"""
+    return templates.TemplateResponse("kitchen/menu-orders.html", {"request": request})
+
+
+@app.get("/kitchen/menu-orders-new", response_class=HTMLResponse)
+async def kitchen_menu_orders_new_page(request: Request):
+    """Página para cocina - Pedidos del menú (Sistema Reestructurado)"""
+    return templates.TemplateResponse("kitchen/menu-orders-new.html", {"request": request})
+
+
+@app.get("/waiters/menu", response_class=HTMLResponse)
+async def waiters_menu_page(request: Request):
+    """Página para meseros - Menú del día"""
+    return templates.TemplateResponse("waiters/menu.html", {"request": request})
+
+
+@app.get("/waiters/menu-new", response_class=HTMLResponse)
+async def waiters_menu_new_page(request: Request):
+    """Página para meseros - Menú del día (Sistema Reestructurado)"""
+    return templates.TemplateResponse("waiters/menu-new.html", {"request": request})
+
+
+@app.get("/menu-management", response_class=HTMLResponse)
+async def menu_management_page(request: Request):
+    """Página de gestión de menús para administradores"""
+    return templates.TemplateResponse("menu-management.html", {"request": request})
+
+
+@app.get("/products/menu-management", response_class=HTMLResponse)
+async def products_menu_management_page(request: Request):
+    """Página de gestión de menús dentro del módulo de productos"""
+    return templates.TemplateResponse("products/menu-management.html", {"request": request})
+
+
+@app.get("/products/admin-products", response_class=HTMLResponse)
+async def admin_products_page(request: Request):
+    """Página de administración de productos"""
+    return templates.TemplateResponse("products/admin-products.html", {"request": request})
+
+
+@app.get("/products/admin-products-separated", response_class=HTMLResponse)
+async def admin_products_separated_page(request: Request):
+    """Página de administración de productos separados (Carta e Inventario)"""
+    return templates.TemplateResponse("products/admin-products-separated.html", {"request": request})
+
+
+@app.get("/carta-restaurante/admin", response_class=HTMLResponse)
+async def carta_restaurante_admin_page(request: Request):
+    """Página de administración de Carta Restaurante"""
+    return templates.TemplateResponse("carta_restaurante/admin.html", {"request": request})
+
+
+@app.get("/products/admin-menus", response_class=HTMLResponse)
+async def admin_menus_page(request: Request):
+    """Página de administración de menús del día"""
+    return templates.TemplateResponse("products/admin-menus.html", {"request": request})
+
+
 @app.get("/health")
 async def health_check():
     """Verificación de salud de la aplicación"""
@@ -173,7 +236,9 @@ async def api_info():
             "reports": "/api/v1/reports",
             "kitchen": "/api/v1/kitchen",
             "caja_ventas": "/api/v1/caja-ventas",
-            "waiters": "/api/v1/waiters"
+            "waiters": "/api/v1/waiters",
+            "menu": "/api/v1/menu",
+            "websocket": "/ws"
         }
     }
 
