@@ -1,0 +1,855 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Menús - Sistema POS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .menu-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+    }
+    
+    .menu-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stats-card {
+        color: white;
+        border-radius: 15px;
+        padding: 14px;
+        margin-bottom: 20px;
+    }
+    
+    .stats-card.active-menus {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    }
+    
+    .stats-card.total-platos {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    }
+    
+    .stats-card.today-menu {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    }
+    
+    .stats-number {
+        font-size: 1.75rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .stats-label {
+        font-size: 0.75rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    .stats-icon {
+        font-size: 1.4rem;
+        margin-bottom: 7px;
+        opacity: 0.9;
+    }
+    
+    .plato-item {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 4px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .plato-item:hover {
+        border-left-color: #3b82f6;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
+    }
+    
+    .plato-item.fijo {
+        border-left-color: #10b981;
+    }
+    
+    .plato-item.variable {
+        border-left-color: #f59e0b;
+    }
+    
+    .plato-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-right: 8px;
+        margin-bottom: 5px;
+    }
+    
+    .plato-badge.fijo {
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+    
+    .plato-badge.variable {
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+    
+    .btn-modern {
+        border-radius: 25px;
+        padding: 10px 25px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .category-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .category-title {
+        color: #374151;
+        font-weight: 600;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .category-title i {
+        margin-right: 8px;
+        color: #6b7280;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .error-message {
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border: 1px solid #fecaca;
+    }
+    
+    .success-message {
+        background: #f0fdf4;
+        color: #16a34a;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border: 1px solid #bbf7d0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-calendar-day text-primary"></i>
+                        Gestión de Menús
+                    </h1>
+                    <p class="text-muted mb-0">Administra los menús del día y platos disponibles</p>
+                </div>
+                <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#menuModal">
+                    <i class="bi bi-plus-circle me-2"></i>Nuevo Menú
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-card active-menus text-center">
+                <i class="bi bi-check-circle stats-icon"></i>
+                <h3 class="stats-number" id="activeMenus">0</h3>
+                <p class="stats-label">Menús Activos</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card total-platos text-center">
+                <i class="bi bi-egg-fried stats-icon"></i>
+                <h3 class="stats-number" id="totalPlatos">0</h3>
+                <p class="stats-label">Total Platos</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card today-menu text-center">
+                <i class="bi bi-calendar-day stats-icon"></i>
+                <h3 class="stats-number" id="todayMenu">-</h3>
+                <p class="stats-label">Menú de Hoy</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestañas de navegación -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="menuTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="menus-tab" data-bs-toggle="tab" data-bs-target="#menus" type="button" role="tab">
+                        <i class="bi bi-calendar-day me-2"></i>Menús
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="platos-tab" data-bs-toggle="tab" data-bs-target="#platos" type="button" role="tab">
+                        <i class="bi bi-egg-fried me-2"></i>Platos
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="today-tab" data-bs-toggle="tab" data-bs-target="#today" type="button" role="tab">
+                        <i class="bi bi-calendar-check me-2"></i>Menú de Hoy
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Contenido de las pestañas -->
+    <div class="tab-content" id="menuTabContent">
+        <!-- Pestaña de Menús -->
+        <div class="tab-pane fade show active" id="menus" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card menu-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-calendar-day me-2"></i>Lista de Menús
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="menusList">
+                                <div class="loading">
+                                    <i class="bi bi-hourglass-split"></i>
+                                    <p>Cargando menús...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestaña de Platos -->
+        <div class="tab-pane fade" id="platos" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card menu-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-egg-fried me-2"></i>Gestión de Platos
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#platoModal">
+                                        <i class="bi bi-plus-circle me-2"></i>Nuevo Plato
+                                    </button>
+                                </div>
+                                <div>
+                                    <button class="btn btn-outline-secondary" onclick="filterPlatos('all')">Todos</button>
+                                    <button class="btn btn-outline-secondary" onclick="filterPlatos('Fijo')">Fijos</button>
+                                    <button class="btn btn-outline-secondary" onclick="filterPlatos('Variable')">Variables</button>
+                                </div>
+                            </div>
+                            <div id="platosList">
+                                <div class="loading">
+                                    <i class="bi bi-hourglass-split"></i>
+                                    <p>Cargando platos...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestaña de Menú de Hoy -->
+        <div class="tab-pane fade" id="today" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card menu-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-calendar-check me-2"></i>Menú del Día
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="todayMenuContent">
+                                <div class="loading">
+                                    <i class="bi bi-hourglass-split"></i>
+                                    <p>Cargando menú de hoy...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear/Editar Menú -->
+<div class="modal fade" id="menuModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-plus me-2"></i>Crear Menú del Día
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="menuForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="menuDate" class="form-label">Fecha</label>
+                                <input type="date" class="form-control" id="menuDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="menuName" class="form-label">Nombre del Menú</label>
+                                <input type="text" class="form-control" id="menuName" placeholder="Ej: Menú del Día - Especial">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="menuDescription" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="menuDescription" rows="3" placeholder="Descripción del menú..."></textarea>
+                    </div>
+                    
+                    <!-- Platos Fijos -->
+                    <div class="category-section">
+                        <h6 class="category-title">
+                            <i class="bi bi-check-circle"></i>Platos Fijos (se incluyen automáticamente)
+                        </h6>
+                        <div id="fixedPlatosList">
+                            <!-- Se cargarán dinámicamente -->
+                        </div>
+                    </div>
+                    
+                    <!-- Platos Variables -->
+                    <div class="category-section">
+                        <h6 class="category-title">
+                            <i class="bi bi-list-ul"></i>Platos Variables (selecciona los que quieras incluir)
+                        </h6>
+                        <div id="variablePlatosList">
+                            <!-- Se cargarán dinámicamente -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary-custom" onclick="saveMenu()">
+                    <i class="bi bi-save me-2"></i>Guardar Menú
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear/Editar Plato -->
+<div class="modal fade" id="platoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-egg-fried me-2"></i>Nuevo Plato
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="platoForm">
+                    <div class="mb-3">
+                        <label for="platoNombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="platoNombre" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="platoDescripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="platoDescripcion" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="platoPrecio" class="form-label">Precio</label>
+                                <input type="text" class="form-control" id="platoPrecio" placeholder="Ej: 12000" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="platoTipo" class="form-label">Tipo</label>
+                                <select class="form-control" id="platoTipo" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Fijo">Fijo</option>
+                                    <option value="Variable">Variable</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="platoCategoria" class="form-label">Categoría</label>
+                        <input type="text" class="form-control" id="platoCategoria" placeholder="Ej: Plato Principal">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary-custom" onclick="savePlato()">
+                    <i class="bi bi-save me-2"></i>Guardar Plato
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+let menus = [];
+let platos = [];
+let currentFilter = 'all';
+
+// Cargar datos al inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    loadMenus();
+    loadPlatos();
+    setupTodayDate();
+});
+
+// Configurar fecha de hoy por defecto
+function setupTodayDate() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('menuDate').value = today;
+}
+
+// Cargar menús
+async function loadMenus() {
+    try {
+        showLoading('menusList');
+        const response = await fetch('/api/v1/menus/');
+        const data = await response.json();
+        menus = data.menus || [];
+        updateMenuStats();
+        renderMenusList();
+    } catch (error) {
+        console.error('Error cargando menús:', error);
+        showError('menusList', 'Error cargando menús');
+    }
+}
+
+// Cargar platos
+async function loadPlatos() {
+    try {
+        showLoading('platosList');
+        const response = await fetch('/api/v1/menus/platos/');
+        const data = await response.json();
+        platos = data.platos || [];
+        updatePlatoStats();
+        renderPlatosList();
+    } catch (error) {
+        console.error('Error cargando platos:', error);
+        showError('platosList', 'Error cargando platos');
+    }
+}
+
+// Cargar menú de hoy
+async function loadTodayMenu() {
+    try {
+        showLoading('todayMenuContent');
+        const response = await fetch('/api/v1/menus/hoy/menu');
+        const data = await response.json();
+        renderTodayMenu(data);
+    } catch (error) {
+        console.error('Error cargando menú de hoy:', error);
+        showError('todayMenuContent', 'No hay menú para hoy');
+    }
+}
+
+// Actualizar estadísticas de menús
+function updateMenuStats() {
+    const activeMenus = menus.filter(menu => menu.activo);
+    document.getElementById('activeMenus').textContent = activeMenus.length;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const todayMenu = menus.find(menu => menu.fecha === today);
+    document.getElementById('todayMenu').textContent = todayMenu ? '✓' : '✗';
+}
+
+// Actualizar estadísticas de platos
+function updatePlatoStats() {
+    document.getElementById('totalPlatos').textContent = platos.length;
+}
+
+// Renderizar lista de menús
+function renderMenusList() {
+    const content = document.getElementById('menusList');
+    
+    if (menus.length === 0) {
+        content.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-calendar-x display-4 text-muted"></i>
+                <p class="text-muted mt-2">No hay menús registrados</p>
+                <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#menuModal">
+                    <i class="bi bi-plus-circle me-2"></i>Crear Primer Menú
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    menus.forEach(menu => {
+        const date = new Date(menu.fecha);
+        const isToday = menu.fecha === new Date().toISOString().split('T')[0];
+        
+        html += `
+            <div class="plato-item">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <h6 class="mb-1">${menu.nombre || 'Menú del Día'}</h6>
+                        <p class="text-muted mb-0">${date.toLocaleDateString('es-ES')} ${isToday ? '(Hoy)' : ''}</p>
+                        <small class="text-muted">${menu.descripcion || 'Sin descripción'}</small>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="badge bg-${menu.activo ? 'success' : 'secondary'}">
+                            ${menu.activo ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="fw-bold">${menu.platos ? menu.platos.length : 0} platos</span>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <button class="btn btn-outline-primary btn-sm me-2" onclick="editMenu(${menu.id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteMenu(${menu.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    content.innerHTML = html;
+}
+
+// Renderizar lista de platos
+function renderPlatosList() {
+    const content = document.getElementById('platosList');
+    
+    let filteredPlatos = platos;
+    if (currentFilter !== 'all') {
+        filteredPlatos = platos.filter(plato => plato.tipo === currentFilter);
+    }
+    
+    if (filteredPlatos.length === 0) {
+        content.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-egg-fried display-4 text-muted"></i>
+                <p class="text-muted mt-2">No hay platos registrados</p>
+                <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#platoModal">
+                    <i class="bi bi-plus-circle me-2"></i>Crear Primer Plato
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    filteredPlatos.forEach(plato => {
+        html += `
+            <div class="plato-item ${plato.tipo.toLowerCase()}">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <h6 class="mb-1">${plato.nombre}</h6>
+                        <p class="text-muted mb-0">${plato.descripcion || 'Sin descripción'}</p>
+                        <small class="text-muted">${plato.categoria || 'Sin categoría'}</small>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="plato-badge ${plato.tipo.toLowerCase()}">${plato.tipo}</span>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="fw-bold">$${plato.precio}</span>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="badge bg-${plato.activo ? 'success' : 'secondary'}">
+                            ${plato.activo ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button class="btn btn-outline-primary btn-sm me-2" onclick="editPlato(${plato.id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deletePlato(${plato.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    content.innerHTML = html;
+}
+
+// Renderizar menú de hoy
+function renderTodayMenu(menuData) {
+    const content = document.getElementById('todayMenuContent');
+    
+    if (!menuData.menu) {
+        content.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-calendar-x display-4 text-muted"></i>
+                <p class="text-muted mt-2">No hay menú para hoy</p>
+                <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#menuModal">
+                    <i class="bi bi-plus-circle me-2"></i>Crear Menú
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    const menu = menuData.menu;
+    const platosFijos = menuData.platos_fijos || [];
+    const platosVariables = menuData.platos_variables || [];
+    
+    let html = `
+        <div class="row">
+            <div class="col-md-8">
+                <h4>${menu.nombre || 'Menú del Día'}</h4>
+                <p class="text-muted">${menu.descripcion || 'Sin descripción'}</p>
+                <p><strong>Fecha:</strong> ${new Date(menu.fecha).toLocaleDateString('es-ES')}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-outline-primary me-2" onclick="editMenu(${menu.id})">
+                    <i class="bi bi-pencil me-2"></i>Editar
+                </button>
+                <button class="btn btn-outline-danger" onclick="deleteMenu(${menu.id})">
+                    <i class="bi bi-trash me-2"></i>Eliminar
+                </button>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="category-section">
+                    <h6 class="category-title">
+                        <i class="bi bi-check-circle"></i>Platos Fijos
+                    </h6>
+    `;
+    
+    if (platosFijos.length > 0) {
+        platosFijos.forEach(plato => {
+            html += `
+                <div class="plato-item fijo">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${plato.nombre}</h6>
+                            <p class="text-muted mb-0">${plato.descripcion || 'Sin descripción'}</p>
+                        </div>
+                        <span class="fw-bold">$${plato.precio}</span>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        html += `<p class="text-muted">No hay platos fijos</p>`;
+    }
+    
+    html += `
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="category-section">
+                    <h6 class="category-title">
+                        <i class="bi bi-list-ul"></i>Platos Variables
+                    </h6>
+    `;
+    
+    if (platosVariables.length > 0) {
+        platosVariables.forEach(plato => {
+            html += `
+                <div class="plato-item variable">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${plato.nombre}</h6>
+                            <p class="text-muted mb-0">${plato.descripcion || 'Sin descripción'}</p>
+                        </div>
+                        <span class="fw-bold">$${plato.precio}</span>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        html += `<p class="text-muted">No hay platos variables</p>`;
+    }
+    
+    html += `
+                </div>
+            </div>
+        </div>
+    `;
+    
+    content.innerHTML = html;
+}
+
+// Filtrar platos
+function filterPlatos(tipo) {
+    currentFilter = tipo;
+    renderPlatosList();
+}
+
+// Guardar menú
+async function saveMenu() {
+    const formData = {
+        fecha: document.getElementById('menuDate').value,
+        nombre: document.getElementById('menuName').value,
+        descripcion: document.getElementById('menuDescription').value,
+        platos_ids: [] // Se implementará la selección
+    };
+    
+    try {
+        const response = await fetch('/api/v1/menus/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('menuModal')).hide();
+            loadMenus();
+            showSuccess('Menú creado exitosamente');
+        } else {
+            const error = await response.json();
+            showError('menuForm', 'Error: ' + error.detail);
+        }
+    } catch (error) {
+        console.error('Error guardando menú:', error);
+        showError('menuForm', 'Error al guardar el menú');
+    }
+}
+
+// Guardar plato
+async function savePlato() {
+    const formData = {
+        nombre: document.getElementById('platoNombre').value,
+        descripcion: document.getElementById('platoDescripcion').value,
+        precio: document.getElementById('platoPrecio').value,
+        tipo: document.getElementById('platoTipo').value,
+        categoria: document.getElementById('platoCategoria').value
+    };
+    
+    try {
+        const response = await fetch('/api/v1/menus/platos/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('platoModal')).hide();
+            loadPlatos();
+            showSuccess('Plato creado exitosamente');
+        } else {
+            const error = await response.json();
+            showError('platoForm', 'Error: ' + error.detail);
+        }
+    } catch (error) {
+        console.error('Error guardando plato:', error);
+        showError('platoForm', 'Error al guardar el plato');
+    }
+}
+
+// Event listeners para pestañas
+document.getElementById('today-tab').addEventListener('click', function() {
+    loadTodayMenu();
+});
+
+// Funciones de utilidad
+function showLoading(elementId) {
+    const element = document.getElementById(elementId);
+    element.innerHTML = `
+        <div class="loading">
+            <i class="bi bi-hourglass-split"></i>
+            <p>Cargando...</p>
+        </div>
+    `;
+}
+
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    element.innerHTML = `
+        <div class="error-message">
+            <i class="bi bi-exclamation-triangle me-2"></i>${message}
+        </div>
+    `;
+}
+
+function showSuccess(message) {
+    // Implementar sistema de notificaciones
+    console.log('SUCCESS:', message);
+}
+
+// Funciones placeholder para acciones
+function editMenu(menuId) {
+    console.log('Editar menú:', menuId);
+}
+
+function deleteMenu(menuId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este menú?')) {
+        console.log('Eliminar menú:', menuId);
+    }
+}
+
+function editPlato(platoId) {
+    console.log('Editar plato:', platoId);
+}
+
+function deletePlato(platoId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este plato?')) {
+        console.log('Eliminar plato:', platoId);
+    }
+}
+</script>
+{% endblock %}
