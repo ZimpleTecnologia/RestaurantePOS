@@ -131,3 +131,5 @@ def test_navbar_adjustment():
 
 if __name__ == "__main__":
     test_navbar_adjustment()
+
+

@@ -25,15 +25,15 @@
     }
     
     .stats-card.active-menus {
-        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
     }
     
     .stats-card.total-platos {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
     }
     
     .stats-card.today-menu {
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
     }
     
     .stats-number {
@@ -46,6 +46,41 @@
         font-size: 0.75rem;
         opacity: 0.9;
         margin: 0;
+    }
+    
+    .btn-primary-custom {
+        background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 24px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        color: var(--white);
+    }
+    
+    .btn-primary-custom:hover {
+        background: linear-gradient(135deg, var(--golden-yellow) 0%, #FFD54F 100%);
+        color: var(--primary-brown);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    }
+    
+    .btn-secondary {
+        background-color: var(--medium-gray);
+        border-color: var(--medium-gray);
+        color: var(--white);
+        border-radius: 25px;
+        padding: 12px 24px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #424242;
+        border-color: #424242;
+        color: var(--white);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(97, 97, 97, 0.3);
     }
     
     .stats-icon {
@@ -462,7 +497,7 @@ function setupTodayDate() {
 async function loadMenus() {
     try {
         showLoading('menusList');
-        const response = await fetch('/api/v1/menus/');
+        const response = await fetch('/api/v1/restaurant-menu/menus/');
         const data = await response.json();
         menus = data.menus || [];
         updateMenuStats();
@@ -477,7 +512,7 @@ async function loadMenus() {
 async function loadPlatos() {
     try {
         showLoading('platosList');
-        const response = await fetch('/api/v1/menus/platos/');
+        const response = await fetch('/api/v1/restaurant-menu/platos/');
         const data = await response.json();
         platos = data.platos || [];
         updatePlatoStats();
@@ -492,7 +527,7 @@ async function loadPlatos() {
 async function loadTodayMenu() {
     try {
         showLoading('todayMenuContent');
-        const response = await fetch('/api/v1/menus/hoy/menu');
+        const response = await fetch('/api/v1/restaurant-menu/menus/hoy');
         const data = await response.json();
         renderTodayMenu(data);
     } catch (error) {
@@ -746,7 +781,7 @@ async function saveMenu() {
     };
     
     try {
-        const response = await fetch('/api/v1/menus/', {
+        const response = await fetch('/api/v1/restaurant-menu/menus/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -779,7 +814,7 @@ async function savePlato() {
     };
     
     try {
-        const response = await fetch('/api/v1/menus/platos/', {
+        const response = await fetch('/api/v1/restaurant-menu/platos/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

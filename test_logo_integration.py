@@ -97,3 +97,5 @@ def test_logo_integration():
 
 if __name__ == "__main__":
     test_logo_integration()
+
+

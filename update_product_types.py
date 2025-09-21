@@ -108,3 +108,5 @@ def update_product_types():
 
 if __name__ == "__main__":
     update_product_types()
+
+

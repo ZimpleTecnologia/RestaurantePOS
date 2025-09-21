@@ -2,99 +2,110 @@
 """
 Script para verificar las tablas de menús en la base de datos
 """
-import psycopg2
 import os
-from dotenv import load_dotenv
+import sys
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 
-# Cargar variables de entorno
-load_dotenv()
+# Agregar el directorio del proyecto al path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from app.config import settings
 
 def check_menu_tables():
-    """Verificar las tablas de menús"""
+    """Verificar las tablas de menús en la base de datos"""
+    print("🔍 Verificando tablas de menús en la base de datos...")
+    
     try:
         # Conectar a la base de datos
-        conn = psycopg2.connect(
-            host=os.getenv('DB_HOST', 'localhost'),
-            port=os.getenv('DB_PORT', '5432'),
-            database=os.getenv('DB_NAME', 'restaurante_pos'),
-            user=os.getenv('DB_USER', 'postgres'),
-            password=os.getenv('DB_PASSWORD', 'password')
-        )
+        engine = create_engine(settings.database_url)
+        Session = sessionmaker(bind=engine)
+        session = Session()
         
-        cur = conn.cursor()
+        # Verificar si existen las tablas
+        print("\n📋 Verificando tablas de menús...")
         
-        # Verificar tablas relacionadas con menús
-        print("🔍 Verificando tablas de menús...")
+        # Verificar tabla platos
+        try:
+            result = session.execute(text("SELECT COUNT(*) FROM platos"))
+            count = result.fetchone()[0]
+            print(f"✅ Tabla 'platos' existe: {count} registros")
+        except Exception as e:
+            print(f"❌ Tabla 'platos' no existe: {e}")
         
-        # Listar todas las tablas
-        cur.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            AND table_name LIKE '%menu%'
-            ORDER BY table_name
-        """)
+        # Verificar tabla menus
+        try:
+            result = session.execute(text("SELECT COUNT(*) FROM menus"))
+            count = result.fetchone()[0]
+            print(f"✅ Tabla 'menus' existe: {count} registros")
+        except Exception as e:
+            print(f"❌ Tabla 'menus' no existe: {e}")
         
-        tables = cur.fetchall()
-        print(f"\n📋 Tablas relacionadas con menús:")
-        for table in tables:
-            print(f"  - {table[0]}")
+        # Verificar tabla menu_platos
+        try:
+            result = session.execute(text("SELECT COUNT(*) FROM menu_platos"))
+            count = result.fetchone()[0]
+            print(f"✅ Tabla 'menu_platos' existe: {count} registros")
+        except Exception as e:
+            print(f"❌ Tabla 'menu_platos' no existe: {e}")
         
-        # Verificar estructura de cada tabla
-        for table in tables:
-            table_name = table[0]
-            print(f"\n🔍 Estructura de {table_name}:")
-            
-            cur.execute(f"""
-                SELECT column_name, data_type, is_nullable, column_default
+        # Verificar estructura de la tabla platos
+        print("\n🔍 Verificando estructura de la tabla 'platos'...")
+        try:
+            result = session.execute(text("""
+                SELECT column_name, data_type, is_nullable 
                 FROM information_schema.columns 
-                WHERE table_name = '{table_name}'
+                WHERE table_name = 'platos'
                 ORDER BY ordinal_position
-            """)
-            
-            columns = cur.fetchall()
-            for col in columns:
-                print(f"    {col[0]}: {col[1]} (nullable: {col[2]}, default: {col[3]})")
-            
-            # Verificar claves foráneas
-            cur.execute(f"""
-                SELECT 
-                    tc.constraint_name, 
-                    tc.table_name, 
-                    kcu.column_name, 
-                    ccu.table_name AS foreign_table_name,
-                    ccu.column_name AS foreign_column_name 
-                FROM 
-                    information_schema.table_constraints AS tc 
-                    JOIN information_schema.key_column_usage AS kcu
-                      ON tc.constraint_name = kcu.constraint_name
-                      AND tc.table_schema = kcu.table_schema
-                    JOIN information_schema.constraint_column_usage AS ccu
-                      ON ccu.constraint_name = tc.constraint_name
-                      AND ccu.table_schema = tc.table_schema
-                WHERE tc.constraint_type = 'FOREIGN KEY' 
-                AND tc.table_name='{table_name}'
-            """)
-            
-            fks = cur.fetchall()
-            if fks:
-                print(f"    Claves foráneas:")
-                for fk in fks:
-                    print(f"      {fk[2]} -> {fk[3]}.{fk[4]}")
+            """))
+            columns = result.fetchall()
+            if columns:
+                print("✅ Estructura de la tabla 'platos':")
+                for col in columns:
+                    print(f"   - {col[0]}: {col[1]} ({'NULL' if col[2] == 'YES' else 'NOT NULL'})")
+            else:
+                print("❌ No se encontraron columnas en la tabla 'platos'")
+        except Exception as e:
+            print(f"❌ Error verificando estructura de 'platos': {e}")
         
-        # Verificar datos existentes
-        print(f"\n📊 Datos existentes:")
-        for table in tables:
-            table_name = table[0]
-            cur.execute(f"SELECT COUNT(*) FROM {table_name}")
-            count = cur.fetchone()[0]
-            print(f"  {table_name}: {count} registros")
+        # Verificar estructura de la tabla menus
+        print("\n🔍 Verificando estructura de la tabla 'menus'...")
+        try:
+            result = session.execute(text("""
+                SELECT column_name, data_type, is_nullable 
+                FROM information_schema.columns 
+                WHERE table_name = 'menus'
+                ORDER BY ordinal_position
+            """))
+            columns = result.fetchall()
+            if columns:
+                print("✅ Estructura de la tabla 'menus':")
+                for col in columns:
+                    print(f"   - {col[0]}: {col[1]} ({'NULL' if col[2] == 'YES' else 'NOT NULL'})")
+            else:
+                print("❌ No se encontraron columnas en la tabla 'menus'")
+        except Exception as e:
+            print(f"❌ Error verificando estructura de 'menus': {e}")
         
-        cur.close()
-        conn.close()
+        # Verificar datos de ejemplo
+        print("\n📊 Verificando datos de ejemplo...")
+        try:
+            result = session.execute(text("SELECT * FROM platos LIMIT 3"))
+            platos = result.fetchall()
+            if platos:
+                print(f"✅ Datos de ejemplo en 'platos': {len(platos)} registros")
+                for plato in platos:
+                    print(f"   - ID: {plato[0]}, Nombre: {plato[1]}, Precio: {plato[3]}")
+            else:
+                print("⚠️ No hay datos en la tabla 'platos'")
+        except Exception as e:
+            print(f"❌ Error verificando datos de 'platos': {e}")
+        
+        session.close()
+        print("\n🎉 Verificación de tablas completada!")
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"❌ Error conectando a la base de datos: {e}")
 
 if __name__ == "__main__":
     check_menu_tables()

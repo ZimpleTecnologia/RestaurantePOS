@@ -81,3 +81,4 @@ def check_and_update_product_types():
 
 if __name__ == "__main__":
     check_and_update_product_types()
+

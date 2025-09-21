@@ -106,3 +106,5 @@ def test_logo_centered():
 
 if __name__ == "__main__":
     test_logo_centered()
+
+

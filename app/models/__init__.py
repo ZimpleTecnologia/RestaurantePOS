@@ -11,6 +11,7 @@ from .settings import SystemSettings
 from .order import Order, OrderItem
 from .menu import MenuDayOld, CategoriaMenu, OpcionMenu, MenuStatus as OldMenuStatus, MenuStatus
 from .carta_restaurante import CartaRestaurante, MenuDia as MenuDiaCarta, MenuOpcion, TipoPlato, CategoriaPlato
+from .menu_restructured import CategoriaPlatoVariable, OpcionPlato, MenuDiaRestructured, MenuDiaOpcion
 
 __all__ = [
     "User",
@@ -44,5 +45,9 @@ __all__ = [
     "MenuDiaCarta",
     "MenuOpcion",
     "TipoPlato",
-    "CategoriaPlato"
+    "CategoriaPlato",
+    "CategoriaPlatoVariable",
+    "OpcionPlato",
+    "MenuDiaRestructured",
+    "MenuDiaOpcion"
 ] 

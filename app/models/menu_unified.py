@@ -82,3 +82,5 @@ class Plato(Base):
     def is_variable(self):
         """Verificar si es un plato variable"""
         return self.tipo == 'Variable'
+
+

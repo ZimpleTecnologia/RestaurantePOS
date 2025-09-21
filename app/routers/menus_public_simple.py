@@ -2,13 +2,31 @@
 Router público simple para probar el sistema de menús sin autenticación
 """
 from typing import List, Dict, Any
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from pydantic import BaseModel
+from datetime import date
 
 from app.database import get_db
 
 router = APIRouter(prefix="/public/menus", tags=["menús públicos"])
+
+
+# Esquemas para crear platos y menús
+class PlatoCreate(BaseModel):
+    nombre: str
+    descripcion: str = ""
+    precio: float
+    tipo: str = "Variable"
+    categoria: str = "Plato Principal"
+
+
+class MenuCreate(BaseModel):
+    fecha: date
+    nombre: str
+    descripcion: str = ""
+    plato_ids: List[int] = []
 
 
 @router.get("/platos/")
@@ -135,4 +153,74 @@ def get_menu_stats_public(db: Session = Depends(get_db)):
             }
         }
     except Exception as e:
+        return {"error": str(e)}
+
+
+@router.post("/platos/")
+def create_plato(plato: PlatoCreate, db: Session = Depends(get_db)):
+    """Crear un nuevo plato (público)"""
+    try:
+        # Insertar el plato
+        result = db.execute(text("""
+            INSERT INTO platos (nombre, descripcion, precio, tipo, categoria, activo, created_at)
+            VALUES (:nombre, :descripcion, :precio, :tipo, :categoria, TRUE, NOW())
+            RETURNING id
+        """), {
+            "nombre": plato.nombre,
+            "descripcion": plato.descripcion,
+            "precio": plato.precio,
+            "tipo": plato.tipo,
+            "categoria": plato.categoria
+        })
+        
+        plato_id = result.fetchone()[0]
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Plato creado exitosamente",
+            "plato_id": plato_id
+        }
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+
+
+@router.post("/")
+def create_menu(menu: MenuCreate, db: Session = Depends(get_db)):
+    """Crear un nuevo menú (público)"""
+    try:
+        # Insertar el menú
+        result = db.execute(text("""
+            INSERT INTO menus (fecha, nombre, descripcion, activo, created_at)
+            VALUES (:fecha, :nombre, :descripcion, TRUE, NOW())
+            RETURNING id
+        """), {
+            "fecha": menu.fecha,
+            "nombre": menu.nombre,
+            "descripcion": menu.descripcion
+        })
+        
+        menu_id = result.fetchone()[0]
+        
+        # Agregar platos al menú si se proporcionan
+        if menu.plato_ids:
+            for plato_id in menu.plato_ids:
+                db.execute(text("""
+                    INSERT INTO menu_platos (menu_id, plato_id)
+                    VALUES (:menu_id, :plato_id)
+                """), {
+                    "menu_id": menu_id,
+                    "plato_id": plato_id
+                })
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Menú creado exitosamente",
+            "menu_id": menu_id
+        }
+    except Exception as e:
+        db.rollback()
         return {"error": str(e)}
