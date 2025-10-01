@@ -116,3 +116,8 @@ if __name__ == "__main__":
     else:
         print("\n⚠️ Algunos endpoints tienen problemas.")
         print("   Revisa los logs del servidor para más detalles.")
+
+
+
+
+

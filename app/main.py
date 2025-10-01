@@ -13,6 +13,7 @@ from app.database import create_tables
 from app.routers import auth, products, inventory, settings, notifications, reports, kitchen, caja_ventas, waiters, recipes, menu, websocket, carta_restaurante, menus_unified, menus_public_simple, restaurant_menu, test_simple, debug_menus, debug_menus_sql, menu_restructured
 from app.models import *  # Importar todos los modelos para crear las tablas
 from app.middleware import AuthMiddleware, SessionTimeoutMiddleware
+from app.middlewares.inventory_access import InventoryAccessMiddleware
 
 # Crear aplicación FastAPI
 app = FastAPI(
@@ -26,6 +27,7 @@ app = FastAPI(
 # Agregar middlewares de autenticación y timeout
 app.add_middleware(AuthMiddleware)
 app.add_middleware(SessionTimeoutMiddleware, timeout_minutes=app_settings.access_token_expire_minutes)
+app.add_middleware(InventoryAccessMiddleware)
 
 # Configurar CORS
 app.add_middleware(
@@ -218,6 +220,12 @@ async def carta_restaurante_admin_page(request: Request):
 async def admin_menus_page(request: Request):
     """Página de administración de menús del día"""
     return templates.TemplateResponse("products/admin-menus.html", {"request": request})
+
+
+@app.get("/module-development", response_class=HTMLResponse)
+async def module_development_page(request: Request):
+    """Página de módulo en desarrollo"""
+    return templates.TemplateResponse("module_development.html", {"request": request})
 
 
 @app.get("/health")

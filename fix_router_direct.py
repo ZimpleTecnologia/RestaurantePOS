@@ -162,3 +162,8 @@ if __name__ == "__main__":
     else:
         print("\n❌ Error durante la ejecución del script.")
         sys.exit(1)
+
+
+
+
+

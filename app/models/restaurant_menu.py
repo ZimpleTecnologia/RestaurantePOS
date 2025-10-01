@@ -14,7 +14,7 @@ menu_categoria_platos = Table(
     'menu_categoria_platos',
     Base.metadata,
     Column('id', Integer, primary_key=True),
-    Column('menu_dia_id', Integer, ForeignKey('menu_dia.id'), nullable=False),
+    Column('menu_dia_id', Integer, ForeignKey('menus_dia.id'), nullable=False),
     Column('categoria_id', Integer, ForeignKey('categorias_menu.id'), nullable=False),
     Column('plato_id', Integer, ForeignKey('platos_restaurante.id'), nullable=False),
     Column('activo', Boolean, default=True),
@@ -27,7 +27,7 @@ class CategoriaMenuRestaurante(Base):
     __tablename__ = "categorias_menu"
     __table_args__ = {'extend_existing': True}
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     nombre = Column(String(50), nullable=False, unique=True)  # "Principio", "Proteína", etc.
     descripcion = Column(Text, nullable=True)
     orden = Column(Integer, default=0)  # Para ordenar las categorías
@@ -49,7 +49,7 @@ class PlatoRestaurante(Base):
     __tablename__ = "platos_restaurante"
     __table_args__ = {'extend_existing': True}
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     nombre = Column(String(100), nullable=False)
     descripcion = Column(Text, nullable=True)
     precio = Column(Numeric(10, 2), nullable=False, default=0.0)
@@ -85,8 +85,8 @@ class MenuDia(Base):
     __tablename__ = "menus_dia"
     __table_args__ = {'extend_existing': True}
     
-    id = Column(Integer, primary_key=True, index=True)  # Usar id (renombrado de menu_id)
-    fecha = Column(Date, nullable=False, unique=True, index=True)
+    id = Column(Integer, primary_key=True)  # Usar id (renombrado de menu_id)
+    fecha = Column(Date, nullable=False, unique=True)
     nombre = Column(String(100), nullable=False)  # "Almuerzo del 18/09/2025"
     descripcion = Column(Text, nullable=True)
     precio = Column(Numeric(10, 2), nullable=False, default=0.00)
@@ -124,8 +124,8 @@ class MenuCategoriaPlato(Base):
     __tablename__ = "menu_categoria_platos"
     __table_args__ = {'extend_existing': True}
     
-    id = Column(Integer, primary_key=True, index=True)
-    menu_dia_id = Column(Integer, ForeignKey('menu_dia.id'), nullable=False)
+    id = Column(Integer, primary_key=True)
+    menu_dia_id = Column(Integer, ForeignKey('menus_dia.id'), nullable=False)
     categoria_id = Column(Integer, ForeignKey('categorias_menu.id'), nullable=False)
     plato_id = Column(Integer, ForeignKey('platos_restaurante.id'), nullable=False)
     activo = Column(Boolean, default=True)
@@ -147,7 +147,7 @@ class AcompanamientoFijo(Base):
     __tablename__ = "acompanamientos_fijos"
     __table_args__ = {'extend_existing': True}
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     nombre = Column(String(100), nullable=False)
     descripcion = Column(Text, nullable=True)
     activo = Column(Boolean, default=True)

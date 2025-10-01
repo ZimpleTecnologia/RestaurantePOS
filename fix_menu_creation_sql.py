@@ -521,3 +521,8 @@ def delete_menu(menu_id: int, db: Session = Depends(get_db)):
 
 if __name__ == "__main__":
     fix_menu_creation_endpoint()
+
+
+
+
+

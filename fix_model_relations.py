@@ -202,3 +202,8 @@ if __name__ == "__main__":
     else:
         print("\n⚠️ Hay problemas con el modelo.")
         print("   Revisa los errores específicos arriba.")
+
+
+
+
+

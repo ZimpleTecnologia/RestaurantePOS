@@ -183,3 +183,8 @@ print("   El endpoint from-carta ahora usa consultas SQL directas.")
 print("   Esto evita los problemas de relaciones automáticas de SQLAlchemy.")
 print("\n🚀 El sistema debería funcionar correctamente ahora.")
 print("   Prueba crear un menú desde la interfaz web.")
+
+
+
+
+

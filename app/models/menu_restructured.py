@@ -11,7 +11,7 @@ class CategoriaPlatoVariable(Base):
     __tablename__ = "categorias_platos_variables"
     __table_args__ = {'extend_existing': True}
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     nombre = Column(String(50), nullable=False, unique=True)
     descripcion = Column(Text, nullable=True)
     orden = Column(Integer, default=0)
@@ -31,7 +31,7 @@ class OpcionPlato(Base):
     __tablename__ = "opciones_platos"
     __table_args__ = {'extend_existing': True}
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     nombre = Column(String(100), nullable=False)
     descripcion = Column(Text, nullable=True)
     categoria_id = Column(Integer, ForeignKey("categorias_platos_variables.id"), nullable=True)
@@ -65,7 +65,7 @@ class MenuDiaOpcion(Base):
     __tablename__ = "menu_dia_opciones"
     __table_args__ = {'extend_existing': True}
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     menu_dia_id = Column(Integer, ForeignKey("menus_dia.id"), nullable=False)
     opcion_id = Column(Integer, ForeignKey("opciones_platos.id"), nullable=False)
     disponible = Column(Boolean, default=True)
@@ -85,8 +85,8 @@ class MenuDiaRestructured(Base):
     __tablename__ = "menus_dia"
     __table_args__ = {'extend_existing': True}
     
-    id = Column(Integer, primary_key=True, index=True)
-    fecha = Column(Date, nullable=False, unique=True, index=True)
+    id = Column(Integer, primary_key=True)
+    fecha = Column(Date, nullable=False, unique=True)
     nombre = Column(String(100), nullable=False)
     descripcion = Column(Text, nullable=True)
     precio = Column(Numeric(10, 2), nullable=False, default=0.00)

@@ -1,6 +1,6 @@
 services:
   app:
-    image: zimpletecnologia/app_pos:v1.1.1
+    image: zimpletecnologia/app_pos:v1.2.0
     restart: unless-stopped
     
     ports:

@@ -34,8 +34,8 @@ class Sale(Base):
     """Modelo de Venta - Simplificado"""
     __tablename__ = "sales"
     
-    id = Column(Integer, primary_key=True, index=True)
-    sale_number = Column(String(50), unique=True, index=True, nullable=False)
+    id = Column(Integer, primary_key=True)
+    sale_number = Column(String(50), unique=True, nullable=False)
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
@@ -64,7 +64,7 @@ class SaleItem(Base):
     """Modelo de Item de Venta"""
     __tablename__ = "sale_items"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     sale_id = Column(Integer, ForeignKey("sales.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     
@@ -88,7 +88,7 @@ class PaymentMethod(Base):
     """Modelo de Método de Pago"""
     __tablename__ = "payment_methods"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     sale_id = Column(Integer, ForeignKey("sales.id"), nullable=False)
     payment_type = Column(String(20), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)

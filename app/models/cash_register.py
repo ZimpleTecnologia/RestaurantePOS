@@ -29,8 +29,8 @@ class CashRegister(Base):
     """Modelo para la caja registradora - Una sola caja por ubicación"""
     __tablename__ = "cash_registers"
     
-    id = Column(Integer, primary_key=True, index=True)
-    register_number = Column(String(50), unique=True, index=True, nullable=False)
+    id = Column(Integer, primary_key=True)
+    register_number = Column(String(50), unique=True, nullable=False)
     name = Column(String(100), nullable=False, default="Caja Principal")
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
@@ -48,10 +48,10 @@ class CashSession(Base):
     """Modelo para las sesiones de caja - Una sesión por día"""
     __tablename__ = "cash_sessions"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     cash_register_id = Column(Integer, ForeignKey("cash_registers.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    session_number = Column(String(50), unique=True, index=True, nullable=False)
+    session_number = Column(String(50), unique=True, nullable=False)
     
     # Apertura
     opening_amount = Column(Numeric(10, 2), nullable=False, default=0)
@@ -100,7 +100,7 @@ class CashMovement(Base):
     """Modelo para los movimientos de caja"""
     __tablename__ = "cash_movements"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     session_id = Column(Integer, ForeignKey("cash_sessions.id"), nullable=False)
     movement_type = Column(String(20), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)

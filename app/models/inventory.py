@@ -44,7 +44,7 @@ class InventoryLocation(Base):
     """Modelo de ubicaciones de inventario"""
     __tablename__ = "inventory_locations"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
@@ -63,7 +63,7 @@ class InventoryLot(Base):
     """Modelo de lotes de inventario para trazabilidad"""
     __tablename__ = "inventory_lots"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     location_id = Column(Integer, ForeignKey("inventory_locations.id"), nullable=False)
     
@@ -132,7 +132,7 @@ class InventoryMovement(Base):
     """Modelo de Movimiento de Inventario - Versión Mejorada"""
     __tablename__ = "inventory_movements"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     
     # Referencias
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
@@ -165,7 +165,7 @@ class InventoryAlert(Base):
     """Modelo de alertas de inventario"""
     __tablename__ = "inventory_alerts"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     lot_id = Column(Integer, ForeignKey("inventory_lots.id"), nullable=True)
     
@@ -192,7 +192,7 @@ class InventoryCount(Base):
     """Modelo para conteos físicos de inventario"""
     __tablename__ = "inventory_counts"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     count_number = Column(String(50), nullable=False, unique=True)
     count_date = Column(Date, nullable=False)
     location_id = Column(Integer, ForeignKey("inventory_locations.id"), nullable=True)
@@ -217,7 +217,7 @@ class InventoryCountItem(Base):
     """Modelo para items de conteo físico"""
     __tablename__ = "inventory_count_items"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     count_id = Column(Integer, ForeignKey("inventory_counts.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     lot_id = Column(Integer, ForeignKey("inventory_lots.id"), nullable=True)

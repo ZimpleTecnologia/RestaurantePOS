@@ -37,13 +37,13 @@ COPY templates/ ./templates/
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
 
-# Copiar scripts de utilidad
-COPY create_admin.py ./
-COPY create_test_data.py ./
+# Copiar scripts de utilidad desde el directorio scripts
+COPY scripts/create_admin_user.py ./create_admin.py
+COPY scripts/create_complete_test_data.py ./create_test_data.py
 COPY init_db.py ./
-COPY reset_admin_password.py ./
+COPY scripts/reset_admin_password.py ./reset_admin_password.py
 COPY migrate_database.py ./
-COPY verify_database.py ./
+COPY scripts/check_database_tables.py ./verify_database.py
 
 # Script de inicio que espera a que la BD esté disponible
 COPY scripts/start.sh /app/start.sh

@@ -21,8 +21,8 @@ class Menu(Base):
     """Modelo unificado para menús del día"""
     __tablename__ = "menus"
     
-    id = Column(Integer, primary_key=True, index=True)
-    fecha = Column(Date, nullable=False, unique=True, index=True)
+    id = Column(Integer, primary_key=True)
+    fecha = Column(Date, nullable=False, unique=True)
     activo = Column(Boolean, default=True)
     nombre = Column(String(100), nullable=True)  # Nombre opcional del menú
     descripcion = Column(Text, nullable=True)
@@ -55,7 +55,7 @@ class Plato(Base):
     """Modelo simplificado para platos"""
     __tablename__ = "platos"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     nombre = Column(String(100), nullable=False)
     descripcion = Column(Text, nullable=True)
     precio = Column(String(20), nullable=False)  # Precio como string para flexibilidad

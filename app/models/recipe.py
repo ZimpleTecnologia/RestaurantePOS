@@ -11,7 +11,7 @@ class Recipe(Base):
     """Modelo de Receta"""
     __tablename__ = "recipes"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
@@ -38,7 +38,7 @@ class RecipeItem(Base):
     """Modelo de Item de Receta"""
     __tablename__ = "recipe_items"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     

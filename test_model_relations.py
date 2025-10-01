@@ -57,3 +57,8 @@ if __name__ == "__main__":
     else:
         print("\n💥 Hay problemas con las relaciones del modelo")
         sys.exit(1)
+
+
+
+
+

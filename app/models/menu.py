@@ -20,8 +20,8 @@ class MenuDayOld(Base):
     """Modelo para el menú del día (sistema anterior)"""
     __tablename__ = "menus_dia"
     
-    id = Column(Integer, primary_key=True, index=True)
-    fecha = Column(Date, nullable=False, unique=True, index=True)
+    id = Column(Integer, primary_key=True)
+    fecha = Column(Date, nullable=False, unique=True)
     nombre = Column(String(100), nullable=False)
     precio = Column(Numeric(10, 2), nullable=False)
     estado = Column(Enum(MenuStatus), default=MenuStatus.ACTIVE)
@@ -60,7 +60,7 @@ class CategoriaMenu(Base):
     """Modelo para categorías del menú"""
     __tablename__ = "categorias_menu"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     nombre = Column(String(50), nullable=False, unique=True)
     orden = Column(Integer, nullable=False, default=0)
     descripcion = Column(Text, nullable=True)
@@ -82,7 +82,7 @@ class OpcionMenu(Base):
     """Modelo para opciones del menú"""
     __tablename__ = "opciones_menu"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     menu_id = Column(Integer, ForeignKey("menus_dia.id"), nullable=False)
     categoria_id = Column(Integer, ForeignKey("categorias_menu.id"), nullable=False)
     nombre = Column(String(100), nullable=False)

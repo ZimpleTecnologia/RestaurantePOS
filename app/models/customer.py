@@ -11,9 +11,9 @@ class Customer(Base):
     """Modelo de Cliente"""
     __tablename__ = "customers"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     document_type = Column(String(20), nullable=False)  # CC, CE, NIT, etc.
-    document_number = Column(String(20), unique=True, index=True, nullable=False)
+    document_number = Column(String(20), unique=True, nullable=False)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     email = Column(String(100), nullable=True)
@@ -48,7 +48,7 @@ class Credit(Base):
     """Modelo de Crédito"""
     __tablename__ = "credits"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
     sale_id = Column(Integer, ForeignKey("sales.id"), nullable=False)
     
@@ -75,7 +75,7 @@ class Payment(Base):
     """Modelo de Pago"""
     __tablename__ = "payments"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
     credit_id = Column(Integer, ForeignKey("credits.id"), nullable=True)
     

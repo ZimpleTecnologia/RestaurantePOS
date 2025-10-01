@@ -34,7 +34,7 @@ class Notification(Base):
     """Modelo de Notificación"""
     __tablename__ = "notifications"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Información de la notificación

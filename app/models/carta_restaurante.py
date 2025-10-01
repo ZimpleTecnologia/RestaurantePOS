@@ -29,7 +29,7 @@ class CartaRestaurante(Base):
     """Modelo para la carta del restaurante"""
     __tablename__ = "carta_restaurante"
     
-    producto_id = Column(Integer, primary_key=True, index=True)
+    producto_id = Column(Integer, primary_key=True)
     nombre = Column(String(100), nullable=False)
     descripcion = Column(Text, nullable=True)
     precio_base = Column(Numeric(10, 2), nullable=False)
@@ -63,8 +63,8 @@ class MenuDia(Base):
     """Modelo para el menú del día"""
     __tablename__ = "menus_dia_carta"
     
-    menu_id = Column(Integer, primary_key=True, index=True)
-    fecha = Column(String(10), nullable=False, unique=True, index=True)  # YYYY-MM-DD
+    menu_id = Column(Integer, primary_key=True)
+    fecha = Column(String(10), nullable=False, unique=True)  # YYYY-MM-DD
     nombre = Column(String(100), nullable=False)
     precio = Column(Numeric(10, 2), nullable=False)
     descripcion = Column(Text, nullable=True)
@@ -103,7 +103,7 @@ class MenuOpcion(Base):
     """Modelo para las opciones del menú del día"""
     __tablename__ = "menu_opciones"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     menu_id = Column(Integer, ForeignKey("menus_dia_carta.menu_id"), nullable=False)
     producto_id = Column(Integer, ForeignKey("carta_restaurante.producto_id"), nullable=False)
     es_fijo = Column(Boolean, nullable=False)
