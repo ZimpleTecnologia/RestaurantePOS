@@ -829,6 +829,13 @@
         document.addEventListener('DOMContentLoaded', function() {
             cargarDatos();
             configurarEventos();
+
+            // Crear categorías básicas si no existen
+            setTimeout(() => {
+                if (categorias.length === 0) {
+                    crearCategoriasBasicas();
+                }
+            }, 2000);
         });
 
         // Configurar eventos
@@ -895,16 +902,58 @@
         // Cargar categorías
         async function cargarCategorias() {
             try {
-                const response = await fetch('/api/v1/menu-restructured/categorias/');
+                const response = await fetch('/api/v1/restaurant-menu/categorias/');
                 const data = await response.json();
-                if (data.success) {
+                if (data.categorias) {
                     categorias = data.categorias || [];
                     renderizarCategoriasSelect();
                 } else {
-                    console.error('Error en respuesta:', data.error);
+                    console.error('Error en respuesta:', data);
+                    // Si no hay categorías, intentar crear las básicas
+                    await crearCategoriasBasicas();
                 }
             } catch (error) {
                 console.error('Error cargando categorías:', error);
+                // Si hay error de conexión, intentar crear las básicas
+                await crearCategoriasBasicas();
+            }
+        }
+
+        // Crear categorías básicas si no existen
+        async function crearCategoriasBasicas() {
+            try {
+                console.log('🔄 Creando categorías básicas...');
+
+                const categoriasBasicas = [
+                    { nombre: 'Principio', descripcion: 'Platos de entrada o principio', orden: 1 },
+                    { nombre: 'Proteína', descripcion: 'Platos principales con proteína', orden: 2 }
+                ];
+
+                for (const categoria of categoriasBasicas) {
+                    try {
+                        const response = await fetch('/api/v1/restaurant-menu/categorias/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(categoria)
+                        });
+
+                        if (response.ok) {
+                            console.log(`✅ Categoría '${categoria.nombre}' creada`);
+                        } else {
+                            console.log(`⚠️ Error creando categoría '${categoria.nombre}': ${response.status}`);
+                        }
+                    } catch (error) {
+                        console.error(`Error creando categoría '${categoria.nombre}':`, error);
+                    }
+                }
+
+                // Recargar categorías después de crear las básicas
+                setTimeout(() => cargarCategorias(), 1000);
+
+            } catch (error) {
+                console.error('Error creando categorías básicas:', error);
             }
         }
 

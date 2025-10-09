@@ -779,6 +779,63 @@ def update_opcion_with_image(
             "message": "Error al actualizar la opción"
         }
 
+@router.put("/opciones/{opcion_id}/")
+def update_opcion(
+    opcion_id: int,
+    nombre: str = None,
+    descripcion: str = None,
+    tipo: str = None,
+    precio: float = None,
+    categoria_id: int = None,
+    activo: bool = None,
+    db: Session = Depends(get_db)
+):
+    """Actualizar opción de plato sin imagen"""
+    try:
+        opcion = db.query(OpcionPlato).filter(OpcionPlato.id == opcion_id).first()
+        if not opcion:
+            raise HTTPException(status_code=404, detail="Opción no encontrada")
+        
+        # Actualizar campos si se proporcionan
+        if nombre is not None:
+            opcion.nombre = nombre
+        if descripcion is not None:
+            opcion.descripcion = descripcion
+        if tipo is not None:
+            opcion.tipo = tipo
+        if precio is not None:
+            opcion.precio = precio
+        if categoria_id is not None:
+            opcion.categoria_id = categoria_id
+        if activo is not None:
+            opcion.activo = activo
+        
+        db.commit()
+        db.refresh(opcion)
+        
+        return {
+            "success": True,
+            "message": "Opción actualizada exitosamente",
+            "opcion": {
+                "id": opcion.id,
+                "nombre": opcion.nombre,
+                "descripcion": opcion.descripcion,
+                "tipo": opcion.tipo,
+                "precio": float(opcion.precio),
+                "activo": opcion.activo,
+                "tiene_imagen": opcion.imagen_data is not None
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Error al actualizar la opción"
+        }
+
 @router.get("/opciones/{opcion_id}/imagen")
 def get_opcion_image(opcion_id: int, db: Session = Depends(get_db)):
     """Obtener imagen de una opción (desde BD)"""
