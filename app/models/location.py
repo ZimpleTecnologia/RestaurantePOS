@@ -37,7 +37,7 @@ class Location(Base):
     """Modelo de Ubicación - Simplificado"""
     __tablename__ = "locations"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     location_type = Column(Enum(LocationType), default=LocationType.RESTAURANTE)
@@ -63,8 +63,8 @@ class Table(Base):
     """Modelo para las mesas del restaurante"""
     __tablename__ = "restaurant_tables"
     
-    id = Column(Integer, primary_key=True, index=True)
-    table_number = Column(String(10), unique=True, nullable=False, index=True)
+    id = Column(Integer, primary_key=True)
+    table_number = Column(String(10), unique=True, nullable=False)
     name = Column(String(50), nullable=False)  # Ej: "Mesa 1", "Terraza 3"
     capacity = Column(Integer, nullable=False, default=4)  # Capacidad de personas
     status = Column(Enum(TableStatus, values_callable=lambda obj: [e.value for e in obj]), default=TableStatus.AVAILABLE)

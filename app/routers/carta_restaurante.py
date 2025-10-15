@@ -402,3 +402,5 @@ def get_menu_stats(
         menus_inactivos=menus_inactivos,
         menu_hoy=menu_hoy
     )
+
+

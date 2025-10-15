@@ -30,8 +30,8 @@ class Order(Base):
     """Modelo para los pedidos del restaurante"""
     __tablename__ = "orders"
     
-    id = Column(Integer, primary_key=True, index=True)
-    order_number = Column(String(20), unique=True, nullable=False, index=True)
+    id = Column(Integer, primary_key=True)
+    order_number = Column(String(20), unique=True, nullable=False)
     
     # Relaciones
     table_id = Column(Integer, ForeignKey("restaurant_tables.id"), nullable=True)  # Null para takeaway/delivery
@@ -100,7 +100,7 @@ class OrderItem(Base):
     """Modelo para los items de un pedido"""
     __tablename__ = "order_items"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=True)  # Nullable para items de menú
     

@@ -10,9 +10,10 @@ import os
 
 from app.config import settings as app_settings
 from app.database import create_tables
-from app.routers import auth, products, inventory, settings, notifications, reports, kitchen, caja_ventas, waiters, recipes, menu, websocket, carta_restaurante
+from app.routers import auth, products, inventory, settings, notifications, reports, kitchen, caja_ventas, waiters, recipes, menu, websocket, carta_restaurante, menus_unified, menus_public_simple, restaurant_menu, test_simple, debug_menus, debug_menus_sql, menu_restructured
 from app.models import *  # Importar todos los modelos para crear las tablas
 from app.middleware import AuthMiddleware, SessionTimeoutMiddleware
+from app.middlewares.inventory_access import InventoryAccessMiddleware
 
 # Crear aplicación FastAPI
 app = FastAPI(
@@ -26,6 +27,7 @@ app = FastAPI(
 # Agregar middlewares de autenticación y timeout
 app.add_middleware(AuthMiddleware)
 app.add_middleware(SessionTimeoutMiddleware, timeout_minutes=app_settings.access_token_expire_minutes)
+app.add_middleware(InventoryAccessMiddleware)
 
 # Configurar CORS
 app.add_middleware(
@@ -61,6 +63,13 @@ app.include_router(waiters.router, prefix="/api/v1")
 app.include_router(menu.router, prefix="/api/v1")
 app.include_router(websocket.router)
 app.include_router(carta_restaurante.router, prefix="/api/v1")
+app.include_router(menus_unified.router, prefix="/api/v1")
+app.include_router(menus_public_simple.router, prefix="/api/v1")
+app.include_router(restaurant_menu.router, prefix="/api/v1")
+app.include_router(test_simple.router, prefix="/api/v1")
+app.include_router(debug_menus.router, prefix="/api/v1")
+app.include_router(debug_menus_sql.router, prefix="/api/v1")
+app.include_router(menu_restructured.router, prefix="/api/v1/menu-restructured")
 
 
 @app.on_event("startup")
@@ -94,6 +103,19 @@ async def products_page(request: Request):
 async def inventory_page(request: Request):
     """Página de inventario"""
     return templates.TemplateResponse("inventory.html", {"request": request})
+
+
+@app.get("/admin/menus", response_class=HTMLResponse)
+async def admin_menus_page(request: Request):
+    """Página de administración de menús - Sistema reestructurado"""
+    return templates.TemplateResponse("menu_restructured_admin.html", {"request": request})
+
+
+@app.get("/meseros/menus", response_class=HTMLResponse)
+async def mesero_menus_page(request: Request):
+    """Página de menú para meseros"""
+    return templates.TemplateResponse("menu_mesero.html", {"request": request})
+
 
 
 @app.get("/recipes", response_class=HTMLResponse)
@@ -174,16 +196,6 @@ async def waiters_menu_new_page(request: Request):
     return templates.TemplateResponse("waiters/menu-new.html", {"request": request})
 
 
-@app.get("/menu-management", response_class=HTMLResponse)
-async def menu_management_page(request: Request):
-    """Página de gestión de menús para administradores"""
-    return templates.TemplateResponse("menu-management.html", {"request": request})
-
-
-@app.get("/products/menu-management", response_class=HTMLResponse)
-async def products_menu_management_page(request: Request):
-    """Página de gestión de menús dentro del módulo de productos"""
-    return templates.TemplateResponse("products/menu-management.html", {"request": request})
 
 
 @app.get("/products/admin-products", response_class=HTMLResponse)
@@ -208,6 +220,12 @@ async def carta_restaurante_admin_page(request: Request):
 async def admin_menus_page(request: Request):
     """Página de administración de menús del día"""
     return templates.TemplateResponse("products/admin-menus.html", {"request": request})
+
+
+@app.get("/module-development", response_class=HTMLResponse)
+async def module_development_page(request: Request):
+    """Página de módulo en desarrollo"""
+    return templates.TemplateResponse("module_development.html", {"request": request})
 
 
 @app.get("/health")

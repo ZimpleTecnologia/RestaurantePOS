@@ -347,7 +347,7 @@ async def debug_create_product(
         product_data = {
             "code": code,
             "name": product.name,
-            "price": product.precio_base,
+            "precio_base": product.precio_base,  # Corregido: usar precio_base en lugar de price
             "cost_price": product.cost_price or 0,
             "stock": product.stock_quantity or product.stock or 0,
             "min_stock": product.min_stock_level or product.min_stock or 0,
@@ -415,7 +415,7 @@ async def create_product(
     product_data = {
         "code": code,
         "name": product.name,
-        "price": product.precio_base,
+        "precio_base": product.precio_base,
         "cost_price": product.cost_price or 0,
         "stock": product.stock or 0,
         "min_stock": product.min_stock or 0,
@@ -496,7 +496,7 @@ def import_products(
     for i, product_data in enumerate(products.get("products", [])):
         try:
             # Validar datos requeridos
-            if not product_data.get("name") or not product_data.get("price"):
+            if not product_data.get("name") or not product_data.get("precio_base"):
                 errors.append(f"Fila {i+1}: Nombre y precio son requeridos")
                 continue
             
@@ -507,7 +507,7 @@ def import_products(
             product = Product(
                 code=code,
                 name=product_data["name"],
-                price=float(product_data["price"]),
+                precio_base=float(product_data["precio_base"]),
                 cost_price=float(product_data.get("cost_price", 0)),
                 stock=int(product_data.get("stock", 0)),
                 min_stock=int(product_data.get("min_stock", 0)),

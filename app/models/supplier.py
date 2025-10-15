@@ -20,10 +20,10 @@ class Supplier(Base):
     """Modelo de Proveedor"""
     __tablename__ = "suppliers"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
     document_type = Column(String(20), nullable=False)  # NIT, CC, etc.
-    document_number = Column(String(20), unique=True, index=True, nullable=False)
+    document_number = Column(String(20), unique=True, nullable=False)
     contact_name = Column(String(100), nullable=True)
     email = Column(String(100), nullable=True)
     phone = Column(String(20), nullable=True)
@@ -52,8 +52,8 @@ class Purchase(Base):
     """Modelo de Compra"""
     __tablename__ = "purchases"
     
-    id = Column(Integer, primary_key=True, index=True)
-    purchase_number = Column(String(50), unique=True, index=True, nullable=False)
+    id = Column(Integer, primary_key=True)
+    purchase_number = Column(String(50), unique=True, nullable=False)
     supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
@@ -85,7 +85,7 @@ class PurchaseItem(Base):
     """Modelo de Item de Compra"""
     __tablename__ = "purchase_items"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     purchase_id = Column(Integer, ForeignKey("purchases.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     

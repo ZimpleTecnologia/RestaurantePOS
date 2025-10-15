@@ -17,23 +17,48 @@
     }
     
     .stats-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border-radius: 15px;
-        padding: 20px;
+        padding: 14px;  /* Reducido de 20px a 14px (30% menos) */
         margin-bottom: 20px;
     }
     
+    /* Tarjeta de Total Productos - Azul profesional */
+    .stats-card.total-products {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    }
+    
+    /* Tarjeta de Stock Bajo - Amarillo/Naranja de advertencia */
+    .stats-card.low-stock {
+        background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+    }
+    
+    /* Tarjeta de Sin Stock - Rojo de alerta */
+    .stats-card.out-of-stock {
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    }
+    
+    /* Tarjeta de Valor Total - Verde de éxito */
+    .stats-card.total-value {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    }
+    
     .stats-number {
-        font-size: 2.5rem;
+        font-size: 1.75rem;  /* Reducido de 2.5rem a 1.75rem (30% menos) */
         font-weight: bold;
         margin: 0;
     }
     
     .stats-label {
-        font-size: 0.9rem;
+        font-size: 0.75rem;  /* Reducido de 0.9rem a 0.75rem (aproximadamente 17% menos) */
         opacity: 0.9;
         margin: 0;
+    }
+    
+    .stats-icon {
+        font-size: 1.4rem;  /* Reducido de 2rem a 1.4rem (30% menos) */
+        margin-bottom: 7px;  /* Reducido de 10px a 7px (30% menos) */
+        opacity: 0.9;
     }
     
     .product-card {
@@ -84,6 +109,43 @@
         font-weight: 500;
     }
     
+    /* Estilos para la tabla de productos - 30% más grande */
+    #productsTable {
+        font-size: 1.3rem;  /* 30% más grande que el tamaño base */
+    }
+    
+    #productsTable th {
+        font-size: 1.1rem;  /* Encabezados ligeramente más grandes */
+        font-weight: 600;
+        padding: 12px 8px;  /* Más padding para mejor legibilidad */
+    }
+    
+    #productsTable td {
+        padding: 10px 8px;  /* Más padding para las celdas */
+        vertical-align: middle;
+    }
+    
+    #productsTable .btn-sm {
+        font-size: 0.9rem;  /* Botones más grandes */
+        padding: 6px 12px;
+    }
+    
+    /* Badges y elementos de estado más grandes */
+    #productsTable .badge {
+        font-size: 0.85rem;  /* 30% más grande que el tamaño base de badge */
+        padding: 6px 10px;
+    }
+    
+    #productsTable .stock-indicator {
+        font-size: 0.9rem;  /* Indicadores de stock más grandes */
+        padding: 6px 12px;
+    }
+    
+    /* Mejorar legibilidad de los datos */
+    #productsTable td strong {
+        font-size: 1.1rem;  /* Nombres de productos más grandes */
+    }
+    
     .measurement-badge {
         background-color: #e9ecef;
         color: #495057;
@@ -119,17 +181,38 @@
     }
     
     .btn-primary-custom {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
         border: none;
+        border-radius: 25px;
+        padding: 12px 24px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        color: var(--white);
+    }
+    
+    .btn-primary-custom:hover {
+        background: linear-gradient(135deg, var(--golden-yellow) 0%, #FFD54F 100%);
+        color: var(--primary-brown);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    }
+    
+    .btn-secondary {
+        background-color: var(--medium-gray);
+        border-color: var(--medium-gray);
+        color: var(--white);
         border-radius: 25px;
         padding: 12px 24px;
         font-weight: 500;
         transition: all 0.3s ease;
     }
     
-    .btn-primary-custom:hover {
+    .btn-secondary:hover {
+        background-color: #424242;
+        border-color: #424242;
+        color: var(--white);
         transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 15px rgba(97, 97, 97, 0.3);
     }
     
     .modal-content {
@@ -139,22 +222,26 @@
     }
     
     .modal-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
+        color: var(--white);
         border-radius: 15px 15px 0 0;
         border: none;
     }
     
     .form-control, .form-select {
         border-radius: 10px;
-        border: 2px solid #e9ecef;
+        border: 2px solid var(--subtle-brown);
         padding: 12px 15px;
         transition: all 0.3s ease;
+        background-color: var(--white);
+        color: var(--primary-brown);
     }
     
     .form-control:focus, .form-select:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        border-color: var(--primary-brown);
+        box-shadow: 0 0 0 0.2rem rgba(78, 52, 46, 0.25);
+        background-color: var(--white);
+        color: var(--primary-brown);
     }
     
     .floating-label {
@@ -331,30 +418,34 @@
     <!-- Estadísticas -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="stats-card text-center">
+            <div class="stats-card total-products text-center">
+                <i class="bi bi-boxes stats-icon"></i>
                 <h3 class="stats-number" id="totalProducts">0</h3>
                 <p class="stats-label">Total Productos</p>
-                        </div>
-                        </div>
+            </div>
+        </div>
         <div class="col-md-3">
-            <div class="stats-card text-center">
+            <div class="stats-card low-stock text-center">
+                <i class="bi bi-exclamation-triangle stats-icon"></i>
                 <h3 class="stats-number" id="lowStockProducts">0</h3>
                 <p class="stats-label">Stock Bajo</p>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stats-card text-center">
+            <div class="stats-card out-of-stock text-center">
+                <i class="bi bi-x-circle stats-icon"></i>
                 <h3 class="stats-number" id="outOfStockProducts">0</h3>
                 <p class="stats-label">Sin Stock</p>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stats-card text-center">
+            <div class="stats-card total-value text-center">
+                <i class="bi bi-currency-dollar stats-icon"></i>
                 <h3 class="stats-number" id="totalValue">$0</h3>
                 <p class="stats-label">Valor Total</p>
-                        </div>
-                        </div>
-                    </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Pestañas de navegación -->
     <div class="row mb-4">

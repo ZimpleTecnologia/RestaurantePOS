@@ -31,8 +31,8 @@ class Category(Base):
     """Modelo de Categoría de Productos"""
     __tablename__ = "categories"
     
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False, unique=True, index=True)
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -50,7 +50,7 @@ class SubCategory(Base):
     """Modelo de Subcategoría de Productos"""
     __tablename__ = "subcategories"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, index=True)
     description = Column(Text, nullable=True)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
@@ -70,7 +70,7 @@ class Product(Base):
     """Modelo de Producto - Reestructurado según especificaciones"""
     __tablename__ = "products"
     
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, index=True)
     description = Column(Text, nullable=True)
     precio_base = Column(Numeric(10, 2), nullable=False, default=Decimal('0.00'))
@@ -84,11 +84,11 @@ class Product(Base):
     product_type = Column(Enum(ProductType), default=ProductType.SALES, nullable=False)
     
     # Código del producto
-    code = Column(String(50), unique=True, nullable=True, index=True)  # Código interno del producto
+    code = Column(String(50), unique=True, nullable=True)  # Código interno del producto
     
     # Códigos de barras y SKU
-    barcode = Column(String(50), unique=True, nullable=True, index=True)  # Código de barras
-    sku = Column(String(50), unique=True, nullable=True, index=True)  # Stock Keeping Unit
+    barcode = Column(String(50), unique=True, nullable=True)  # Código de barras
+    sku = Column(String(50), unique=True, nullable=True)  # Stock Keeping Unit
     
     # Categorización (compatibilidad con enum y tablas)
     category = Column(Enum(ProductCategory), default=ProductCategory.OTRO)

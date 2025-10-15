@@ -28,6 +28,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/api/v1/products/subcategories",
             "/api/v1/caja-ventas/estado",
             "/api/v1/caja-ventas/movimientos",
+            "/api/v1/menu-restructured/",
+            "/api/v1/menu-restructured/categorias/",
+            "/api/v1/menu-restructured/opciones/",
+            "/api/v1/menu-restructured/menus/",
+            "/api/v1/menu-restructured/menus/hoy",
+            "/api/v1/menu-restructured/stats/",
             "/static",
             "/uploads",
             "/health",
@@ -41,7 +47,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if any(request.url.path.startswith(path) for path in self.exclude_paths):
             return await call_next(request)
         
-        # Para rutas de API, usar el sistema de dependencias existente
+        # Para rutas de API del sistema de menús reestructurado, permitir acceso
+        if request.url.path.startswith("/api/v1/menu-restructured/"):
+            return await call_next(request)
+        
+        # Para otras rutas de API, usar el sistema de dependencias existente
         if request.url.path.startswith("/api/"):
             return await call_next(request)
         

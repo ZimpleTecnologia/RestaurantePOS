@@ -9,21 +9,43 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <style>
         :root {
-            --primary-color: #ff6b35;
-            --secondary-color: #2c3e50;
-            --accent-color: #28a745;
-            --header-orange: #ff6b35;
-            --header-dark: #2c3e50;
+            /* Colores principales Plantónico */
+            --primary-brown: #4E342E;
+            --light-beige: #FAF3E0;
+            --golden-yellow: #FFC107;
+            --warm-red: #E64A19;
+            --light-brown: #6D4C41;
+            --subtle-brown: #BCAAA4;
+            --medium-gray: #616161;
+            --white: #FFFFFF;
+            
+            /* Colores del sistema */
+            --primary-color: #4E342E;
+            --secondary-color: #FAF3E0;
+            --accent-color: #FFC107;
+            --header-orange: #4E342E;
+            --header-dark: #4E342E;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #E64A19;
+            --info-color: #17a2b8;
+        }
+        
+        * {
+            font-family: 'Poppins', sans-serif;
         }
         
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-beige);
+            color: var(--primary-brown);
         }
         
         /* Header horizontal */
@@ -33,21 +55,21 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            height: 70px;
+            height: 60px;
             display: flex;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
         .header-left {
-            background-color: var(--header-orange);
+            background-color: var(--primary-brown);
             display: flex;
             align-items: center;
-            padding: 0 30px;
-            min-width: 300px;
+            padding: 0 20px;
+            min-width: 250px;
         }
         
         .header-right {
-            background-color: var(--header-dark);
+            background-color: var(--primary-brown);
             flex: 1;
             display: flex;
             align-items: center;
@@ -61,42 +83,57 @@
             color: white;
         }
         
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background-color: white;
-            border-radius: 8px;
+        /* Logo Plantónico para la barra de navegación */
+        .plantonico-logo-nav {
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            font-size: 26px;
-            color: var(--header-orange);
+            gap: 12px;
         }
         
-        .logo-text {
+        .logo-image-nav {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+            transition: transform 0.3s ease;
+            border-radius: 50%;
+            background-color: var(--light-beige);
+            padding: 2px;
+        }
+        
+        .logo-image-nav:hover {
+            transform: scale(1.05);
+        }
+        
+        .logo-text-nav {
             display: flex;
             flex-direction: column;
         }
         
-        .logo-title {
-            font-size: 18px;
-            font-weight: bold;
+        .logo-title-nav {
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--white);
             margin: 0;
             line-height: 1;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
         
-        .logo-subtitle {
-            font-size: 12px;
-            opacity: 0.9;
-            margin: 0;
+        .logo-subtitle-nav {
+            font-family: 'Poppins', sans-serif;
+            font-size: 10px;
+            color: var(--white);
+            margin: 1px 0 0 0;
             line-height: 1;
+            opacity: 0.9;
+            font-weight: 400;
         }
         
         .nav-modules {
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 20px;
             list-style: none;
             margin: 0;
             padding: 0;
@@ -105,28 +142,32 @@
         .nav-module {
             display: flex;
             align-items: center;
-            color: white;
+            color: var(--white);
             text-decoration: none;
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 6px;
             transition: all 0.3s ease;
             white-space: nowrap;
         }
         
         .nav-module:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
+            background-color: var(--golden-yellow);
+            color: var(--primary-brown);
             text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
         }
         
         .nav-module.active {
-            background-color: var(--header-orange);
+            background-color: var(--light-brown);
+            color: var(--white);
+            border-bottom: 3px solid var(--golden-yellow);
         }
         
         /* Botón de logout */
         .logout-btn {
-            background-color: #dc3545;
-            color: white;
+            background-color: var(--warm-red);
+            color: var(--white);
             border: none;
             padding: 8px 16px;
             border-radius: 6px;
@@ -140,8 +181,9 @@
         }
         
         .logout-btn:hover {
-            background-color: #c82333;
-            transform: translateY(-1px);
+            background-color: #c62828;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(230, 74, 25, 0.3);
         }
         
         .logout-btn i {
@@ -149,47 +191,73 @@
         }
         
         .nav-module i {
-            font-size: 23px;
-            margin-right: 8px;
-            color: var(--header-orange);
+            font-size: 18px;
+            margin-right: 6px;
+            color: var(--golden-yellow);
         }
         
         .nav-module.active i {
-            color: white;
+            color: var(--white);
+        }
+        
+        .nav-module:hover i {
+            color: var(--primary-brown);
         }
         
         .nav-module-text {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
         }
         
         /* Contenido principal */
         .main-content {
-            margin-top: 70px;
-            min-height: calc(100vh - 70px);
+            margin-top: 60px;
+            min-height: calc(100vh - 60px);
             padding: 20px;
+            background-color: var(--light-beige);
         }
         
         .card {
-            border: none;
+            border: 1px solid var(--subtle-brown);
             border-radius: 15px;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            box-shadow: 0 4px 8px rgba(78, 52, 46, 0.1);
+            background-color: var(--light-beige);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 8px 16px rgba(255, 193, 7, 0.2);
+            transform: translateY(-2px);
         }
         
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background-color: var(--primary-brown);
+            border-color: var(--primary-brown);
             border-radius: 8px;
+            color: var(--white);
+            transition: all 0.3s ease;
         }
         
         .btn-primary:hover {
-            background-color: #e55a2b;
-            border-color: #e55a2b;
+            background-color: var(--golden-yellow);
+            border-color: var(--golden-yellow);
+            color: var(--primary-brown);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
         }
         
         .stats-card {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #e55a2b 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
+            color: var(--white);
+            border: 1px solid var(--subtle-brown);
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            background: linear-gradient(135deg, var(--golden-yellow) 0%, #FFD54F 100%);
+            color: var(--primary-brown);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 193, 7, 0.3);
         }
         
         .table-responsive {
@@ -258,12 +326,12 @@
         <!-- Sección izquierda con logo -->
         <div class="header-left">
             <div class="logo-section">
-                <div class="logo-icon">
-                    🍽️
-                </div>
-                <div class="logo-text">
-                    <h1 class="logo-title">RESTAURANTE</h1>
-                    <p class="logo-subtitle">Sistema POS</p>
+                <div class="plantonico-logo-nav">
+                    <img src="/static/images/platonico_logo.png" alt="Plantónico Logo" class="logo-image-nav">
+                    <div class="logo-text-nav">
+                        <h1 class="logo-title-nav">PLANTÓNICO</h1>
+                        <p class="logo-subtitle-nav">Amor al primer bocado</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -274,13 +342,19 @@
                 <li>
                     <a href="/" class="nav-module" id="nav-dashboard">
                         <i class="bi bi-house-door"></i>
-                        <span class="nav-module-text">Dashboard</span>
+                        <span class="nav-module-text">Home</span>
                     </a>
                 </li>
                 <li>
-                    <a href="/products" class="nav-module" id="nav-products">
-                        <i class="bi bi-box"></i>
-                        <span class="nav-module-text">Productos</span>
+                    <a href="/admin/menus" class="nav-module" id="nav-admin">
+                        <i class="bi bi-gear"></i>
+                        <span class="nav-module-text">Gestión Menús</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/meseros/menus" class="nav-module" id="nav-meseros">
+                        <i class="bi bi-person-badge"></i>
+                        <span class="nav-module-text">Meseros</span>
                     </a>
                 </li>
                 <li>
@@ -323,12 +397,6 @@
                     <a href="/reports" class="nav-module" id="nav-reports">
                         <i class="bi bi-graph-up"></i>
                         <span class="nav-module-text">Reportes</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/menu-management" class="nav-module" id="nav-menu-management">
-                        <i class="bi bi-gear-fill"></i>
-                        <span class="nav-module-text">Gestión Menús</span>
                     </a>
                 </li>
                 <li>

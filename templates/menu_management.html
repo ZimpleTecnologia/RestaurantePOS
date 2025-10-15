@@ -1,0 +1,632 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Menús - Sistema POS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .menu-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+    }
+    
+    .menu-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stats-card {
+        color: white;
+        border-radius: 15px;
+        padding: 14px;
+        margin-bottom: 20px;
+    }
+    
+    /* Tarjeta de Menús Activos - Verde de éxito */
+    .stats-card.active-menus {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    }
+    
+    /* Tarjeta de Menús Pendientes - Azul informativo */
+    .stats-card.pending-menus {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    }
+    
+    /* Tarjeta de Platos Disponibles - Púrpura creativo */
+    .stats-card.available-dishes {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    }
+    
+    .stats-number {
+        font-size: 1.75rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .stats-label {
+        font-size: 0.75rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    .stats-icon {
+        font-size: 1.4rem;
+        margin-bottom: 7px;
+        opacity: 0.9;
+    }
+    
+    .menu-item {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 4px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .menu-item:hover {
+        border-left-color: #3b82f6;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
+    }
+    
+    .menu-item.fixed {
+        border-left-color: #10b981;
+    }
+    
+    .menu-item.variable {
+        border-left-color: #f59e0b;
+    }
+    
+    .dish-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-right: 8px;
+        margin-bottom: 5px;
+    }
+    
+    .dish-badge.fixed {
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+    
+    .dish-badge.variable {
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+    }
+    
+    .btn-modern {
+        border-radius: 25px;
+        padding: 10px 25px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .category-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .category-title {
+        color: #374151;
+        font-weight: 600;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .category-title i {
+        margin-right: 8px;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-calendar-day text-primary"></i>
+                        Gestión de Menús Diarios
+                    </h1>
+                    <p class="text-muted mb-0">Crea y gestiona los menús del día</p>
+                </div>
+                <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#menuModal">
+                    <i class="bi bi-plus-circle me-2"></i>Nuevo Menú
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-card active-menus text-center">
+                <i class="bi bi-check-circle stats-icon"></i>
+                <h3 class="stats-number" id="activeMenus">0</h3>
+                <p class="stats-label">Menús Activos</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card pending-menus text-center">
+                <i class="bi bi-clock stats-icon"></i>
+                <h3 class="stats-number" id="pendingMenus">0</h3>
+                <p class="stats-label">Pendientes</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card available-dishes text-center">
+                <i class="bi bi-egg-fried stats-icon"></i>
+                <h3 class="stats-number" id="availableDishes">0</h3>
+                <p class="stats-label">Platos Disponibles</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestañas de navegación -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="menuTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="today-tab" data-bs-toggle="tab" data-bs-target="#today" type="button" role="tab">
+                        <i class="bi bi-calendar-day me-2"></i>Menú de Hoy
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
+                        <i class="bi bi-clock-history me-2"></i>Historial
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="dishes-tab" data-bs-toggle="tab" data-bs-target="#dishes" type="button" role="tab">
+                        <i class="bi bi-egg-fried me-2"></i>Platos Disponibles
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Contenido de las pestañas -->
+    <div class="tab-content" id="menuTabContent">
+        <!-- Pestaña de Menú de Hoy -->
+        <div class="tab-pane fade show active" id="today" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card menu-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-calendar-day me-2"></i>Menú del Día
+                                <span class="badge bg-success ms-2" id="menuStatus">Activo</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="todayMenuContent">
+                                <!-- El contenido se cargará dinámicamente -->
+                                <div class="text-center py-4">
+                                    <i class="bi bi-calendar-x display-4 text-muted"></i>
+                                    <p class="text-muted mt-2">No hay menú para hoy</p>
+                                    <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#menuModal">
+                                        <i class="bi bi-plus-circle me-2"></i>Crear Menú
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestaña de Historial -->
+        <div class="tab-pane fade" id="history" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card menu-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-clock-history me-2"></i>Historial de Menús
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="menuHistoryContent">
+                                <!-- El historial se cargará dinámicamente -->
+                                <div class="text-center py-4">
+                                    <i class="bi bi-inbox display-4 text-muted"></i>
+                                    <p class="text-muted mt-2">Cargando historial...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestaña de Platos Disponibles -->
+        <div class="tab-pane fade" id="dishes" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card menu-card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-egg-fried me-2"></i>Platos Disponibles
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="availableDishesContent">
+                                <!-- Los platos se cargarán dinámicamente -->
+                                <div class="text-center py-4">
+                                    <i class="bi bi-egg-fried display-4 text-muted"></i>
+                                    <p class="text-muted mt-2">Cargando platos...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear/Editar Menú -->
+<div class="modal fade" id="menuModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-plus me-2"></i>Crear Menú del Día
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="menuForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="menuDate" class="form-label">Fecha</label>
+                                <input type="date" class="form-control" id="menuDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="menuPrice" class="form-label">Precio del Menú</label>
+                                <input type="number" class="form-control" id="menuPrice" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="menuName" class="form-label">Nombre del Menú</label>
+                        <input type="text" class="form-control" id="menuName" placeholder="Ej: Menú del Día - Especial" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="menuDescription" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="menuDescription" rows="3" placeholder="Descripción del menú..."></textarea>
+                    </div>
+                    
+                    <!-- Platos Fijos -->
+                    <div class="category-section">
+                        <h6 class="category-title">
+                            <i class="bi bi-check-circle"></i>Platos Fijos (se incluyen automáticamente)
+                        </h6>
+                        <div id="fixedDishesList">
+                            <!-- Se cargarán dinámicamente -->
+                        </div>
+                    </div>
+                    
+                    <!-- Platos Variables -->
+                    <div class="category-section">
+                        <h6 class="category-title">
+                            <i class="bi bi-list-ul"></i>Platos Variables (selecciona por categoría)
+                        </h6>
+                        <div id="variableDishesList">
+                            <!-- Se cargarán dinámicamente -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary-custom" onclick="saveMenu()">
+                    <i class="bi bi-save me-2"></i>Guardar Menú
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+let menus = [];
+let dishes = [];
+let categories = [];
+
+// Cargar datos al inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    loadMenus();
+    loadDishes();
+    loadCategories();
+    setupTodayDate();
+});
+
+// Configurar fecha de hoy por defecto
+function setupTodayDate() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('menuDate').value = today;
+}
+
+// Cargar menús
+async function loadMenus() {
+    try {
+        const response = await fetch('/api/v1/carta/menus/');
+        const data = await response.json();
+        menus = data;
+        updateMenuStats();
+        renderTodayMenu();
+        renderMenuHistory();
+    } catch (error) {
+        console.error('Error cargando menús:', error);
+    }
+}
+
+// Cargar platos disponibles
+async function loadDishes() {
+    try {
+        const response = await fetch('/api/v1/carta/platos/');
+        const data = await response.json();
+        dishes = data;
+        updateDishStats();
+        renderAvailableDishes();
+    } catch (error) {
+        console.error('Error cargando platos:', error);
+    }
+}
+
+// Cargar categorías
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/v1/categories/');
+        const data = await response.json();
+        categories = data;
+    } catch (error) {
+        console.error('Error cargando categorías:', error);
+    }
+}
+
+// Actualizar estadísticas de menús
+function updateMenuStats() {
+    const today = new Date().toISOString().split('T')[0];
+    const activeMenus = menus.filter(menu => menu.activo);
+    const pendingMenus = menus.filter(menu => !menu.activo);
+    
+    document.getElementById('activeMenus').textContent = activeMenus.length;
+    document.getElementById('pendingMenus').textContent = pendingMenus.length;
+}
+
+// Actualizar estadísticas de platos
+function updateDishStats() {
+    document.getElementById('availableDishes').textContent = dishes.length;
+}
+
+// Renderizar menú de hoy
+function renderTodayMenu() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayMenu = menus.find(menu => menu.fecha === today);
+    
+    const content = document.getElementById('todayMenuContent');
+    
+    if (!todayMenu) {
+        content.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-calendar-x display-4 text-muted"></i>
+                <p class="text-muted mt-2">No hay menú para hoy</p>
+                <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#menuModal">
+                    <i class="bi bi-plus-circle me-2"></i>Crear Menú
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Renderizar menú de hoy
+    content.innerHTML = `
+        <div class="row">
+            <div class="col-md-8">
+                <h4>${todayMenu.nombre}</h4>
+                <p class="text-muted">${todayMenu.descripcion || 'Sin descripción'}</p>
+                <p><strong>Precio:</strong> $${todayMenu.precio}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-outline-primary me-2" onclick="editMenu(${todayMenu.menu_id})">
+                    <i class="bi bi-pencil me-2"></i>Editar
+                </button>
+                <button class="btn btn-outline-danger" onclick="deleteMenu(${todayMenu.menu_id})">
+                    <i class="bi bi-trash me-2"></i>Eliminar
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Renderizar historial de menús
+function renderMenuHistory() {
+    const content = document.getElementById('menuHistoryContent');
+    
+    if (menus.length === 0) {
+        content.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-inbox display-4 text-muted"></i>
+                <p class="text-muted mt-2">No hay menús registrados</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    menus.forEach(menu => {
+        const date = new Date(menu.fecha);
+        const isToday = menu.fecha === new Date().toISOString().split('T')[0];
+        
+        html += `
+            <div class="menu-item">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h6 class="mb-1">${menu.nombre}</h6>
+                        <p class="text-muted mb-0">${date.toLocaleDateString('es-ES')} ${isToday ? '(Hoy)' : ''}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge bg-${menu.activo ? 'success' : 'secondary'}">
+                            ${menu.activo ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <span class="fw-bold">$${menu.precio}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    content.innerHTML = html;
+}
+
+// Renderizar platos disponibles
+function renderAvailableDishes() {
+    const content = document.getElementById('availableDishesContent');
+    
+    if (dishes.length === 0) {
+        content.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-egg-fried display-4 text-muted"></i>
+                <p class="text-muted mt-2">No hay platos disponibles</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Agrupar platos por categoría
+    const dishesByCategory = {};
+    dishes.forEach(dish => {
+        const category = dish.categoria || 'Otro';
+        if (!dishesByCategory[category]) {
+            dishesByCategory[category] = [];
+        }
+        dishesByCategory[category].push(dish);
+    });
+    
+    let html = '';
+    Object.keys(dishesByCategory).forEach(category => {
+        html += `
+            <div class="category-section">
+                <h6 class="category-title">
+                    <i class="bi bi-tag"></i>${category}
+                </h6>
+                <div class="row">
+        `;
+        
+        dishesByCategory[category].forEach(dish => {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="menu-item ${dish.tipo === 'Fijo' ? 'fixed' : 'variable'}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${dish.nombre}</h6>
+                                <p class="text-muted mb-2">${dish.descripcion || 'Sin descripción'}</p>
+                                <span class="dish-badge ${dish.tipo === 'Fijo' ? 'fixed' : 'variable'}">
+                                    ${dish.tipo}
+                                </span>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold">$${dish.precio_base}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    });
+    
+    content.innerHTML = html;
+}
+
+// Guardar menú
+async function saveMenu() {
+    const formData = {
+        fecha: document.getElementById('menuDate').value,
+        nombre: document.getElementById('menuName').value,
+        precio: parseFloat(document.getElementById('menuPrice').value),
+        descripcion: document.getElementById('menuDescription').value,
+        platos_fijos: [], // Se implementará la selección
+        platos_variables: [] // Se implementará la selección
+    };
+    
+    try {
+        const response = await fetch('/api/v1/carta/menus/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            // Cerrar modal y recargar datos
+            bootstrap.Modal.getInstance(document.getElementById('menuModal')).hide();
+            loadMenus();
+            showNotification('Menú creado exitosamente', 'success');
+        } else {
+            const error = await response.json();
+            showNotification('Error: ' + error.detail, 'error');
+        }
+    } catch (error) {
+        console.error('Error guardando menú:', error);
+        showNotification('Error al guardar el menú', 'error');
+    }
+}
+
+// Mostrar notificación
+function showNotification(message, type) {
+    // Implementar sistema de notificaciones
+    console.log(`${type.toUpperCase()}: ${message}`);
+}
+
+// Editar menú
+function editMenu(menuId) {
+    // Implementar edición de menú
+    console.log('Editar menú:', menuId);
+}
+
+// Eliminar menú
+function deleteMenu(menuId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este menú?')) {
+        // Implementar eliminación de menú
+        console.log('Eliminar menú:', menuId);
+    }
+}
+</script>
+{% endblock %}
+
+

@@ -1,23 +1,48 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Sistema POS{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
+{% block title %}Plantónico - Sistema POS{% endblock %}
+{% block page_title %}Plantónico POS{% endblock %}
 
 {% block content %}
-<div class="row">
+<!-- Mensaje de Bienvenida -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-4">
+                <h1 class="display-6 mb-3" style="color: var(--primary-brown);">
+                    <i class="bi bi-house-door me-3" style="color: var(--golden-yellow);"></i>
+                    Bienvenido a Plantónico
+                </h1>
+                <p class="lead mb-0" style="color: var(--medium-gray);">
+                    Amor al primer bocado.
+                </p>
+                <div class="mt-3">
+                    <span class="badge fs-6 px-3 py-2" id="currentDate" style="background-color: var(--primary-brown); color: var(--white);"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas Principales -->
+<div class="row mb-4">
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold">Panel de Control</h6>
+                <h6 class="m-0 font-weight-bold">
+                    <i class="bi bi-graph-up me-2"></i>Estadísticas del Día
+                </h6>
                 <div>
-                    <span class="badge bg-primary" id="currentDate"></span>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshStats()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+                    </button>
                 </div>
             </div>
             <div class="card-body">
                 <!-- Estadísticas Principales -->
                 <div class="row mb-4">
                     <div class="col-md-3">
-                        <div class="card bg-primary text-white">
+                        <div class="card stats-card">
                             <div class="card-body text-center">
                                 <h3 class="card-title" id="totalSales">0</h3>
                                 <p class="card-text">Ventas Hoy</p>
@@ -25,7 +50,7 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-success text-white">
+                        <div class="card stats-card">
                             <div class="card-body text-center">
                                 <h3 class="card-title" id="totalRevenue">$0</h3>
                                 <p class="card-text">Ingresos Hoy</p>
@@ -33,7 +58,7 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-info text-white">
+                        <div class="card stats-card">
                             <div class="card-body text-center">
                                 <h3 class="card-title" id="pendingOrders">0</h3>
                                 <p class="card-text">Pedidos Pendientes</p>
@@ -41,7 +66,7 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-warning text-white">
+                        <div class="card stats-card">
                             <div class="card-body text-center">
                                 <h3 class="card-title" id="lowStock">0</h3>
                                 <p class="card-text">Stock Bajo</p>
@@ -50,48 +75,18 @@
                     </div>
                 </div>
 
-                <!-- Módulos Principales -->
+                <!-- Módulos MVP -->
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="m-0 font-weight-bold">Módulos del Sistema</h6>
+                                <h6 class="m-0 font-weight-bold">
+                                    <i class="bi bi-grid-3x3-gap me-2"></i>Módulos Principales (MVP)
+                                </h6>
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-4 col-lg-3 mb-3">
-                                        <a href="/products" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-box text-primary" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Productos</h6>
-                                                    <p class="card-text text-muted small">Gestión de productos y menú</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div class="col-md-4 col-lg-3 mb-3">
-                                        <a href="/kitchen" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-fire text-danger" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Cocina</h6>
-                                                    <p class="card-text text-muted small">Gestión de pedidos y preparación</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div class="col-md-4 col-lg-3 mb-3">
-                                        <a href="/waiters" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-person-badge text-success" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Meseros</h6>
-                                                    <p class="card-text text-muted small">Toma de pedidos y gestión de mesas</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
+                                    <!-- Inventario -->
                                     <div class="col-md-4 col-lg-3 mb-3">
                                         <a href="/inventory" class="text-decoration-none">
                                             <div class="card h-100 border-0 shadow-sm hover-card">
@@ -103,22 +98,94 @@
                                             </div>
                                         </a>
                                     </div>
+                                    
+                                    <!-- Gestión de Menús -->
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/admin/menus" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-calendar-day text-info" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Gestión Menús</h6>
+                                                    <p class="card-text text-muted small">Administrar menús del día</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Pedidos a Cocina -->
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/kitchen" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-fire text-danger" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Pedidos a Cocina</h6>
+                                                    <p class="card-text text-muted small">Gestión de pedidos y preparación</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Caja / Ventas -->
                                     <div class="col-md-4 col-lg-3 mb-3">
                                         <a href="/caja-ventas" class="text-decoration-none">
                                             <div class="card h-100 border-0 shadow-sm hover-card">
                                                 <div class="card-body text-center">
                                                     <i class="bi bi-cash-coin text-success" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Caja y Ventas</h6>
+                                                    <h6 class="card-title mt-3">Caja / Ventas</h6>
                                                     <p class="card-text text-muted small">Procesamiento de pagos y cierre</p>
                                                 </div>
                                             </div>
                                         </a>
                                     </div>
-                                    <div class="col-md-4 col-lg-3 mb-3">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Módulos de Acceso Rápido -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold">
+                                    <i class="bi bi-lightning me-2"></i>Acceso Rápido
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <!-- Vista de Meseros -->
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <a href="/meseros/menus" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-calendar-check text-success" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Menú del Día</h6>
+                                                    <p class="card-text text-muted small">Vista para meseros</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Gestión Menús -->
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <a href="/admin/menus" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-gear text-primary" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Gestión Menús</h6>
+                                                    <p class="card-text text-muted small">Panel de administración</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Reportes -->
+                                    <div class="col-md-6 col-lg-4 mb-3">
                                         <a href="/reports" class="text-decoration-none">
                                             <div class="card h-100 border-0 shadow-sm hover-card">
                                                 <div class="card-body text-center">
-                                                    <i class="bi bi-graph-up text-primary" style="font-size: 2.5rem;"></i>
+                                                    <i class="bi bi-graph-up text-info" style="font-size: 2.5rem;"></i>
                                                     <h6 class="card-title mt-3">Reportes</h6>
                                                     <p class="card-text text-muted small">Análisis y estadísticas</p>
                                                 </div>
@@ -288,5 +355,47 @@
             }
         });
     }
+
+    // Función para refrescar estadísticas
+    function refreshStats() {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Actualizando...';
+        btn.disabled = true;
+        
+        // Simular carga
+        setTimeout(() => {
+            loadDashboardData();
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            
+            // Mostrar notificación
+            showNotification('Estadísticas actualizadas', 'success');
+        }, 1000);
+    }
+
+    // Mostrar notificación
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+    }
+
+    // Actualizar fecha cada minuto
+    setInterval(setCurrentDate, 60000);
 </script>
 {% endblock %} 

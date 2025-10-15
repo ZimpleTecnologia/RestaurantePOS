@@ -10,8 +10,8 @@ class SystemSettings(Base):
     """Modelo para configuraciones del sistema"""
     __tablename__ = "system_settings"
     
-    id = Column(Integer, primary_key=True, index=True)
-    setting_key = Column(String(100), unique=True, index=True, nullable=False)
+    id = Column(Integer, primary_key=True)
+    setting_key = Column(String(100), unique=True, nullable=False)
     setting_value = Column(Text, nullable=True)
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
