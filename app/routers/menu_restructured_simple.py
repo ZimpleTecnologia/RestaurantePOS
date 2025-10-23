@@ -12,7 +12,7 @@ from app.models.menu_restructured import (
     MenuDiaOpcion
 )
 
-router = APIRouter(prefix="/menu-restructured", tags=["menu-restructured"])
+router = APIRouter(tags=["menu-restructured-simple"])
 
 # ============================================================================
 # ENDPOINTS SIMPLIFICADOS PARA PRUEBAS

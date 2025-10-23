@@ -132,6 +132,14 @@ def get_opciones(db: Session = Depends(get_db)):
             tiene_imagen = opcion.imagen_data is not None
             print(f"   📊 {opcion.nombre}: tiene_imagen={tiene_imagen}, imagen_data_size={len(opcion.imagen_data) if opcion.imagen_data else 0}")
             
+            # Incluir información de categoría si existe
+            categoria_info = None
+            if opcion.categoria:
+                categoria_info = {
+                    "id": opcion.categoria.id,
+                    "nombre": opcion.categoria.nombre
+                }
+            
             opciones_data.append({
                 "id": opcion.id,
                 "nombre": opcion.nombre,
@@ -139,6 +147,7 @@ def get_opciones(db: Session = Depends(get_db)):
                 "tipo": opcion.tipo,
                 "precio": float(opcion.precio),
                 "activo": opcion.activo,
+                "categoria": categoria_info,
                 "imagen_data": tiene_imagen,
                 "tiene_imagen": tiene_imagen
             })
@@ -865,3 +874,207 @@ def get_opcion_image(opcion_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         print(f"💥 Error al obtener imagen: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/opciones/{opcion_id}")
+def delete_opcion(opcion_id: int, db: Session = Depends(get_db)):
+    """Eliminar o desactivar opción de plato"""
+    try:
+        print(f"🗑️ Intentando eliminar opción ID: {opcion_id}")
+        
+        # Buscar la opción
+        opcion = db.query(OpcionPlato).filter(OpcionPlato.id == opcion_id).first()
+        if not opcion:
+            print(f"❌ Opción {opcion_id} no encontrada")
+            raise HTTPException(status_code=404, detail="Opción no encontrada")
+        
+        # Verificar si la opción está siendo usada en algún menú
+        menu_count = db.query(MenuDiaOpcion).filter(MenuDiaOpcion.opcion_id == opcion_id).count()
+        
+        if menu_count > 0:
+            # Si está en uso, desactivar en lugar de eliminar
+            print(f"⚠️ Opción {opcion_id} está siendo usada en {menu_count} menú(s) - Desactivando...")
+            
+            if not opcion.activo:
+                print(f"ℹ️ Opción {opcion_id} ya estaba desactivada")
+                return {
+                    "success": True,
+                    "action": "already_inactive",
+                    "message": f"La opción ya estaba desactivada. Está siendo usada en {menu_count} menú(s).",
+                    "menu_count": menu_count,
+                    "warning": "Para eliminarla completamente, primero remuévala de todos los menús donde está siendo utilizada."
+                }
+            
+            # Desactivar la opción
+            opcion.activo = False
+            
+            # Desactivar en todos los menús donde esté siendo usada
+            menu_opciones = db.query(MenuDiaOpcion).filter(MenuDiaOpcion.opcion_id == opcion_id).all()
+            menus_actualizados = 0
+            
+            for menu_opcion in menu_opciones:
+                if menu_opcion.disponible:  # Solo actualizar si estaba disponible
+                    menu_opcion.disponible = False
+                    menus_actualizados += 1
+            
+            db.commit()
+            db.refresh(opcion)
+            
+            print(f"✅ Opción {opcion_id} desactivada exitosamente")
+            print(f"📋 Actualizados {menus_actualizados} menú(s) donde estaba disponible")
+            
+            return {
+                "success": True,
+                "action": "deactivated",
+                "message": f"La opción ha sido desactivada y removida de {menus_actualizados} menú(s) donde estaba disponible.",
+                "menu_count": menu_count,
+                "menus_updated": menus_actualizados,
+                "warning": "El plato ya no aparecerá en ningún menú. Para eliminarlo completamente de la base de datos, remuévalo de todos los menús primero.",
+                "opcion": {
+                    "id": opcion.id,
+                    "nombre": opcion.nombre,
+                    "activo": opcion.activo
+                }
+            }
+        else:
+            # Si no está en uso, eliminar permanentemente
+            print(f"✅ Opción {opcion_id} no está en uso - Eliminando permanentemente...")
+            db.delete(opcion)
+            db.commit()
+            
+            print(f"✅ Opción {opcion_id} eliminada exitosamente")
+            return {
+                "success": True,
+                "action": "deleted",
+                "message": "Opción eliminada permanentemente"
+            }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"💥 Error al eliminar/desactivar opción: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al procesar la eliminación: {str(e)}"
+        )
+
+@router.patch("/opciones/{opcion_id}/toggle-status")
+def toggle_opcion_status(opcion_id: int, db: Session = Depends(get_db)):
+    """Activar/Desactivar opción de plato"""
+    try:
+        print(f"🔄 Cambiando estado de opción ID: {opcion_id}")
+        
+        # Buscar la opción
+        opcion = db.query(OpcionPlato).filter(OpcionPlato.id == opcion_id).first()
+        if not opcion:
+            print(f"❌ Opción {opcion_id} no encontrada")
+            raise HTTPException(status_code=404, detail="Opción no encontrada")
+        
+        # Cambiar el estado
+        nuevo_estado = not opcion.activo
+        opcion.activo = nuevo_estado
+        
+        # Sincronizar con menús
+        menu_opciones = db.query(MenuDiaOpcion).filter(MenuDiaOpcion.opcion_id == opcion_id).all()
+        menus_actualizados = 0
+        
+        for menu_opcion in menu_opciones:
+            # Si se está activando, marcar como disponible en todos los menús
+            # Si se está desactivando, marcar como no disponible en todos los menús
+            menu_opcion.disponible = nuevo_estado
+            menus_actualizados += 1
+        
+        db.commit()
+        db.refresh(opcion)
+        
+        estado_texto = "activada" if nuevo_estado else "desactivada"
+        print(f"✅ Opción {opcion_id} {estado_texto}")
+        print(f"📋 Sincronizados {menus_actualizados} menú(s)")
+        
+        return {
+            "success": True,
+            "message": f"Opción {estado_texto} exitosamente y sincronizada con {menus_actualizados} menú(s)",
+            "menus_updated": menus_actualizados,
+            "opcion": {
+                "id": opcion.id,
+                "nombre": opcion.nombre,
+                "activo": opcion.activo
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"💥 Error al cambiar estado de opción: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al cambiar estado: {str(e)}"
+        )
+
+@router.get("/opciones/{opcion_id}/sync-status")
+def get_opcion_sync_status(opcion_id: int, db: Session = Depends(get_db)):
+    """Verificar estado de sincronización entre opción y menús"""
+    try:
+        print(f"🔍 Verificando sincronización para opción ID: {opcion_id}")
+        
+        # Buscar la opción
+        opcion = db.query(OpcionPlato).filter(OpcionPlato.id == opcion_id).first()
+        if not opcion:
+            raise HTTPException(status_code=404, detail="Opción no encontrada")
+        
+        # Obtener todas las relaciones con menús
+        menu_opciones = db.query(MenuDiaOpcion).filter(MenuDiaOpcion.opcion_id == opcion_id).all()
+        
+        # Analizar sincronización
+        total_menus = len(menu_opciones)
+        menus_disponibles = sum(1 for mo in menu_opciones if mo.disponible)
+        menus_no_disponibles = total_menus - menus_disponibles
+        
+        # Determinar si está sincronizado
+        if opcion.activo:
+            # Si la opción está activa, todos los menús deberían estar disponibles
+            sincronizado = menus_no_disponibles == 0
+            estado_sync = "Sincronizado" if sincronizado else "Desincronizado"
+        else:
+            # Si la opción está inactiva, ningún menú debería estar disponible
+            sincronizado = menus_disponibles == 0
+            estado_sync = "Sincronizado" if sincronizado else "Desincronizado"
+        
+        # Obtener detalles de los menús
+        menus_detalle = []
+        for mo in menu_opciones:
+            menu_info = {
+                "menu_id": mo.menu_dia_id,
+                "fecha": mo.menu_dia.fecha.isoformat() if mo.menu_dia else None,
+                "nombre_menu": mo.menu_dia.nombre if mo.menu_dia else None,
+                "disponible": mo.disponible,
+                "deberia_estar_disponible": opcion.activo
+            }
+            menus_detalle.append(menu_info)
+        
+        return {
+            "success": True,
+            "opcion": {
+                "id": opcion.id,
+                "nombre": opcion.nombre,
+                "activo": opcion.activo
+            },
+            "sincronizacion": {
+                "estado": estado_sync,
+                "sincronizado": sincronizado,
+                "total_menus": total_menus,
+                "menus_disponibles": menus_disponibles,
+                "menus_no_disponibles": menus_no_disponibles
+            },
+            "menus": menus_detalle
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"💥 Error al verificar sincronización: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al verificar sincronización: {str(e)}"
+        )

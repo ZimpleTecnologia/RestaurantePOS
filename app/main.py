@@ -10,7 +10,7 @@ import os
 
 from app.config import settings as app_settings
 from app.database import create_tables
-from app.routers import auth, products, inventory, settings, notifications, reports, kitchen, caja_ventas, waiters, recipes, menu, websocket, carta_restaurante, menus_unified, menus_public_simple, restaurant_menu, test_simple, debug_menus, debug_menus_sql, menu_restructured
+from app.routers import auth, products, inventory, settings, notifications, reports, kitchen, caja_ventas, waiters, recipes, menu, websocket, carta_restaurante, menus_unified, menus_public_simple, restaurant_menu, test_simple, debug_menus, debug_menus_sql, menu_restructured, menu_restructured_simple
 from app.models import *  # Importar todos los modelos para crear las tablas
 from app.middleware import AuthMiddleware, SessionTimeoutMiddleware
 from app.middlewares.inventory_access import InventoryAccessMiddleware
@@ -70,6 +70,7 @@ app.include_router(test_simple.router, prefix="/api/v1")
 app.include_router(debug_menus.router, prefix="/api/v1")
 app.include_router(debug_menus_sql.router, prefix="/api/v1")
 app.include_router(menu_restructured.router, prefix="/api/v1/menu-restructured")
+app.include_router(menu_restructured_simple.router, prefix="/api/v1/menu-restructured-simple")
 
 
 @app.on_event("startup")
