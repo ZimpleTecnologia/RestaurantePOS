@@ -109,7 +109,7 @@ def get_categorias(db: Session = Depends(get_db)):
                     "id": cat.id,
                     "nombre": cat.nombre,
                     "descripcion": cat.descripcion,
-                    "activa": cat.activa
+                    "activa": cat.activo
                 }
                 for cat in categorias
             ]

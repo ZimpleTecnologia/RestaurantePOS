@@ -235,6 +235,44 @@
             transform: rotate(180deg);
         }
 
+        /* Botón de nuevo plato moderno */
+        .btn-new-dish-modern {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 140px;
+        }
+
+        .btn-new-dish-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+            background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+        }
+
+        .btn-new-dish-modern:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-new-dish-modern i {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-new-dish-modern:hover i {
+            transform: scale(1.1);
+        }
+
         .btn-ripple {
             position: absolute;
             top: 50%;
@@ -247,7 +285,8 @@
             transition: width 0.6s, height 0.6s;
         }
 
-        .btn-refresh-modern:active .btn-ripple {
+        .btn-refresh-modern:active .btn-ripple,
+        .btn-new-dish-modern:active .btn-ripple {
             width: 300px;
             height: 300px;
         }
@@ -802,13 +841,18 @@
                     </h1>
                     <p class="text-muted mb-0">Administra platos fijos, variables y menús del día</p>
                 </div>
-                <div>
-                    <button class="btn btn-refresh-modern" onclick="sincronizarDatos()" title="Refrescar datos">
-                        <i class="bi bi-arrow-clockwise me-2"></i>
-                        <span class="btn-text">Refrescar</span>
-                        <div class="btn-ripple"></div>
-                    </button>
-                </div>
+                        <div class="d-flex gap-3">
+                            <button class="btn btn-new-dish-modern" onclick="nuevaOpcion()" title="Crear nuevo plato">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                <span class="btn-text">Nuevo Plato</span>
+                                <div class="btn-ripple"></div>
+                            </button>
+                            <button class="btn btn-refresh-modern" onclick="sincronizarDatos()" title="Refrescar datos">
+                                <i class="bi bi-arrow-clockwise me-2"></i>
+                                <span class="btn-text">Refrescar</span>
+                                <div class="btn-ripple"></div>
+                            </button>
+                        </div>
             </div>
         </div>
     </div>
@@ -1130,6 +1174,44 @@
         </div>
     </div>
 
+    <!-- Modal de confirmación para eliminación -->
+    <div class="modal fade" id="confirmarEliminacionModal" tabindex="-1" aria-labelledby="confirmarEliminacionModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="confirmarEliminacionModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-trash-fill text-danger" style="font-size: 3rem;"></i>
+                    </div>
+                    <h6 class="text-center mb-3">¿Estás seguro de que deseas eliminar este plato?</h6>
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Plato:</strong> <span id="platoNombreEliminar"></span>
+                    </div>
+                    <p class="text-muted text-center mb-0">
+                        Esta acción no se puede deshacer. El plato será eliminado permanentemente.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmarEliminacionBtn">
+                        <i class="bi bi-trash me-1"></i>
+                        Sí, Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para crear menú del día -->
     <div class="modal fade" id="menuModal" tabindex="-1">
         <div class="modal-dialog modal-xl">
@@ -1384,18 +1466,24 @@
         // Cargar categorías
         async function cargarCategorias() {
             try {
-                const response = await fetch('/api/v1/restaurant-menu/categorias/');
+                console.log('🔧 Cargando categorías...');
+                const response = await fetch('/api/v1/menu-restructured/categorias/');
+                console.log('📡 Respuesta de categorías:', response.status, response.statusText);
+                
                 const data = await response.json();
-                if (data.categorias) {
+                console.log('📊 Datos de categorías recibidos:', data);
+                
+                if (data.categorias && Array.isArray(data.categorias)) {
                     categorias = data.categorias || [];
+                    console.log(`✅ Cargadas ${categorias.length} categorías:`, categorias);
                     renderizarCategoriasSelect();
                 } else {
-                    console.error('Error en respuesta:', data);
+                    console.error('❌ Error en respuesta de categorías:', data);
                     categorias = [];
                     renderizarCategoriasSelect();
                 }
             } catch (error) {
-                console.error('Error cargando categorías:', error);
+                console.error('❌ Error cargando categorías:', error);
                 categorias = [];
                 renderizarCategoriasSelect();
             }
@@ -1404,8 +1492,12 @@
         // Función para renderizar categorías en el select
         function renderizarCategoriasSelect() {
             const select = document.getElementById('opcionCategoria');
-            if (!select) return; // Si no existe el select, salir
+            if (!select) {
+                console.warn('⚠️ No se encontró el elemento opcionCategoria');
+                return; // Si no existe el select, salir
+            }
             
+            console.log('🔧 Renderizando categorías en select...', categorias);
             select.innerHTML = '<option value="">Seleccionar categoría</option>';
             
             if (categorias && categorias.length > 0) {
@@ -1415,21 +1507,31 @@
                     option.textContent = categoria.nombre;
                     select.appendChild(option);
                 });
+                console.log(`✅ Agregadas ${categorias.length} categorías al select`);
+            } else {
+                console.warn('⚠️ No hay categorías para renderizar en el select');
             }
             
             // También poblar el selector de filtros
+            console.log('🔧 Llamando a poblarFiltroCategorias...');
             poblarFiltroCategorias();
         }
         
         // Función para poblar el filtro de categorías
         function poblarFiltroCategorias() {
             const categoriasList = document.getElementById('categoriasList');
-            if (!categoriasList) return;
+            if (!categoriasList) {
+                console.error('❌ No se encontró el elemento categoriasList');
+                return;
+            }
+            
+            console.log('🔧 Poblando filtro de categorías...', categorias);
             
             // Limpiar categorías existentes
             categoriasList.innerHTML = '';
             
             if (categorias && categorias.length > 0) {
+                console.log(`📋 Agregando ${categorias.length} categorías al filtro`);
                 categorias.forEach(categoria => {
                     const li = document.createElement('li');
                     li.innerHTML = `
@@ -1444,14 +1546,18 @@
                     `;
                     categoriasList.appendChild(li);
                 });
+                
+                // Configurar eventos para los checkboxes
+                configurarEventosCategorias();
+            } else {
+                console.warn('⚠️ No hay categorías disponibles para el filtro');
             }
-            
-            // Configurar eventos para los checkboxes
-            configurarEventosCategorias();
         }
         
         // Función para configurar eventos de categorías
         function configurarEventosCategorias() {
+            console.log('🔧 Configurando eventos de categorías...');
+            
             // Evento para "Todas las categorías"
             const categoriaTodas = document.getElementById('categoriaTodas');
             if (categoriaTodas) {
@@ -1464,6 +1570,7 @@
                         actualizarTextoFiltroCategoria();
                     }
                 });
+                console.log('✅ Evento configurado para "Todas las categorías"');
             }
             
             // Eventos para categorías específicas
@@ -1479,6 +1586,8 @@
                     actualizarTextoFiltroCategoria();
                 });
             });
+            
+            console.log(`✅ Eventos configurados para ${document.querySelectorAll('.categoria-checkbox').length} categorías`);
         }
         
         // Función para actualizar el texto del filtro de categorías
@@ -1486,6 +1595,11 @@
             const textoFiltro = document.getElementById('filtroCategoriaText');
             const categoriaTodas = document.getElementById('categoriaTodas');
             const categoriasSeleccionadas = document.querySelectorAll('.categoria-checkbox:checked');
+            
+            if (!textoFiltro) {
+                console.warn('⚠️ No se encontró el elemento filtroCategoriaText');
+                return;
+            }
             
             if (categoriaTodas && categoriaTodas.checked) {
                 textoFiltro.textContent = 'Todas las categorías';
@@ -2165,6 +2279,22 @@
             );
         }
 
+        // Función para crear nueva opción
+        function nuevaOpcion() {
+            // Limpiar el formulario
+            limpiarFormularioOpcion();
+            
+            // Configurar el modal para creación
+            document.getElementById('opcionModalTitle').textContent = 'Nuevo Plato';
+            
+            // Resetear la referencia de edición
+            opcionEditando = null;
+            
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('opcionModal'));
+            modal.show();
+        }
+
         // Función para editar opción
         function editarOpcion(opcionId) {
             const opcion = opciones.find(o => o.id === opcionId);
@@ -2205,55 +2335,72 @@
         }
 
         // Función para eliminar opción
-        async function eliminarOpcion(opcionId) {
+        function eliminarOpcion(opcionId) {
             const opcion = opciones.find(o => o.id === opcionId);
             if (!opcion) {
                 showAlert('Opción no encontrada', 'error');
                 return;
             }
 
+            // Mostrar modal de confirmación
+            mostrarModalConfirmacionEliminacion(opcion);
+        }
+
+        // Función para mostrar el modal de confirmación
+        function mostrarModalConfirmacionEliminacion(opcion) {
+            // Configurar el nombre del plato en el modal
+            document.getElementById('platoNombreEliminar').textContent = opcion.nombre;
+            
+            // Configurar el evento del botón de confirmación
+            const confirmarBtn = document.getElementById('confirmarEliminacionBtn');
+            confirmarBtn.onclick = () => confirmarEliminacion(opcion.id);
+            
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('confirmarEliminacionModal'));
+            modal.show();
+        }
+
+        // Función para confirmar la eliminación
+        async function confirmarEliminacion(opcionId) {
+            // Cerrar el modal de confirmación
+            const modal = bootstrap.Modal.getInstance(document.getElementById('confirmarEliminacionModal'));
+            modal.hide();
+            
             try {
                 console.log('🗑️ Eliminando opción:', opcionId);
                 console.log('📤 Enviando DELETE a:', `/api/v1/menu-restructured/opciones/${opcionId}`);
                 
                 const response = await fetch(`/api/v1/menu-restructured/opciones/${opcionId}`, {
                     method: 'DELETE',
-                            headers: {
+                    headers: {
                         'Content-Type': 'application/json',
-                            }
-                        });
+                    }
+                });
 
                 console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+                
+                const data = await response.json();
+                console.log('📥 Respuesta del servidor:', data);
 
                 if (response.ok) {
-                const data = await response.json();
-                    console.log('📥 Respuesta del servidor:', data);
-                
-                if (data.success) {
-                        // Si la opción está siendo usada en menús, mostrar opciones
-                        if (data.action === 'already_inactive' && data.menu_count > 0) {
-                            await mostrarOpcionesEliminacion(opcion, data.menu_count);
-                        } else if (data.action === 'deactivated') {
-                            showAlert(`Opción "${opcion.nombre}" desactivada (estaba en ${data.menu_count} menú(s))`, 'warning');
-                            await refrescarDatos('opciones');
-                        } else if (data.action === 'deleted') {
-                            showAlert(`Opción "${opcion.nombre}" eliminada permanentemente`, 'success');
-                            await refrescarDatos('opciones');
-                } else {
-                            showAlert(`Opción "${opcion.nombre}" procesada exitosamente`, 'success');
-                            await refrescarDatos('opciones');
+                    if (data.success) {
+                        if (data.action === "already_inactive" && data.menu_count > 0) {
+                            // Si está en menús, mostrar opciones de eliminación
+                            mostrarOpcionesEliminacion(data.opcion, data.menu_count);
+                        } else {
+                            // Eliminación exitosa
+                            showAlert(`Plato "${data.opcion?.nombre || 'eliminado'}" eliminado exitosamente`, 'success');
+                            await cargarOpciones();
                         }
                     } else {
-                        showAlert(`Error eliminando opción: ${data.error}`, 'error');
+                        showAlert(`Error: ${data.error || 'Error desconocido'}`, 'error');
                     }
                 } else {
-                    const errorData = await response.json();
-                    console.error('❌ Error HTTP:', response.status, errorData);
-                    showAlert(`Error eliminando opción: ${errorData.detail || 'Error desconocido'}`, 'error');
+                    showAlert(`Error del servidor: ${response.status}`, 'error');
                 }
             } catch (error) {
-                console.error('Error eliminando opción:', error);
-                showAlert(`Error de conexión eliminando opción: ${error.message}`, 'error');
+                console.error('❌ Error eliminando opción:', error);
+                showAlert(`Error de conexión: ${error.message}`, 'error');
             }
         }
 
@@ -2636,13 +2783,65 @@
                     }
                 } else {
                     // Crear nueva opción
-                    url = '/api/v1/menu-restructured/opciones/';
-                    method = 'POST';
+                    const imagenFile = document.getElementById('opcionImagen').files[0];
                     
-                    response = await fetch(url, {
-                        method: method,
-                        body: formData
-                    });
+                    if (imagenFile) {
+                        // Si hay imagen, usar el endpoint con imagen
+                        url = '/api/v1/menu-restructured/opciones/with-image/';
+                        method = 'POST';
+                        
+                        // Preparar FormData con imagen
+                        const createFormData = new FormData();
+                        createFormData.append('nombre', document.getElementById('opcionNombre').value.trim());
+                        createFormData.append('descripcion', document.getElementById('opcionDescripcion').value.trim());
+                        createFormData.append('tipo', document.getElementById('opcionTipo').value);
+                        createFormData.append('precio', parseFloat(document.getElementById('opcionPrecio').value) || 0);
+                        createFormData.append('imagen', imagenFile);
+                        
+                        if (document.getElementById('opcionTipo').value === 'Variable') {
+                            const categoriaId = document.getElementById('opcionCategoria').value;
+                            if (categoriaId) {
+                                createFormData.append('categoria_id', categoriaId);
+                            }
+                        }
+                        
+                        console.log('🔄 Creando nueva opción con imagen:', url);
+                        console.log('📤 Datos FormData:');
+                        for (let [key, value] of createFormData.entries()) {
+                            console.log(`  ${key}: ${value instanceof File ? value.name : value}`);
+                        }
+                        
+                        response = await fetch(url, {
+                            method: method,
+                            body: createFormData
+                        });
+                    } else {
+                        // Si no hay imagen, usar endpoint simple
+                        const params = new URLSearchParams();
+                        params.append('nombre', document.getElementById('opcionNombre').value.trim());
+                        params.append('descripcion', document.getElementById('opcionDescripcion').value.trim());
+                        params.append('tipo', document.getElementById('opcionTipo').value);
+                        params.append('precio', parseFloat(document.getElementById('opcionPrecio').value) || 0);
+                        params.append('activo', document.getElementById('opcionActivo').checked);
+                        
+                        // Agregar categoría si es variable
+                        if (document.getElementById('opcionTipo').value === 'Variable') {
+                            const categoriaId = document.getElementById('opcionCategoria').value;
+                            if (categoriaId) {
+                                params.append('categoria_id', categoriaId);
+                            }
+                        }
+                        
+                        url = `/api/v1/menu-restructured-simple/opciones/?${params.toString()}`;
+                        method = 'POST';
+                        
+                        console.log('🔄 Creando nueva opción sin imagen:', url);
+                        console.log('📤 Parámetros:', params.toString());
+                        
+                        response = await fetch(url, {
+                            method: method
+                        });
+                    }
                 }
                 
                 console.log('📡 Respuesta del servidor:', response.status, response.statusText);
@@ -2717,3 +2916,4 @@
         }
 </script>
 {% endblock %}
+
