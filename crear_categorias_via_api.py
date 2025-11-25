@@ -79,3 +79,4 @@ if __name__ == "__main__":
     
     if crear_categorias_via_api():
         verificar_categorias()
+

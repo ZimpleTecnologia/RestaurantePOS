@@ -94,3 +94,4 @@ def corregir_categorias_proteinas():
 
 if __name__ == "__main__":
     corregir_categorias_proteinas()
+

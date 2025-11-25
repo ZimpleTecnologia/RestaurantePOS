@@ -291,6 +291,163 @@
             height: 300px;
         }
 
+        /* Estilos para calendario de menús */
+        .calendario-menus {
+            background: var(--white);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(78, 52, 46, 0.1);
+        }
+
+        .semana-calendario {
+            border: 1px solid var(--subtle-brown);
+            border-radius: 12px;
+            padding: 15px;
+            background: var(--light-beige);
+        }
+
+        .semana-actual {
+            border-color: var(--primary-brown);
+            background: linear-gradient(135deg, var(--light-beige) 0%, #f8f6f4 100%);
+            box-shadow: 0 4px 15px rgba(78, 52, 46, 0.15);
+        }
+
+        .dia-calendario {
+            background: var(--white);
+            border: 1px solid var(--subtle-brown);
+            border-radius: 10px;
+            padding: 12px;
+            min-height: 200px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .dia-calendario:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 52, 46, 0.15);
+        }
+
+        .dia-hoy {
+            border-color: var(--primary-brown);
+            background: linear-gradient(135deg, var(--white) 0%, #f8f6f4 100%);
+            box-shadow: 0 4px 15px rgba(78, 52, 46, 0.2);
+        }
+
+        .dia-header {
+            text-align: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--subtle-brown);
+        }
+
+        .dia-nombre {
+            font-weight: 600;
+            color: var(--primary-brown);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .dia-numero {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--dark-brown);
+        }
+
+        .dia-hoy .dia-numero {
+            background: var(--primary-brown);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .menu-dia-card {
+            background: var(--white);
+            border: 1px solid var(--subtle-brown);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-dia-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(78, 52, 46, 0.15);
+        }
+
+        .menu-hoy {
+            border-color: var(--primary-brown);
+            background: linear-gradient(135deg, var(--white) 0%, #f8f6f4 100%);
+        }
+
+        .menu-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .menu-nombre {
+            font-weight: 600;
+            color: var(--dark-brown);
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .menu-precio {
+            font-weight: bold;
+            color: var(--primary-brown);
+            font-size: 0.8rem;
+        }
+
+        .menu-info {
+            margin-bottom: 8px;
+        }
+
+        .menu-platos {
+            font-size: 0.8rem;
+            color: var(--dark-brown);
+            margin-bottom: 4px;
+        }
+
+        .menu-descripcion {
+            font-size: 0.75rem;
+            color: var(--muted-brown);
+            font-style: italic;
+        }
+
+        .menu-acciones {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .menu-acciones .btn {
+            padding: 4px 8px;
+            font-size: 0.7rem;
+        }
+
+        .dia-vacio {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+            text-align: center;
+        }
+
+        .dia-hoy-vacio {
+            background: linear-gradient(135deg, var(--light-beige) 0%, #f8f6f4 100%);
+            border: 2px dashed var(--primary-brown);
+        }
+
+        .dia-vacio i {
+            opacity: 0.5;
+        }
+
         /* Estilos para filtros */
         .filter-card {
             background: var(--white);
@@ -846,13 +1003,13 @@
                                 <i class="bi bi-plus-circle me-2"></i>
                                 <span class="btn-text">Nuevo Plato</span>
                                 <div class="btn-ripple"></div>
-                            </button>
+                    </button>
                             <button class="btn btn-refresh-modern" onclick="sincronizarDatos()" title="Refrescar datos">
                                 <i class="bi bi-arrow-clockwise me-2"></i>
                                 <span class="btn-text">Refrescar</span>
                                 <div class="btn-ripple"></div>
-                            </button>
-                        </div>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -949,17 +1106,17 @@
                                         <option value="false">Inactivos</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+                        <div class="col-md-2">
                                     <button class="btn btn-primary w-100" onclick="filtrarOpciones()">
                                         <i class="bi bi-funnel me-1"></i>
                                         Filtrar
                                     </button>
                                 </div>
-                                <div class="col-md-1">
-                                    <button class="btn btn-outline-secondary w-100" onclick="limpiarFiltros()" title="Limpiar filtros">
-                                        <i class="bi bi-x-circle"></i>
-                                    </button>
-                                </div>
+                        <div class="col-md-1">
+                            <button class="btn btn-outline-secondary w-100" onclick="limpiarFiltros()" title="Limpiar filtros">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
                             </div>
                         </div>
                     </div>
@@ -1012,7 +1169,7 @@
                                     </button>
                                 </div>
                                 <div class="col-md-3">
-                                    <button class="btn btn-success w-100" onclick="showCrearMenuModal()">
+                                    <button class="btn btn-success w-100" onclick="nuevoMenu()">
                                         <i class="bi bi-plus-circle me-1"></i>
                                         Nuevo Menú
                                     </button>
@@ -1549,7 +1706,7 @@
                 
                 // Configurar eventos para los checkboxes
                 configurarEventosCategorias();
-            } else {
+                        } else {
                 console.warn('⚠️ No hay categorías disponibles para el filtro');
             }
         }
@@ -2163,25 +2320,25 @@
             container.innerHTML = '';
 
             if (menus.length === 0) {
-                    container.innerHTML = `
+                container.innerHTML = `
                     <div class="text-center py-5">
                         <i class="bi bi-calendar-x display-1 text-muted"></i>
                         <h5 class="text-muted mt-3">No hay menús creados</h5>
                         <p class="text-muted">Crea tu primer menú del día</p>
-                        </div>
-                    `;
-                    return;
-                }
+                    </div>
+                `;
+                return;
+            }
 
             menus.forEach(menu => {
-                    container.innerHTML += `
+                container.innerHTML += `
                     <div class="card mb-3">
                         <div class="card-body">
                             <div class="row align-items-center">
                                 <div class="col-md-4">
                                     <h6 class="mb-1">${menu.nombre}</h6>
                                     <small class="text-muted">${menu.fecha}</small>
-                                    </div>
+                                </div>
                                 <div class="col-md-2">
                                     <span class="badge ${menu.estado === 'ACTIVE' ? 'bg-success' : 'bg-secondary'}">
                                         ${menu.estado}
@@ -2189,7 +2346,7 @@
                                 </div>
                                 <div class="col-md-2">
                                     <strong>${formatearPrecio(menu.precio)}</strong>
-                            </div>
+                                </div>
                                 <div class="col-md-4 text-end">
                                     <button class="btn btn-sm btn-outline-primary me-1" onclick="verMenu(${menu.id})">
                                         <i class="bi bi-eye"></i> Ver
@@ -2200,11 +2357,11 @@
                                     <button class="btn btn-sm btn-outline-danger" onclick="eliminarMenu(${menu.id})">
                                         <i class="bi bi-trash"></i> Eliminar
                                     </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                        </div>
-                        </div>
-                    `;
+                `;
             });
         }
 
@@ -2295,13 +2452,32 @@
             modal.show();
         }
 
+        // Función para crear nuevo menú
+        function nuevoMenu() {
+            // Limpiar el formulario
+            limpiarFormularioMenu();
+            
+            // Configurar el modal para creación
+            document.getElementById('menuModalTitle').textContent = 'Crear Menú del Día';
+            
+            // Resetear la referencia de edición
+            menuEditando = null;
+            
+            // Cargar opciones disponibles
+            cargarOpcionesParaMenu();
+            
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('menuModal'));
+            modal.show();
+        }
+
         // Función para editar opción
         function editarOpcion(opcionId) {
             const opcion = opciones.find(o => o.id === opcionId);
             if (!opcion) {
                 showAlert('Opción no encontrada', 'error');
-                return;
-            }
+                    return;
+                }
 
             // Configurar el modal para edición
             document.getElementById('opcionModalTitle').textContent = 'Editar Opción';
@@ -2339,8 +2515,8 @@
             const opcion = opciones.find(o => o.id === opcionId);
             if (!opcion) {
                 showAlert('Opción no encontrada', 'error');
-                return;
-            }
+                    return;
+                }
 
             // Mostrar modal de confirmación
             mostrarModalConfirmacionEliminacion(opcion);
@@ -2434,7 +2610,7 @@
                                     Opción en uso
                                 </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
+                                    </div>
                             <div class="modal-body">
                                 <div class="alert alert-warning">
                                     <i class="bi bi-info-circle me-2"></i>
@@ -2447,12 +2623,12 @@
                                             ${op.text}
                                         </button>
                                     `).join('')}
-                                </div>
                             </div>
                         </div>
+                        </div>
                     </div>
-                </div>
-            `;
+                    </div>
+                `;
 
             // Remover modal existente si existe
             const existingModal = document.getElementById('eliminacionModal');
@@ -2555,7 +2731,7 @@
                     
                     const deleteResponse = await fetch(`/api/v1/menu-restructured/opciones/${opcionId}`, {
                         method: 'DELETE',
-                    headers: {
+                            headers: {
                             'Content-Type': 'application/json',
                         }
                     });
@@ -2667,7 +2843,7 @@
             } else {
                         showAlert(`Opción desvinculada pero no eliminada: ${deleteData.message || 'Error desconocido'}`, 'warning');
                     }
-            } else {
+                } else {
                     const errorData = await deleteResponse.json();
                     console.error('❌ Error eliminando opción:', errorData);
                     showAlert(`Opción desvinculada pero error al eliminar: ${errorData.detail || 'Error desconocido'}`, 'warning');
@@ -2817,7 +2993,7 @@
                         });
                     } else {
                         // Si no hay imagen, usar endpoint simple
-                        const params = new URLSearchParams();
+                const params = new URLSearchParams();
                         params.append('nombre', document.getElementById('opcionNombre').value.trim());
                         params.append('descripcion', document.getElementById('opcionDescripcion').value.trim());
                         params.append('tipo', document.getElementById('opcionTipo').value);
@@ -2847,10 +3023,10 @@
                 console.log('📡 Respuesta del servidor:', response.status, response.statusText);
 
                 if (response.ok) {
-                    const data = await response.json();
+                const data = await response.json();
                     console.log('📥 Respuesta del servidor:', data);
-                    
-                    if (data.success) {
+                
+                if (data.success) {
                         const accion = opcionEditando ? 'actualizada' : 'creada';
                         const nombreOpcion = document.getElementById('opcionNombre').value.trim();
                         showAlert(`Opción "${nombreOpcion}" ${accion} exitosamente`, 'success');
@@ -2864,7 +3040,7 @@
                         
                         // Recargar datos
                         await refrescarDatos('opciones');
-                    } else {
+                } else {
                         console.error('❌ Error en respuesta:', data);
                         showAlert(`Error ${opcionEditando ? 'actualizando' : 'creando'} opción: ${data.error}`, 'error');
                     }
@@ -2913,6 +3089,523 @@
             }
             
             return true;
+        }
+
+        // ==================== FUNCIONES DE MENÚ ====================
+
+        // Función para limpiar formulario de menú
+        function limpiarFormularioMenu() {
+            // Establecer fecha de hoy
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('menuFecha').value = hoy;
+            document.getElementById('menuNombre').value = '';
+            document.getElementById('menuPrecio').value = '14000';
+            document.getElementById('menuDescripcion').value = '';
+            
+            // Limpiar selección de platos fijos (marcar todos por defecto)
+            const platosFijosCheckboxes = document.querySelectorAll('.plato-fijo-checkbox');
+            platosFijosCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
+            // Limpiar selección de platos variables
+            const platosVariablesCheckboxes = document.querySelectorAll('.plato-variable-checkbox');
+            platosVariablesCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Actualizar contador
+            actualizarContadorOpciones();
+        }
+
+        // Función para cargar opciones disponibles para menú
+        async function cargarOpcionesParaMenu() {
+            try {
+                console.log('🔄 Cargando opciones para menú...');
+                const response = await fetch('/api/v1/menu-restructured/opciones/');
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('📥 Respuesta del servidor:', data);
+                
+                if (data.success) {
+                    const opcionesActivas = data.opciones.filter(opcion => opcion.activo);
+                    console.log(`✅ Cargadas ${opcionesActivas.length} opciones activas`);
+                    
+                    // Separar platos fijos y variables
+                    const platosFijos = opcionesActivas.filter(opcion => opcion.tipo === 'Fijo');
+                    const platosVariables = opcionesActivas.filter(opcion => opcion.tipo === 'Variable');
+                    
+                    console.log(`📋 Platos fijos: ${platosFijos.length}, Platos variables: ${platosVariables.length}`);
+                    
+                    // Renderizar platos fijos en el modal
+                    renderizarPlatosFijosEnModal(platosFijos);
+                    
+                    // Renderizar platos variables en el modal
+                    renderizarPlatosVariablesEnModal(platosVariables);
+                } else {
+                    console.error('❌ Error en respuesta:', data.error);
+                    showAlert(`Error cargando opciones: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error cargando opciones:', error);
+                showAlert(`Error de conexión: ${error.message}`, 'error');
+            }
+        }
+
+        // Función para renderizar platos fijos en el modal
+        function renderizarPlatosFijosEnModal(platosFijos) {
+            const container = document.getElementById('platosFijosModal');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (platosFijos.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No hay platos fijos activos disponibles.
+                    </div>
+                `;
+                return;
+            }
+            
+            // Renderizar platos fijos con checkboxes (marcados por defecto)
+            platosFijos.forEach(plato => {
+                const platoHtml = `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body p-3">
+                                <div class="form-check">
+                                    <input class="form-check-input plato-fijo-checkbox" 
+                                           type="checkbox" 
+                                           value="${plato.id}" 
+                                           id="plato_fijo_${plato.id}"
+                                           checked
+                                           onchange="actualizarContadorOpciones()">
+                                    <label class="form-check-label w-100" for="plato_fijo_${plato.id}">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <strong>${plato.nombre}</strong>
+                                                <br>
+                                                <small class="text-muted">${plato.descripcion || 'Sin descripción'}</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge bg-primary">${formatearPrecio(plato.precio)}</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', platoHtml);
+            });
+        }
+
+        // Función para renderizar platos variables en el modal
+        function renderizarPlatosVariablesEnModal(platosVariables) {
+            const container = document.getElementById('platosVariablesModal');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (platosVariables.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No hay platos variables activos disponibles.
+                        </div>
+                    `;
+                return;
+            }
+            
+            // Agrupar por categoría
+            const platosPorCategoria = {};
+            platosVariables.forEach(plato => {
+                const categoria = plato.categoria ? plato.categoria.nombre : 'Sin categoría';
+                if (!platosPorCategoria[categoria]) {
+                    platosPorCategoria[categoria] = [];
+                }
+                platosPorCategoria[categoria].push(plato);
+            });
+            
+            // Renderizar por categorías
+            Object.keys(platosPorCategoria).forEach(categoria => {
+                const platosCategoria = platosPorCategoria[categoria];
+                
+                const categoriaHtml = `
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-tag me-2"></i>
+                            ${categoria}
+                        </h6>
+                        <div class="row">
+                            ${platosCategoria.map(plato => `
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body p-3">
+                    <div class="form-check">
+                                                <input class="form-check-input plato-variable-checkbox" 
+                                                       type="checkbox" 
+                                                       value="${plato.id}" 
+                                                       id="plato_variable_${plato.id}"
+                                                       onchange="actualizarContadorOpciones()">
+                                                <label class="form-check-label w-100" for="plato_variable_${plato.id}">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <strong>${plato.nombre}</strong>
+                                                            <br>
+                                                            <small class="text-muted">${plato.descripcion || 'Sin descripción'}</small>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <span class="badge bg-success">${formatearPrecio(plato.precio)}</span>
+                                                        </div>
+                                                    </div>
+                        </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                    </div>
+                </div>
+            `;
+                
+                container.insertAdjacentHTML('beforeend', categoriaHtml);
+            });
+        }
+
+        // Función para actualizar contador de opciones seleccionadas
+        function actualizarContadorOpciones() {
+            const platosFijosSeleccionados = document.querySelectorAll('.plato-fijo-checkbox:checked');
+            const platosVariablesSeleccionados = document.querySelectorAll('.plato-variable-checkbox:checked');
+            const totalSeleccionados = platosFijosSeleccionados.length + platosVariablesSeleccionados.length;
+            
+            const contador = document.getElementById('opcionesSeleccionadas');
+            if (contador) {
+                contador.textContent = totalSeleccionados;
+            }
+            
+            console.log(`📊 Platos seleccionados: ${totalSeleccionados} (${platosFijosSeleccionados.length} fijos + ${platosVariablesSeleccionados.length} variables)`);
+        }
+
+        // Función para guardar menú
+        async function guardarMenu() {
+            // Validar formulario
+            if (!validarFormularioMenu()) {
+                return;
+            }
+
+            try {
+                // Obtener platos fijos seleccionados (deberían estar todos marcados por defecto)
+                const platosFijosSeleccionados = Array.from(document.querySelectorAll('.plato-fijo-checkbox:checked'))
+                    .map(checkbox => checkbox.value);
+                
+                // Obtener platos variables seleccionados
+                const platosVariablesSeleccionados = Array.from(document.querySelectorAll('.plato-variable-checkbox:checked'))
+                    .map(checkbox => checkbox.value);
+                
+                // Combinar todos los platos seleccionados
+                const opcionesSeleccionadas = [...platosFijosSeleccionados, ...platosVariablesSeleccionados];
+                
+                console.log(`📋 Platos seleccionados: ${opcionesSeleccionadas.length} (${platosFijosSeleccionados.length} fijos + ${platosVariablesSeleccionados.length} variables)`);
+                
+                if (opcionesSeleccionadas.length === 0) {
+                    showAlert('Debes seleccionar al menos un plato para el menú', 'warning');
+                    return;
+                }
+
+                // Preparar datos como query parameters
+                const params = new URLSearchParams();
+                params.append('fecha', document.getElementById('menuFecha').value);
+                params.append('nombre', document.getElementById('menuNombre').value.trim());
+                params.append('descripcion', document.getElementById('menuDescripcion').value.trim());
+                params.append('precio', parseFloat(document.getElementById('menuPrecio').value) || 0);
+                params.append('opciones_ids', opcionesSeleccionadas.join(','));
+
+                const url = `/api/v1/menu-restructured-simple/menus/?${params.toString()}`;
+                
+                console.log('🔄 Guardando menú:', {
+                    fecha: document.getElementById('menuFecha').value,
+                    nombre: document.getElementById('menuNombre').value.trim(),
+                    descripcion: document.getElementById('menuDescripcion').value.trim(),
+                    precio: parseFloat(document.getElementById('menuPrecio').value) || 0,
+                    opciones_ids: opcionesSeleccionadas.join(',')
+                });
+                console.log('📤 URL:', url);
+
+                const response = await fetch(url, {
+                    method: 'POST'
+                });
+
+                console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+
+                if (response.ok) {
+                const data = await response.json();
+                    console.log('📥 Respuesta del servidor:', data);
+                    
+                if (data.success) {
+                        showAlert(`Menú "${menuData.nombre}" creado exitosamente`, 'success');
+                        
+                        // Cerrar modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('menuModal'));
+                        modal.hide();
+                        
+                        // Limpiar formulario
+                        limpiarFormularioMenu();
+                        
+                        // Recargar datos
+                        await refrescarDatos('menus');
+                } else {
+                        console.error('❌ Error en respuesta:', data);
+                        showAlert(`Error: ${data.error || 'Error desconocido'}`, 'error');
+                    }
+                } else {
+                    const errorData = await response.json();
+                    console.error('❌ Error del servidor:', errorData);
+                    showAlert(`Error del servidor: ${errorData.detail || 'Error desconocido'}`, 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error guardando menú:', error);
+                showAlert(`Error de conexión: ${error.message}`, 'error');
+            }
+        }
+
+        // Función para validar formulario de menú
+        function validarFormularioMenu() {
+            const fecha = document.getElementById('menuFecha').value;
+            const nombre = document.getElementById('menuNombre').value.trim();
+            const precio = document.getElementById('menuPrecio').value;
+            
+            if (!fecha) {
+                showAlert('La fecha es obligatoria', 'warning');
+                document.getElementById('menuFecha').focus();
+                return false;
+            }
+            
+            if (!nombre) {
+                showAlert('El nombre del menú es obligatorio', 'warning');
+                document.getElementById('menuNombre').focus();
+                return false;
+            }
+            
+            if (!precio || parseFloat(precio) < 0) {
+                showAlert('El precio debe ser mayor o igual a 0', 'warning');
+                document.getElementById('menuPrecio').focus();
+                return false;
+            }
+            
+            return true;
+        }
+
+        // ==================== FUNCIONES DE CALENDARIO ====================
+
+        // Función para renderizar menús en formato calendario
+        function renderizarMenus() {
+            const container = document.getElementById('menusContainer');
+            if (!container) return;
+            
+            container.innerHTML = '';
+
+            // Generar calendario de las últimas 2 semanas
+            const calendarioHtml = generarCalendarioMenus();
+            container.innerHTML = calendarioHtml;
+        }
+
+        // Función para generar el calendario de menús
+        function generarCalendarioMenus() {
+            const hoy = new Date();
+            const dosSemanasAtras = new Date(hoy);
+            dosSemanasAtras.setDate(hoy.getDate() - 14);
+            
+            // Crear array de fechas para las últimas 2 semanas
+            const fechas = [];
+            for (let i = 0; i < 14; i++) {
+                const fecha = new Date(dosSemanasAtras);
+                fecha.setDate(dosSemanasAtras.getDate() + i);
+                fechas.push(fecha);
+            }
+            
+            // Agrupar fechas por semana
+            const semanas = [];
+            for (let i = 0; i < fechas.length; i += 7) {
+                semanas.push(fechas.slice(i, i + 7));
+            }
+            
+            let calendarioHtml = `
+                <div class="calendario-menus">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="mb-0">
+                            <i class="bi bi-calendar-week me-2"></i>
+                            Calendario de Menús (Últimas 2 Semanas)
+                        </h5>
+                        <div class="text-muted">
+                            <small>${fechas[0].toLocaleDateString('es-CO')} - ${fechas[fechas.length-1].toLocaleDateString('es-CO')}</small>
+                                </div>
+                                </div>
+            `;
+            
+            // Renderizar cada semana
+            semanas.forEach((semana, semanaIndex) => {
+                const esSemanaActual = semana.some(fecha => 
+                    fecha.toDateString() === hoy.toDateString()
+                );
+                
+                calendarioHtml += `
+                    <div class="semana-calendario mb-4 ${esSemanaActual ? 'semana-actual' : ''}">
+                        <div class="row g-3">
+                `;
+                
+                // Renderizar cada día de la semana
+                semana.forEach(fecha => {
+                    const esHoy = fecha.toDateString() === hoy.toDateString();
+                    const menuDelDia = menus.find(menu => {
+                        const menuFecha = new Date(menu.fecha);
+                        return menuFecha.toDateString() === fecha.toDateString();
+                    });
+                    
+                    calendarioHtml += `
+                        <div class="col">
+                            <div class="dia-calendario ${esHoy ? 'dia-hoy' : ''} ${menuDelDia ? 'con-menu' : 'sin-menu'}">
+                                <div class="dia-header">
+                                    <div class="dia-nombre">${fecha.toLocaleDateString('es-CO', { weekday: 'short' })}</div>
+                                    <div class="dia-numero">${fecha.getDate()}</div>
+                                </div>
+                                <div class="dia-contenido">
+                                    ${menuDelDia ? renderizarMenuEnDia(menuDelDia) : renderizarDiaVacio(fecha)}
+                                </div>
+                                </div>
+                            </div>
+                    `;
+                });
+                
+                calendarioHtml += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            calendarioHtml += `
+                </div>
+            `;
+            
+            return calendarioHtml;
+        }
+
+        // Función para renderizar un menú en un día del calendario
+        function renderizarMenuEnDia(menu) {
+            const opcionesCount = menu.opciones ? menu.opciones.length : 0;
+            const fechaMenu = new Date(menu.fecha);
+            const esHoy = fechaMenu.toDateString() === new Date().toDateString();
+            
+            return `
+                <div class="menu-dia-card ${esHoy ? 'menu-hoy' : ''}">
+                    <div class="menu-header">
+                        <h6 class="menu-nombre">${menu.nombre}</h6>
+                        <div class="menu-precio">${formatearPrecio(menu.precio)}</div>
+                    </div>
+                    <div class="menu-info">
+                        <div class="menu-platos">
+                            <i class="bi bi-utensils me-1"></i>
+                            ${opcionesCount} plato${opcionesCount !== 1 ? 's' : ''}
+                        </div>
+                        ${menu.descripcion ? `
+                            <div class="menu-descripcion" title="${menu.descripcion}">
+                                <i class="bi bi-info-circle me-1"></i>
+                                ${menu.descripcion.length > 30 ? menu.descripcion.substring(0, 30) + '...' : menu.descripcion}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="menu-acciones">
+                        <button class="btn btn-sm btn-outline-primary" onclick="verMenu(${menu.id})" title="Ver detalles">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="editarMenu(${menu.id})" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarMenu(${menu.id})" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Función para renderizar un día vacío
+        function renderizarDiaVacio(fecha) {
+            const esHoy = fecha.toDateString() === new Date().toDateString();
+            const esFuturo = fecha > new Date();
+            
+            return `
+                <div class="dia-vacio ${esHoy ? 'dia-hoy-vacio' : ''}">
+                    ${esHoy ? `
+                        <div class="text-center">
+                            <i class="bi bi-calendar-plus text-primary fs-4"></i>
+                            <div class="mt-2">
+                                <small class="text-muted">Hoy</small>
+                                <br>
+                                <button class="btn btn-sm btn-primary mt-1" onclick="nuevoMenu()">
+                                    <i class="bi bi-plus me-1"></i>
+                                    Crear Menú
+                                </button>
+                </div>
+                        </div>
+                    ` : esFuturo ? `
+                        <div class="text-center text-muted">
+                            <i class="bi bi-calendar text-muted fs-4"></i>
+                            <div class="mt-2">
+                                <small>Futuro</small>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="text-center text-muted">
+                            <i class="bi bi-calendar-x text-muted fs-4"></i>
+                            <div class="mt-2">
+                                <small>Sin menú</small>
+                            </div>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        // Funciones auxiliares para menús
+        function verMenu(menuId) {
+            const menu = menus.find(m => m.id === menuId);
+            if (!menu) {
+                showAlert('Menú no encontrado', 'error');
+                return;
+            }
+            
+            // Aquí puedes implementar un modal para ver detalles del menú
+            showAlert(`Ver detalles del menú: ${menu.nombre}`, 'info');
+        }
+
+        function editarMenu(menuId) {
+            const menu = menus.find(m => m.id === menuId);
+            if (!menu) {
+                showAlert('Menú no encontrado', 'error');
+                return;
+            }
+            
+            // Aquí puedes implementar la edición del menú
+            showAlert(`Editar menú: ${menu.nombre}`, 'info');
+        }
+
+        function eliminarMenu(menuId) {
+            const menu = menus.find(m => m.id === menuId);
+            if (!menu) {
+                showAlert('Menú no encontrado', 'error');
+                return;
+            }
+            
+            // Aquí puedes implementar la eliminación del menú
+            showAlert(`Eliminar menú: ${menu.nombre}`, 'info');
         }
 </script>
 {% endblock %}

@@ -37,3 +37,4 @@ def verificar_categorias():
 
 if __name__ == "__main__":
     verificar_categorias()
+

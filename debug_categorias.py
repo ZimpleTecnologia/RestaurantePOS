@@ -71,3 +71,4 @@ def diagnosticar_categorias():
 
 if __name__ == "__main__":
     diagnosticar_categorias()
+

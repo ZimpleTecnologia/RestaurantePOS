@@ -189,3 +189,4 @@ if __name__ == "__main__":
             print("\n❌ Error durante la limpieza. Revisa los logs.")
     else:
         print("\n❌ Operación cancelada.")
+

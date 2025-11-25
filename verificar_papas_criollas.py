@@ -74,3 +74,4 @@ def verificar_papas_criollas():
 
 if __name__ == "__main__":
     verificar_papas_criollas()
+

@@ -66,15 +66,15 @@ class MenuDiaOpcion(Base):
     __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True)
-    menu_dia_id = Column(Integer, ForeignKey("menus_dia.id"), nullable=False)
+    menu_dia_id = Column(Integer, ForeignKey("menus_dia_restructured.id"), nullable=False)
     opcion_id = Column(Integer, ForeignKey("opciones_platos.id"), nullable=False)
     disponible = Column(Boolean, default=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    # Relaciones - usando foreign_keys explícitas
-    menu_dia = relationship("MenuDiaRestructured", back_populates="opciones", foreign_keys=[menu_dia_id])
-    opcion = relationship("OpcionPlato", back_populates="menu_opciones", foreign_keys=[opcion_id])
+    # Relaciones
+    menu_dia = relationship("MenuDiaRestructured", back_populates="opciones")
+    opcion = relationship("OpcionPlato", back_populates="menu_opciones")
     
     def __repr__(self):
         return f"<MenuDiaOpcion(menu_dia_id={self.menu_dia_id}, opcion_id={self.opcion_id})>"
@@ -82,7 +82,7 @@ class MenuDiaOpcion(Base):
 # Modelo MenuDia para el sistema reestructurado
 class MenuDiaRestructured(Base):
     """Menú del día con opciones"""
-    __tablename__ = "menus_dia"
+    __tablename__ = "menus_dia_restructured"
     __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True)
@@ -95,8 +95,8 @@ class MenuDiaRestructured(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Relaciones - usando foreign_keys explícitas
-    opciones = relationship("MenuDiaOpcion", back_populates="menu_dia", foreign_keys="MenuDiaOpcion.menu_dia_id")
+    # Relaciones
+    opciones = relationship("MenuDiaOpcion", back_populates="menu_dia")
     
     def __repr__(self):
         return f"<MenuDiaRestructured(id={self.id}, fecha='{self.fecha}', estado='{self.estado}')>"

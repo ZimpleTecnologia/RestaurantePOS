@@ -43,3 +43,4 @@ def test_categorias_correctas():
 
 if __name__ == "__main__":
     test_categorias_correctas()
+

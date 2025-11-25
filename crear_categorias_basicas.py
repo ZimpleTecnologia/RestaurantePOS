@@ -102,3 +102,4 @@ if __name__ == "__main__":
     print("🏗️ CREADOR DE CATEGORÍAS BÁSICAS")
     print("=" * 50)
     crear_categorias_basicas()
+
