@@ -1427,13 +1427,13 @@
                             <div class="card-header">
                                 <h6 class="mb-0">
                                     <i class="bi bi-list-ul me-2"></i>
-                                    Platos Variables (selecciona por categoría)
+                                    Platos Variables (selecciona los que quieras incluir)
                                 </h6>
-                                <small class="text-muted">Organiza los platos por categorías para que el cliente pueda elegir</small>
+                                <small class="text-muted">Los platos están organizados por categorías</small>
                             </div>
                             <div class="card-body">
                                 <div id="platosVariablesModal">
-                                    <!-- Los platos variables se cargarán aquí por categoría -->
+                                    <!-- Los platos variables se cargarán aquí agrupados por categoría -->
                                 </div>
                             </div>
                         </div>
@@ -1482,6 +1482,7 @@
         let menus = [];
         let opcionEditando = null;
         let menuEditando = null;
+        let platosVariablesModal = []; // Almacenar platos variables para el modal con sus categorías
         
         // Variables de filtrado
         let opcionesFiltradas = [];
@@ -1517,22 +1518,26 @@
         // Configurar eventos
         function configurarEventos() {
             // Cambiar tipo de opción
+            // Habilitar categoría solo para platos variables (Menu_Dia)
             document.getElementById('opcionTipo').addEventListener('change', function() {
                 const tipo = this.value;
                 const categoriaSelect = document.getElementById('opcionCategoria');
                 
-                if (tipo === 'Variable') {
-                    categoriaSelect.required = true;
-                    categoriaSelect.disabled = false;
-                    // Asegurar que el select esté visible y funcional
-                    categoriaSelect.style.display = 'block';
-                } else {
-                    categoriaSelect.required = false;
-                    categoriaSelect.disabled = true;
-                    categoriaSelect.value = '';
+                if (categoriaSelect) {
+                    if (tipo === 'Variable') {
+                        // Habilitar categoría para platos variables
+                        categoriaSelect.required = true;
+                        categoriaSelect.disabled = false;
+                        categoriaSelect.style.display = 'block';
+                    } else {
+                        // Deshabilitar para platos fijos
+                        categoriaSelect.required = false;
+                        categoriaSelect.disabled = true;
+                        categoriaSelect.value = '';
+                    }
                 }
                 
-                console.log('Tipo cambiado a:', tipo, 'Categoría habilitada:', !categoriaSelect.disabled);
+                console.log('Tipo cambiado a:', tipo, 'Categoría:', tipo === 'Variable' ? 'habilitada' : 'deshabilitada');
             });
 
             // Configurar eventos de pestañas
@@ -1590,28 +1595,56 @@
             }
         }
 
-        // Cargar opciones
+        // Cargar opciones (platos disponibles para menús) - Usando el nuevo API unificado
         async function cargarOpciones() {
             try {
                 // Agregar timestamp para evitar caché
                 const timestamp = new Date().getTime();
-                const response = await fetch(`/api/v1/menu-restructured/opciones/?t=${timestamp}`);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                // Cargar ambos tipos de platos desde el nuevo API unificado
+                const [responseFijos, responseVariables] = await Promise.all([
+                    fetch(`/api/v1/restaurant-menu/platos/?tipo=Plato_Fijo&t=${timestamp}`),
+                    fetch(`/api/v1/restaurant-menu/platos/?tipo=Menu_Dia&t=${timestamp}`)
+                ]);
+                
+                if (!responseFijos.ok || !responseVariables.ok) {
+                    throw new Error(`HTTP Error: ${responseFijos.status || responseVariables.status}`);
                 }
                 
-                const data = await response.json();
-                if (data.success) {
-                    opciones = data.opciones || [];
-                    renderizarOpciones();
-                    console.log(`✅ Cargadas ${opciones.length} opciones`);
-                } else {
-                    console.error('Error en respuesta:', data.error);
-                    showAlert(`Error cargando opciones: ${data.error}`, 'error');
-                    opciones = [];
-                    renderizarOpciones();
-                }
+                const dataFijos = await responseFijos.json();
+                const dataVariables = await responseVariables.json();
+                
+                // Adaptar estructura al formato esperado por el frontend
+                const platosFijos = (dataFijos.platos || []).map(plato => ({
+                    id: plato.id,
+                    nombre: plato.nombre,
+                    descripcion: plato.descripcion || '',
+                    precio: parseFloat(plato.precio) || 0,
+                    tipo: 'Fijo', // Mapear a formato del frontend
+                    activo: plato.activo !== false,
+                    categoria: null, // Los platos fijos no tienen categoría
+                    categoria_id: null,
+                    tiene_imagen: plato.tiene_imagen || false,
+                    imagen_data: plato.imagen_data || false
+                }));
+                
+                const platosVariables = (dataVariables.platos || []).map(plato => ({
+                    id: plato.id,
+                    nombre: plato.nombre,
+                    descripcion: plato.descripcion || '',
+                    precio: parseFloat(plato.precio) || 0,
+                    tipo: 'Variable', // Mapear a formato del frontend
+                    activo: plato.activo !== false,
+                    categoria: plato.categoria || null, // Categoría sugerida por defecto
+                    categoria_id: plato.categoria_id || null,
+                    tiene_imagen: plato.tiene_imagen || false,
+                    imagen_data: plato.imagen_data || false
+                }));
+                
+                // Combinar ambos tipos de platos
+                opciones = [...platosFijos, ...platosVariables];
+                renderizarOpciones();
+                console.log(`✅ Cargadas ${opciones.length} opciones (${platosFijos.length} fijos + ${platosVariables.length} variables)`);
             } catch (error) {
                 console.error('Error cargando opciones:', error);
                 showAlert(`Error de conexión cargando opciones: ${error.message}`, 'error');
@@ -1624,12 +1657,13 @@
         async function cargarCategorias() {
             try {
                 console.log('🔧 Cargando categorías...');
-                const response = await fetch('/api/v1/menu-restructured/categorias/');
+                const response = await fetch('/api/v1/restaurant-menu/categorias/');
                 console.log('📡 Respuesta de categorías:', response.status, response.statusText);
                 
                 const data = await response.json();
                 console.log('📊 Datos de categorías recibidos:', data);
                 
+                // El nuevo API devuelve { categorias: [...], total: N }
                 if (data.categorias && Array.isArray(data.categorias)) {
                     categorias = data.categorias || [];
                     console.log(`✅ Cargadas ${categorias.length} categorías:`, categorias);
@@ -1773,55 +1807,83 @@
         // Cargar menús
         async function cargarMenus() {
             try {
-                const response = await fetch('/api/v1/menu-restructured/menus/');
+                const response = await fetch('/api/v1/restaurant-menu/menus/');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
                 const data = await response.json();
-                if (data.success) {
-                    menus = data.menus || [];
-                    renderizarMenus();
+                // El nuevo API devuelve { menus: [...], total: N }
+                if (data.menus) {
+                    // Adaptar estructura: convertir menus a formato esperado
+                    menus = (data.menus || []).map(menu => ({
+                        id: menu.id,
+                        fecha: menu.fecha,
+                        nombre: menu.nombre,
+                        descripcion: menu.descripcion || '',
+                        precio: parseFloat(menu.precio) || 0,
+                        estado: menu.estado || 'DRAFT',
+                        activo: menu.activo || false,
+                        total_platos: menu.total_platos || 0,
+                        categorias_platos: menu.categorias_platos || {}
+                    }));
+                    
+                    // Renderizar lista de menús (pestaña Menú del Día)
+                    const menusListContainer = document.getElementById('menusList');
+                    if (menusListContainer) {
+                        renderizarMenusLista();
+                    }
+                    
+                    // Renderizar historial
                     renderizarHistorial();
+                    
+                    // Renderizar calendario si existe el contenedor
+                    const menusContainer = document.getElementById('menusContainer');
+                    if (menusContainer) {
+                        renderizarMenusCalendario();
+                    }
+                    
                     console.log(`✅ Cargados ${menus.length} menús`);
                 } else {
-                    console.error('Error en respuesta:', data.error);
-                    showAlert(`Error cargando menús: ${data.error}`, 'error');
+                    console.error('Error en respuesta:', data);
+                    showAlert(`Error cargando menús: formato de respuesta inválido`, 'error');
                     menus = [];
-                    renderizarMenus();
+                    const menusListContainer = document.getElementById('menusList');
+                    if (menusListContainer) {
+                        renderizarMenusLista();
+                    }
                     renderizarHistorial();
                 }
             } catch (error) {
                 console.error('Error cargando menús:', error);
                 showAlert(`Error de conexión cargando menús: ${error.message}`, 'error');
                 menus = [];
-                renderizarMenus();
+                const menusListContainer = document.getElementById('menusList');
+                if (menusListContainer) {
+                    renderizarMenusLista();
+                }
                 renderizarHistorial();
             }
         }
 
-        // Cargar estadísticas
+        // Cargar estadísticas (calculadas desde los datos locales)
         async function cargarEstadisticas() {
             try {
-                const response = await fetch('/api/v1/menu-restructured/stats/');
-                const data = await response.json();
-                if (data.success) {
-                    const stats = data.stats;
-                    // Usar animación para actualizar números
-                    animarNumero('totalOpciones', stats.opciones || 0);
-                    animarNumero('platosFijos', stats.platos_fijos || 0);
-                    animarNumero('platosVariables', stats.platos_variables || 0);
-                    animarNumero('menusActivos', stats.menus || 0);
-                    
-                    // Actualizar contadores de pestañas
-                    actualizarContadoresPestanas();
-                } else {
-                    console.error('Error cargando estadísticas:', data.error);
-                    // Fallback a datos locales con animación
-                    actualizarEstadisticasConAnimacion();
-                    actualizarContadoresPestanas();
-                }
+                // Calcular estadísticas desde los datos ya cargados
+                const totalOpciones = opciones.length;
+                const platosFijos = opciones.filter(o => o.tipo === 'Fijo').length;
+                const platosVariables = opciones.filter(o => o.tipo === 'Variable').length;
+                const menusActivos = menus.filter(m => m.estado === 'ACTIVE').length;
+                
+                // Usar animación para actualizar números
+                animarNumero('totalOpciones', totalOpciones);
+                animarNumero('platosFijos', platosFijos);
+                animarNumero('platosVariables', platosVariables);
+                animarNumero('menusActivos', menusActivos);
+                
+                // Actualizar contadores de pestañas
+                actualizarContadoresPestanas();
             } catch (error) {
                 console.error('Error cargando estadísticas:', error);
                 // Actualizar contadores con datos locales en caso de error
@@ -2036,9 +2098,9 @@
             let imagenHTML = '';
             
             if (opcion.tiene_imagen || opcion.imagen_data) {
-                // Solo imagen real
+                // Solo imagen real - usar el nuevo endpoint unificado
                 imagenHTML = `
-                    <img src="/api/v1/menu-restructured/opciones/${opcion.id}/imagen" 
+                    <img src="/api/v1/restaurant-menu/platos/${opcion.id}/imagen" 
                          class="opcion-imagen" 
                          alt="${opcion.nombre}">
                 `;
@@ -2251,8 +2313,12 @@
         }
 
         // Renderizar menús
-        function renderizarMenus(menusList = menus) {
+        function renderizarMenusLista(menusList = menus) {
             const container = document.getElementById('menusList');
+            if (!container) {
+                console.warn('⚠️ Contenedor menusList no encontrado');
+                return;
+            }
             container.innerHTML = '';
 
             // Actualizar contadores después de renderizar
@@ -2287,7 +2353,7 @@
                                     <strong>${formatearPrecio(menu.precio)}</strong>
                                 </div>
                                 <div class="col-md-1">
-                                    <small class="text-muted">${menu.opciones ? menu.opciones.length : 0} platos</small>
+                                    <small class="text-muted">${menu.total_platos || 0} platos</small>
                                 </div>
                                 <div class="col-md-4 text-end">
                                     <button class="btn btn-sm btn-outline-primary me-1" onclick="verMenu(${menu.id})">
@@ -2476,30 +2542,37 @@
             const opcion = opciones.find(o => o.id === opcionId);
             if (!opcion) {
                 showAlert('Opción no encontrada', 'error');
-                    return;
-                }
+                return;
+            }
 
             // Configurar el modal para edición
-            document.getElementById('opcionModalTitle').textContent = 'Editar Opción';
+            document.getElementById('opcionModalTitle').textContent = 'Editar Plato';
             document.getElementById('opcionNombre').value = opcion.nombre;
             document.getElementById('opcionTipo').value = opcion.tipo;
             document.getElementById('opcionPrecio').value = opcion.precio;
             document.getElementById('opcionDescripcion').value = opcion.descripcion || '';
-            document.getElementById('opcionActivo').checked = opcion.activo;
+            document.getElementById('opcionActivo').checked = opcion.activo !== false;
             
             // Configurar categoría según el tipo
-            if (opcion.tipo === 'Variable') {
-                document.getElementById('opcionCategoria').disabled = false;
-                document.getElementById('opcionCategoria').required = true;
-                if (opcion.categoria) {
-                    document.getElementById('opcionCategoria').value = opcion.categoria.id;
+            const categoriaSelect = document.getElementById('opcionCategoria');
+            if (categoriaSelect) {
+                if (opcion.tipo === 'Variable') {
+                    categoriaSelect.disabled = false;
+                    categoriaSelect.required = true;
+                    categoriaSelect.style.display = 'block';
+                    // Establecer valor si existe
+                    if (opcion.categoria && opcion.categoria.id) {
+                        categoriaSelect.value = opcion.categoria.id;
+                    } else if (opcion.categoria_id) {
+                        categoriaSelect.value = opcion.categoria_id;
                     } else {
-                    document.getElementById('opcionCategoria').value = '';
+                        categoriaSelect.value = '';
+                    }
+                } else {
+                    categoriaSelect.disabled = true;
+                    categoriaSelect.required = false;
+                    categoriaSelect.value = '';
                 }
-            } else {
-                document.getElementById('opcionCategoria').value = '';
-                document.getElementById('opcionCategoria').disabled = true;
-                document.getElementById('opcionCategoria').required = false;
             }
 
             // Guardar referencia a la opción que se está editando
@@ -2543,10 +2616,13 @@
             modal.hide();
             
             try {
-                console.log('🗑️ Eliminando opción:', opcionId);
-                console.log('📤 Enviando DELETE a:', `/api/v1/menu-restructured/opciones/${opcionId}`);
+                const opcion = opciones.find(o => o.id === opcionId);
+                const nombreOpcion = opcion ? opcion.nombre : 'eliminado';
                 
-                const response = await fetch(`/api/v1/menu-restructured/opciones/${opcionId}`, {
+                console.log('🗑️ Eliminando opción:', opcionId);
+                console.log('📤 Enviando DELETE a:', `/api/v1/restaurant-menu/platos/${opcionId}`);
+                
+                const response = await fetch(`/api/v1/restaurant-menu/platos/${opcionId}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2554,25 +2630,31 @@
                 });
 
                 console.log('📡 Respuesta del servidor:', response.status, response.statusText);
-                
-                const data = await response.json();
-                console.log('📥 Respuesta del servidor:', data);
 
                 if (response.ok) {
+                    const data = await response.json();
+                    console.log('📥 Respuesta del servidor:', data);
+                    
                     if (data.success) {
                         if (data.action === "already_inactive" && data.menu_count > 0) {
                             // Si está en menús, mostrar opciones de eliminación
                             mostrarOpcionesEliminacion(data.opcion, data.menu_count);
-                        } else {
-                            // Eliminación exitosa
-                            showAlert(`Plato "${data.opcion?.nombre || 'eliminado'}" eliminado exitosamente`, 'success');
+                        } else if (data.action === "deleted") {
+                            showAlert(`Plato "${nombreOpcion}" eliminado exitosamente`, 'success');
                             await cargarOpciones();
+                            await refrescarDatos('menus');
+                        } else {
+                            showAlert(`Plato "${nombreOpcion}" desactivado exitosamente`, 'success');
+                            await cargarOpciones();
+                            await refrescarDatos('menus');
                         }
                     } else {
                         showAlert(`Error: ${data.error || 'Error desconocido'}`, 'error');
                     }
                 } else {
-                    showAlert(`Error del servidor: ${response.status}`, 'error');
+                    const errorData = await response.json();
+                    console.error('❌ Error del servidor:', errorData);
+                    showAlert(`Error del servidor: ${errorData.detail || 'Error desconocido'}`, 'error');
                 }
             } catch (error) {
                 console.error('❌ Error eliminando opción:', error);
@@ -2858,209 +2940,138 @@
             }
         }
 
-        // Función para guardar opción (crear o editar)
+        // Función para guardar opción (crear o editar) - Usando el nuevo API unificado
         async function guardarOpcion() {
             // Validar formulario
             if (!validarFormularioOpcion()) {
                 return;
             }
 
-            // Preparar datos para envío
-            const formData = new FormData();
-            formData.append('nombre', document.getElementById('opcionNombre').value.trim());
-            formData.append('tipo', document.getElementById('opcionTipo').value);
-            formData.append('precio', parseFloat(document.getElementById('opcionPrecio').value) || 0);
-            formData.append('descripcion', document.getElementById('opcionDescripcion').value.trim());
-            formData.append('activo', document.getElementById('opcionActivo').checked);
-
-            // Agregar categoría si es variable
-            if (document.getElementById('opcionTipo').value === 'Variable') {
-                const categoriaId = document.getElementById('opcionCategoria').value;
-                console.log('🔍 Categoría seleccionada:', categoriaId);
-                if (!categoriaId) {
-                    showAlert('Debes seleccionar una categoría para platos variables', 'warning');
-                    return;
-                }
-                formData.append('categoria_id', parseInt(categoriaId));
-                console.log('📤 Categoría agregada al FormData:', parseInt(categoriaId));
-            }
-
             try {
+                // Mapear tipos del frontend a tipos del nuevo API
+                const tipoFrontend = document.getElementById('opcionTipo').value;
+                const tipoAPI = tipoFrontend === 'Fijo' ? 'Plato_Fijo' : 'Menu_Dia';
+                
+                // Preparar datos según el nuevo API
+                const platoData = {
+                    nombre: document.getElementById('opcionNombre').value.trim(),
+                    descripcion: document.getElementById('opcionDescripcion').value.trim() || null,
+                    precio: parseFloat(document.getElementById('opcionPrecio').value) || 0,
+                    tipo: tipoAPI,
+                    activo: document.getElementById('opcionActivo').checked
+                };
+                
+                // Agregar categoría si es plato variable
+                if (tipoFrontend === 'Variable') {
+                    const categoriaId = document.getElementById('opcionCategoria').value;
+                    if (categoriaId) {
+                        platoData.categoria_id = parseInt(categoriaId);
+                    }
+                } else {
+                    platoData.categoria_id = null;
+                }
+                
+                console.log('🔄 Guardando plato:', platoData);
+                
                 let response;
                 let url;
                 let method;
 
                 if (opcionEditando) {
-                    // Editar opción existente
-                    const imagenFile = document.getElementById('opcionImagen').files[0];
-                    
-                    if (imagenFile) {
-                        // Si hay imagen, usar el endpoint con imagen
-                        url = `/api/v1/menu-restructured/opciones/${opcionEditando}/with-image/`;
-                        method = 'PUT';
-                        
-                        // Preparar FormData con imagen
-                        const editFormData = new FormData();
-                        editFormData.append('nombre', document.getElementById('opcionNombre').value.trim());
-                        editFormData.append('tipo', document.getElementById('opcionTipo').value);
-                        editFormData.append('precio', parseFloat(document.getElementById('opcionPrecio').value) || 0);
-                        editFormData.append('descripcion', document.getElementById('opcionDescripcion').value.trim());
-                        editFormData.append('activo', document.getElementById('opcionActivo').checked);
-                        editFormData.append('imagen', imagenFile);
-                        
-                        if (document.getElementById('opcionTipo').value === 'Variable') {
-                            const categoriaId = document.getElementById('opcionCategoria').value;
-                            console.log('🔍 Editando con imagen - Categoría seleccionada:', categoriaId);
-                            if (categoriaId) {
-                                editFormData.append('categoria_id', categoriaId);
-                                console.log('📤 Categoría agregada al FormData (con imagen):', categoriaId);
-                            }
-                        }
-                        
-                        // Debug: mostrar datos que se van a enviar
-                        console.log('🔄 Editando opción con imagen:', opcionEditando);
-                        console.log('📤 Datos FormData:');
-                        for (let [key, value] of editFormData.entries()) {
-                            console.log(`  ${key}: ${value instanceof File ? value.name : value}`);
-                        }
-                        
-                        response = await fetch(url, {
-                            method: method,
-                            body: editFormData
-                        });
-                    } else {
-                        // Si no hay imagen, usar query parameters
-                        const params = new URLSearchParams();
-                        params.append('nombre', document.getElementById('opcionNombre').value.trim());
-                        params.append('tipo', document.getElementById('opcionTipo').value);
-                        params.append('precio', parseFloat(document.getElementById('opcionPrecio').value) || 0);
-                        params.append('descripcion', document.getElementById('opcionDescripcion').value.trim());
-                        params.append('activo', document.getElementById('opcionActivo').checked);
-                        
-                        if (document.getElementById('opcionTipo').value === 'Variable') {
-                            const categoriaId = document.getElementById('opcionCategoria').value;
-                            console.log('🔍 Editando sin imagen - Categoría seleccionada:', categoriaId);
-                            if (categoriaId) {
-                                params.append('categoria_id', categoriaId);
-                                console.log('📤 Categoría agregada a parámetros (sin imagen):', categoriaId);
-                            }
-                        }
-                        
-                        url = `/api/v1/menu-restructured/opciones/${opcionEditando}/?${params.toString()}`;
-                        method = 'PUT';
-                        
-                        // Debug: mostrar datos que se van a enviar
-                        console.log('🔄 Editando opción sin imagen:', opcionEditando);
-                        console.log('📤 URL con parámetros:', url);
-                        
-                        response = await fetch(url, {
-                            method: method
-                        });
-                    }
+                    // Editar plato existente
+                    url = `/api/v1/restaurant-menu/platos/${opcionEditando}`;
+                    method = 'PUT';
                 } else {
-                    // Crear nueva opción
-                    const imagenFile = document.getElementById('opcionImagen').files[0];
-                    
-                    if (imagenFile) {
-                        // Si hay imagen, usar el endpoint con imagen
-                        url = '/api/v1/menu-restructured/opciones/with-image/';
-                        method = 'POST';
-                        
-                        // Preparar FormData con imagen
-                        const createFormData = new FormData();
-                        createFormData.append('nombre', document.getElementById('opcionNombre').value.trim());
-                        createFormData.append('descripcion', document.getElementById('opcionDescripcion').value.trim());
-                        createFormData.append('tipo', document.getElementById('opcionTipo').value);
-                        createFormData.append('precio', parseFloat(document.getElementById('opcionPrecio').value) || 0);
-                        createFormData.append('imagen', imagenFile);
-                        
-                        if (document.getElementById('opcionTipo').value === 'Variable') {
-                            const categoriaId = document.getElementById('opcionCategoria').value;
-                            if (categoriaId) {
-                                createFormData.append('categoria_id', categoriaId);
-                            }
-                        }
-                        
-                        console.log('🔄 Creando nueva opción con imagen:', url);
-                        console.log('📤 Datos FormData:');
-                        for (let [key, value] of createFormData.entries()) {
-                            console.log(`  ${key}: ${value instanceof File ? value.name : value}`);
-                        }
-                        
-                        response = await fetch(url, {
-                            method: method,
-                            body: createFormData
-                        });
-                    } else {
-                        // Si no hay imagen, usar endpoint simple
-                const params = new URLSearchParams();
-                        params.append('nombre', document.getElementById('opcionNombre').value.trim());
-                        params.append('descripcion', document.getElementById('opcionDescripcion').value.trim());
-                        params.append('tipo', document.getElementById('opcionTipo').value);
-                        params.append('precio', parseFloat(document.getElementById('opcionPrecio').value) || 0);
-                        params.append('activo', document.getElementById('opcionActivo').checked);
-                        
-                        // Agregar categoría si es variable
-                        if (document.getElementById('opcionTipo').value === 'Variable') {
-                            const categoriaId = document.getElementById('opcionCategoria').value;
-                            if (categoriaId) {
-                                params.append('categoria_id', categoriaId);
-                            }
-                        }
-                        
-                        url = `/api/v1/menu-restructured-simple/opciones/?${params.toString()}`;
-                        method = 'POST';
-                        
-                        console.log('🔄 Creando nueva opción sin imagen:', url);
-                        console.log('📤 Parámetros:', params.toString());
-                        
-                        response = await fetch(url, {
-                            method: method
-                        });
-                    }
+                    // Crear nuevo plato
+                    url = '/api/v1/restaurant-menu/platos/';
+                    method = 'POST';
                 }
+                
+                console.log('📤 Enviando a:', url, method);
+                
+                response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(platoData)
+                });
                 
                 console.log('📡 Respuesta del servidor:', response.status, response.statusText);
 
                 if (response.ok) {
-                const data = await response.json();
+                    const data = await response.json();
                     console.log('📥 Respuesta del servidor:', data);
-                
-                if (data.success) {
-                        const accion = opcionEditando ? 'actualizada' : 'creada';
-                        const nombreOpcion = document.getElementById('opcionNombre').value.trim();
-                        showAlert(`Opción "${nombreOpcion}" ${accion} exitosamente`, 'success');
-                        
-                        // Cerrar modal
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('opcionModal'));
-                        modal.hide();
-                        
-                        // Limpiar formulario
-                        limpiarFormularioOpcion();
-                        
-                        // Recargar datos
-                        await refrescarDatos('opciones');
-                } else {
-                        console.error('❌ Error en respuesta:', data);
-                        showAlert(`Error ${opcionEditando ? 'actualizando' : 'creando'} opción: ${data.error}`, 'error');
+                    
+                    const platoId = data.id || opcionEditando;
+                    
+                    // Si hay imagen seleccionada, subirla
+                    const imagenFile = document.getElementById('opcionImagen').files[0];
+                    if (imagenFile && platoId) {
+                        try {
+                            console.log('📤 Subiendo imagen para plato:', platoId);
+                            const formData = new FormData();
+                            formData.append('imagen', imagenFile);
+                            
+                            const imagenResponse = await fetch(`/api/v1/restaurant-menu/platos/${platoId}/imagen`, {
+                                method: 'PUT',
+                                body: formData
+                            });
+                            
+                            if (imagenResponse.ok) {
+                                console.log('✅ Imagen subida exitosamente');
+                            } else {
+                                console.error('⚠️ Error al subir imagen:', await imagenResponse.json());
+                                showAlert('Plato guardado pero hubo un error al subir la imagen', 'warning');
+                            }
+                        } catch (error) {
+                            console.error('❌ Error subiendo imagen:', error);
+                            showAlert('Plato guardado pero hubo un error al subir la imagen', 'warning');
+                        }
                     }
+                    
+                    const accion = opcionEditando ? 'actualizado' : 'creado';
+                    const nombreOpcion = document.getElementById('opcionNombre').value.trim();
+                    showAlert(`Plato "${nombreOpcion}" ${accion} exitosamente`, 'success');
+                    
+                    // Cerrar modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('opcionModal'));
+                    modal.hide();
+                    
+                    // Limpiar formulario
+                    limpiarFormularioOpcion();
+                    
+                    // Recargar datos
+                    await refrescarDatos('opciones');
                 } else {
                     const errorData = await response.json();
                     console.error('❌ Error HTTP:', response.status, errorData);
-                    showAlert(`Error ${opcionEditando ? 'actualizando' : 'creando'} opción: ${errorData.detail || 'Error desconocido'}`, 'error');
+                    showAlert(`Error ${opcionEditando ? 'actualizando' : 'creando'} plato: ${errorData.detail || 'Error desconocido'}`, 'error');
                 }
             } catch (error) {
-                console.error(`Error ${opcionEditando ? 'actualizando' : 'creando'} opción:`, error);
-                showAlert(`Error de conexión ${opcionEditando ? 'actualizando' : 'creando'} opción: ${error.message}`, 'error');
+                console.error(`Error ${opcionEditando ? 'actualizando' : 'creando'} plato:`, error);
+                showAlert(`Error de conexión ${opcionEditando ? 'actualizando' : 'creando'} plato: ${error.message}`, 'error');
             }
         }
 
         // Función para limpiar formulario de opción
         function limpiarFormularioOpcion() {
-            document.getElementById('opcionModalTitle').textContent = 'Nueva Opción';
+            document.getElementById('opcionModalTitle').textContent = 'Nuevo Plato';
             document.getElementById('opcionForm').reset();
-            document.getElementById('opcionCategoria').disabled = true;
-            document.getElementById('opcionCategoria').required = false;
+            // Resetear categoría según el tipo seleccionado
+            const tipoSelect = document.getElementById('opcionTipo');
+            const categoriaSelect = document.getElementById('opcionCategoria');
+            if (categoriaSelect && tipoSelect) {
+                const tipo = tipoSelect.value;
+                if (tipo === 'Variable') {
+                    categoriaSelect.disabled = false;
+                    categoriaSelect.required = true;
+                } else {
+                    categoriaSelect.disabled = true;
+                    categoriaSelect.required = false;
+                    categoriaSelect.value = '';
+                }
+            }
             opcionEditando = null;
         }
 
@@ -3068,6 +3079,7 @@
         function validarFormularioOpcion() {
             const nombre = document.getElementById('opcionNombre').value.trim();
             const tipo = document.getElementById('opcionTipo').value;
+            const precio = parseFloat(document.getElementById('opcionPrecio').value);
             const categoria = document.getElementById('opcionCategoria').value;
             
             if (!nombre) {
@@ -3082,6 +3094,13 @@
                 return false;
             }
             
+            if (isNaN(precio) || precio < 0) {
+                showAlert('El precio debe ser un número mayor o igual a 0', 'warning');
+                document.getElementById('opcionPrecio').focus();
+                return false;
+            }
+            
+            // Validar categoría solo para platos variables
             if (tipo === 'Variable' && !categoria) {
                 showAlert('Debes seleccionar una categoría para platos variables', 'warning');
                 document.getElementById('opcionCategoria').focus();
@@ -3122,34 +3141,34 @@
         async function cargarOpcionesParaMenu() {
             try {
                 console.log('🔄 Cargando opciones para menú...');
-                const response = await fetch('/api/v1/menu-restructured/opciones/');
+                // Cargar platos de tipo Menu_Dia y Plato_Fijo
+                const [responseMenuDia, responseFijos] = await Promise.all([
+                    fetch('/api/v1/restaurant-menu/platos/?tipo=Menu_Dia'),
+                    fetch('/api/v1/restaurant-menu/platos/?tipo=Plato_Fijo')
+                ]);
                 
-                if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
+                if (!responseMenuDia.ok || !responseFijos.ok) {
+                    throw new Error(`Error HTTP al cargar platos`);
                 }
 
-                const data = await response.json();
-                console.log('📥 Respuesta del servidor:', data);
+                const dataMenuDia = await responseMenuDia.json();
+                const dataFijos = await responseFijos.json();
+                console.log('📥 Respuesta del servidor:', { menuDia: dataMenuDia, fijos: dataFijos });
                 
-                if (data.success) {
-                    const opcionesActivas = data.opciones.filter(opcion => opcion.activo);
-                    console.log(`✅ Cargadas ${opcionesActivas.length} opciones activas`);
+                // Procesar platos variables (Menu_Dia)
+                const platosVariables = (dataMenuDia.platos || []).filter(plato => plato.activo);
+                
+                // Procesar platos fijos (Plato_Fijo)
+                const platosFijos = (dataFijos.platos || []).filter(plato => plato.activo);
+                
+                console.log(`✅ Cargadas ${platosFijos.length} platos fijos y ${platosVariables.length} platos variables`);
                     
-                    // Separar platos fijos y variables
-                    const platosFijos = opcionesActivas.filter(opcion => opcion.tipo === 'Fijo');
-                    const platosVariables = opcionesActivas.filter(opcion => opcion.tipo === 'Variable');
+                // Renderizar platos fijos en el modal
+                renderizarPlatosFijosEnModal(platosFijos);
                     
-                    console.log(`📋 Platos fijos: ${platosFijos.length}, Platos variables: ${platosVariables.length}`);
-                    
-                    // Renderizar platos fijos en el modal
-                    renderizarPlatosFijosEnModal(platosFijos);
-                    
-                    // Renderizar platos variables en el modal
-                    renderizarPlatosVariablesEnModal(platosVariables);
-                } else {
-                    console.error('❌ Error en respuesta:', data.error);
-                    showAlert(`Error cargando opciones: ${data.error}`, 'error');
-                }
+                // Renderizar platos variables en el modal (necesitamos cargar categorías para agruparlos)
+                await cargarCategorias(); // Asegurar que tenemos las categorías
+                renderizarPlatosVariablesEnModal(platosVariables);
             } catch (error) {
                 console.error('❌ Error cargando opciones:', error);
                 showAlert(`Error de conexión: ${error.message}`, 'error');
@@ -3207,7 +3226,7 @@
             });
         }
 
-        // Función para renderizar platos variables en el modal
+        // Función para renderizar platos variables en el modal agrupados por categoría
         function renderizarPlatosVariablesEnModal(platosVariables) {
             const container = document.getElementById('platosVariablesModal');
             if (!container) return;
@@ -3219,42 +3238,64 @@
                     <div class="alert alert-info text-center">
                         <i class="bi bi-info-circle me-2"></i>
                         No hay platos variables activos disponibles.
-                        </div>
-                    `;
+                    </div>
+                `;
                 return;
             }
             
-            // Agrupar por categoría
+            // Almacenar platos variables en variable global para usar al guardar
+            platosVariablesModal = platosVariables;
+            
+            // Agrupar platos por categoría
             const platosPorCategoria = {};
+            
             platosVariables.forEach(plato => {
-                const categoria = plato.categoria ? plato.categoria.nombre : 'Sin categoría';
-                if (!platosPorCategoria[categoria]) {
-                    platosPorCategoria[categoria] = [];
+                // Obtener nombre de categoría (puede venir como objeto o como string)
+                let categoriaNombre = 'Sin categoría';
+                if (plato.categoria) {
+                    if (typeof plato.categoria === 'string') {
+                        categoriaNombre = plato.categoria;
+                    } else if (typeof plato.categoria === 'object' && plato.categoria.nombre) {
+                        categoriaNombre = plato.categoria.nombre;
+                    } else {
+                        categoriaNombre = 'Sin categoría';
+                    }
+                } else if (plato.categoria_nombre) {
+                    categoriaNombre = plato.categoria_nombre;
                 }
-                platosPorCategoria[categoria].push(plato);
+                
+                if (!platosPorCategoria[categoriaNombre]) {
+                    platosPorCategoria[categoriaNombre] = [];
+                }
+                platosPorCategoria[categoriaNombre].push(plato);
             });
             
-            // Renderizar por categorías
-            Object.keys(platosPorCategoria).forEach(categoria => {
-                const platosCategoria = platosPorCategoria[categoria];
+            // Ordenar categorías alfabéticamente
+            const categoriasOrdenadas = Object.keys(platosPorCategoria).sort();
+            
+            // Renderizar por categoría
+            categoriasOrdenadas.forEach(categoriaNombre => {
+                const platosDeCategoria = platosPorCategoria[categoriaNombre];
                 
+                // Crear sección de categoría
                 const categoriaHtml = `
                     <div class="mb-4">
                         <h6 class="text-primary mb-3">
                             <i class="bi bi-tag me-2"></i>
-                            ${categoria}
+                            ${categoriaNombre}
                         </h6>
                         <div class="row">
-                            ${platosCategoria.map(plato => `
+                            ${platosDeCategoria.map(plato => `
                                 <div class="col-md-6 col-lg-4 mb-3">
                                     <div class="card h-100">
                                         <div class="card-body p-3">
-                    <div class="form-check">
+                                            <div class="form-check">
                                                 <input class="form-check-input plato-variable-checkbox" 
                                                        type="checkbox" 
                                                        value="${plato.id}" 
                                                        id="plato_variable_${plato.id}"
-                                                       onchange="actualizarContadorOpciones()">
+                                                       data-categoria="${categoriaNombre}"
+                                                       onchange="actualizarContadorOpciones();">
                                                 <label class="form-check-label w-100" for="plato_variable_${plato.id}">
                                                     <div class="d-flex justify-content-between align-items-start">
                                                         <div>
@@ -3266,16 +3307,15 @@
                                                             <span class="badge bg-success">${formatearPrecio(plato.precio)}</span>
                                                         </div>
                                                     </div>
-                        </label>
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             `).join('')}
+                        </div>
                     </div>
-                </div>
-            `;
-                
+                `;
                 container.insertAdjacentHTML('beforeend', categoriaHtml);
             });
         }
@@ -3302,73 +3342,134 @@
             }
 
             try {
-                // Obtener platos fijos seleccionados (deberían estar todos marcados por defecto)
-                const platosFijosSeleccionados = Array.from(document.querySelectorAll('.plato-fijo-checkbox:checked'))
-                    .map(checkbox => checkbox.value);
+                // Obtener platos variables seleccionados (agrupados por categoría)
+                const platosVariablesCheckboxes = document.querySelectorAll('.plato-variable-checkbox:checked');
+                const categoriasPlatos = {}; // Estructura: { "Principio": [1,2], "Proteína": [3,4] }
                 
-                // Obtener platos variables seleccionados
-                const platosVariablesSeleccionados = Array.from(document.querySelectorAll('.plato-variable-checkbox:checked'))
-                    .map(checkbox => checkbox.value);
+                // Agrupar platos variables por categoría usando la categoría asignada al plato
+                platosVariablesCheckboxes.forEach(checkbox => {
+                    const platoId = parseInt(checkbox.value);
+                    
+                    // Obtener categoría del atributo data-categoria del checkbox
+                    let categoriaNombre = checkbox.getAttribute('data-categoria');
+                    
+                    // Si no está en el atributo, buscarlo en los platos almacenados
+                    if (!categoriaNombre) {
+                        const plato = platosVariablesModal.find(p => p.id === platoId);
+                        if (plato && plato.categoria) {
+                            if (typeof plato.categoria === 'string') {
+                                categoriaNombre = plato.categoria;
+                            } else if (typeof plato.categoria === 'object' && plato.categoria.nombre) {
+                                categoriaNombre = plato.categoria.nombre;
+                            } else {
+                                categoriaNombre = 'Sin categoría';
+                            }
+                        } else if (plato && plato.categoria_nombre) {
+                            categoriaNombre = plato.categoria_nombre;
+                        } else {
+                            categoriaNombre = 'Sin categoría';
+                        }
+                    }
+                    
+                    if (categoriaNombre && categoriaNombre !== 'Sin categoría') {
+                        if (!categoriasPlatos[categoriaNombre]) {
+                            categoriasPlatos[categoriaNombre] = [];
+                        }
+                        categoriasPlatos[categoriaNombre].push(platoId);
+                    }
+                });
                 
-                // Combinar todos los platos seleccionados
-                const opcionesSeleccionadas = [...platosFijosSeleccionados, ...platosVariablesSeleccionados];
+                console.log(`📋 Categorías de platos:`, categoriasPlatos);
                 
-                console.log(`📋 Platos seleccionados: ${opcionesSeleccionadas.length} (${platosFijosSeleccionados.length} fijos + ${platosVariablesSeleccionados.length} variables)`);
-                
-                if (opcionesSeleccionadas.length === 0) {
-                    showAlert('Debes seleccionar al menos un plato para el menú', 'warning');
+                // Validar que al menos haya una categoría con platos
+                const totalPlatos = Object.values(categoriasPlatos).reduce((sum, ids) => sum + ids.length, 0);
+                if (totalPlatos === 0) {
+                    showAlert('Debes seleccionar al menos un plato variable para el menú', 'warning');
                     return;
                 }
 
-                // Preparar datos como query parameters
-                const params = new URLSearchParams();
-                params.append('fecha', document.getElementById('menuFecha').value);
-                params.append('nombre', document.getElementById('menuNombre').value.trim());
-                params.append('descripcion', document.getElementById('menuDescripcion').value.trim());
-                params.append('precio', parseFloat(document.getElementById('menuPrecio').value) || 0);
-                params.append('opciones_ids', opcionesSeleccionadas.join(','));
-
-                const url = `/api/v1/menu-restructured-simple/menus/?${params.toString()}`;
-                
-                console.log('🔄 Guardando menú:', {
+                // Preparar datos según el nuevo API
+                const menuData = {
                     fecha: document.getElementById('menuFecha').value,
                     nombre: document.getElementById('menuNombre').value.trim(),
-                    descripcion: document.getElementById('menuDescripcion').value.trim(),
+                    descripcion: document.getElementById('menuDescripcion').value.trim() || '',
                     precio: parseFloat(document.getElementById('menuPrecio').value) || 0,
-                    opciones_ids: opcionesSeleccionadas.join(',')
-                });
-                console.log('📤 URL:', url);
+                    estado: 'ACTIVE',
+                    categorias_platos: categoriasPlatos
+                };
+                
+                console.log('🔄 Guardando menú:', menuData);
+
+                // Determinar si es creación o actualización
+                const esEdicion = menuEditando !== null;
+                const url = esEdicion 
+                    ? `/api/v1/restaurant-menu/menus/${menuEditando}`
+                    : '/api/v1/restaurant-menu/menus/';
+                const method = esEdicion ? 'PUT' : 'POST';
 
                 const response = await fetch(url, {
-                    method: 'POST'
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(menuData)
                 });
 
                 console.log('📡 Respuesta del servidor:', response.status, response.statusText);
 
                 if (response.ok) {
-                const data = await response.json();
+                    const data = await response.json();
                     console.log('📥 Respuesta del servidor:', data);
                     
-                if (data.success) {
-                        showAlert(`Menú "${menuData.nombre}" creado exitosamente`, 'success');
-                        
-                        // Cerrar modal
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('menuModal'));
+                    // Cerrar modal primero (antes de cualquier otra operación)
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('menuModal'));
+                    if (modal) {
                         modal.hide();
-                        
-                        // Limpiar formulario
-                        limpiarFormularioMenu();
-                        
-                        // Recargar datos
-                        await refrescarDatos('menus');
-                } else {
-                        console.error('❌ Error en respuesta:', data);
-                        showAlert(`Error: ${data.error || 'Error desconocido'}`, 'error');
                     }
+                    
+                    // Limpiar formulario y resetear modo edición
+                    limpiarFormularioMenu();
+                    menuEditando = null;
+                    
+                    // Mostrar mensaje de éxito
+                    const mensaje = esEdicion 
+                        ? `Menú "${menuData.nombre}" actualizado exitosamente`
+                        : `Menú "${menuData.nombre}" creado exitosamente`;
+                    showAlert(mensaje, 'success');
+                    
+                    // Recargar datos en segundo plano (sin bloquear)
+                    refrescarDatos('menus').catch(error => {
+                        console.error('Error recargando menús:', error);
+                        showAlert('Menú guardado pero hubo un error al recargar la lista', 'warning');
+                    });
                 } else {
                     const errorData = await response.json();
                     console.error('❌ Error del servidor:', errorData);
-                    showAlert(`Error del servidor: ${errorData.detail || 'Error desconocido'}`, 'error');
+                    
+                    // Si el error indica que ya existe un menú para esa fecha, cargarlo para editarlo
+                    if (response.status === 400 && errorData.detail) {
+                        let errorDetail = errorData.detail;
+                        if (typeof errorDetail === 'object' && errorDetail.menu_id) {
+                            // El backend devolvió información del menú existente
+                            const menuId = errorDetail.menu_id;
+                            console.log(`📝 Menú existente detectado, cargando para editar (ID: ${menuId})`);
+                            showAlert(`Ya existe un menú para esta fecha. Cargando para editar...`, 'info');
+                            await cargarMenuParaEditar(menuId);
+                            return;
+                        } else if (typeof errorDetail === 'string' && errorDetail.includes('Ya existe un menú')) {
+                            // Buscar el menú por fecha
+                            const fechaMenu = menuData.fecha;
+                            const menuExistente = menus.find(m => m.fecha === fechaMenu);
+                            if (menuExistente) {
+                                console.log(`📝 Menú existente encontrado, cargando para editar (ID: ${menuExistente.id})`);
+                                showAlert(`Ya existe un menú para esta fecha. Cargando para editar...`, 'info');
+                                await cargarMenuParaEditar(menuExistente.id);
+                                return;
+                            }
+                        }
+                    }
+                    
+                    showAlert(`Error del servidor: ${typeof errorData.detail === 'object' ? errorData.detail.message || 'Error desconocido' : errorData.detail || 'Error desconocido'}`, 'error');
                 }
             } catch (error) {
                 console.error('❌ Error guardando menú:', error);
@@ -3406,7 +3507,7 @@
         // ==================== FUNCIONES DE CALENDARIO ====================
 
         // Función para renderizar menús en formato calendario
-        function renderizarMenus() {
+        function renderizarMenusCalendario() {
             const container = document.getElementById('menusContainer');
             if (!container) return;
             
@@ -3586,15 +3687,97 @@
             showAlert(`Ver detalles del menú: ${menu.nombre}`, 'info');
         }
 
-        function editarMenu(menuId) {
-            const menu = menus.find(m => m.id === menuId);
-            if (!menu) {
-                showAlert('Menú no encontrado', 'error');
-                return;
+        async function cargarMenuParaEditar(menuId) {
+            try {
+                // Cargar el menú desde el servidor
+                const response = await fetch(`/api/v1/restaurant-menu/menus/?limit=1000`);
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const menu = (data.menus || []).find(m => m.id === menuId);
+                
+                if (!menu) {
+                    showAlert('Menú no encontrado en el servidor', 'error');
+                    return;
+                }
+                
+                // Cargar el menú en el formulario
+                await editarMenu(menuId);
+            } catch (error) {
+                console.error('Error cargando menú para editar:', error);
+                showAlert(`Error al cargar el menú: ${error.message}`, 'error');
             }
-            
-            // Aquí puedes implementar la edición del menú
-            showAlert(`Editar menú: ${menu.nombre}`, 'info');
+        }
+
+        async function editarMenu(menuId) {
+            try {
+                // Buscar el menú en la lista local primero
+                let menu = menus.find(m => m.id === menuId);
+                
+                // Si no está en la lista local, cargarlo desde el servidor
+                if (!menu) {
+                    const response = await fetch(`/api/v1/restaurant-menu/menus/?limit=1000`);
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    menu = (data.menus || []).find(m => m.id === menuId);
+                }
+                
+                if (!menu) {
+                    showAlert('Menú no encontrado', 'error');
+                    return;
+                }
+                
+                console.log('📝 Editando menú:', menu);
+                
+                // Configurar el modal para edición
+                document.getElementById('menuModalTitle').textContent = 'Editar Menú del Día';
+                menuEditando = menuId;
+                
+                // Llenar el formulario con los datos del menú
+                document.getElementById('menuFecha').value = menu.fecha;
+                document.getElementById('menuNombre').value = menu.nombre;
+                document.getElementById('menuDescripcion').value = menu.descripcion || '';
+                document.getElementById('menuPrecio').value = menu.precio || 0;
+                
+                // Cargar opciones disponibles
+                await cargarOpcionesParaMenu();
+                
+                // Esperar un poco para que se carguen los platos antes de marcar los checkboxes
+                setTimeout(() => {
+                    // Marcar platos fijos (todos por defecto)
+                    const platosFijosCheckboxes = document.querySelectorAll('.plato-fijo-checkbox');
+                    platosFijosCheckboxes.forEach(checkbox => {
+                        checkbox.checked = true;
+                    });
+                    
+                    // Marcar platos variables según las categorías del menú
+                    if (menu.categorias_platos) {
+                        Object.keys(menu.categorias_platos).forEach(categoriaNombre => {
+                            const platosIds = menu.categorias_platos[categoriaNombre];
+                            platosIds.forEach(plato => {
+                                const platoId = typeof plato === 'object' ? plato.id : plato;
+                                const checkbox = document.getElementById(`plato_variable_${platoId}`);
+                                if (checkbox) {
+                                    checkbox.checked = true;
+                                }
+                            });
+                        });
+                    }
+                    
+                    actualizarContadorOpciones();
+                }, 500);
+                
+                // Mostrar el modal
+                const modal = new bootstrap.Modal(document.getElementById('menuModal'));
+                modal.show();
+            } catch (error) {
+                console.error('Error editando menú:', error);
+                showAlert(`Error al cargar el menú para editar: ${error.message}`, 'error');
+            }
         }
 
         function eliminarMenu(menuId) {

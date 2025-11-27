@@ -2,7 +2,7 @@
 Modelos para el sistema de menús del restaurante
 Estructura: Menú del día con categorías (principio, proteína) + platos fijos + acompañamientos fijos
 """
-from sqlalchemy import Column, Integer, String, Date, Boolean, DateTime, Text, ForeignKey, Table, Numeric
+from sqlalchemy import Column, Integer, String, Date, Boolean, DateTime, Text, ForeignKey, Table, Numeric, LargeBinary
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -55,6 +55,16 @@ class PlatoRestaurante(Base):
     precio = Column(Numeric(10, 2), nullable=False, default=0.0)
     tipo = Column(String(20), nullable=False)  # 'Menu_Dia', 'Plato_Fijo', 'Acompanamiento_Fijo'
     activo = Column(Boolean, default=True)
+    
+    # Categoría sugerida por defecto (opcional, solo para platos de tipo Menu_Dia)
+    categoria_id = Column(Integer, ForeignKey('categorias_menu.id'), nullable=True)
+    
+    # Campos de imagen (similar al modelo OpcionPlato)
+    imagen_data = Column(LargeBinary, nullable=True)  # Imagen como BLOB
+    imagen_tipo = Column(String(50), nullable=True)  # Tipo MIME de la imagen
+    
+    # Relación con categoría
+    categoria = relationship("CategoriaMenuRestaurante", foreign_keys=[categoria_id])
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
