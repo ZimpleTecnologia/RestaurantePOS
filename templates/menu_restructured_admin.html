@@ -981,6 +981,67 @@
                 font-size: 0.7rem;
             }
         }
+        /* Estilos para modal de vista previa */
+        #vistaPreviaModal .modal-xl {
+            max-width: 95%;
+        }
+
+        #menuPreviewContainer {
+            min-height: 600px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        #menuPreviewContent {
+            font-family: 'Georgia', 'Times New Roman', serif;
+        }
+
+        #menuPreviewContent h1 {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #menuPreviewContent ul {
+            margin: 0;
+            padding-left: 0;
+        }
+
+        #menuPreviewContent li {
+            transition: all 0.3s ease;
+        }
+
+        #menuPreviewContent li:hover {
+            padding-left: 10px;
+        }
+
+        .form-control-color {
+            height: 38px;
+            cursor: pointer;
+        }
+
+        /* Estilos para mensaje personalizado en vista previa */
+        #menuPreviewContent .mensaje-personalizado {
+            border-top: 2px solid;
+            padding-top: 30px;
+            margin-top: 40px;
+        }
+
+        #menuPreviewContent .mensaje-personalizado p {
+            line-height: 1.8;
+            white-space: pre-line;
+        }
+
+        /* Estilos para formato 9:16 */
+        #menuPreviewContainer.formato-9-16 {
+            width: 1080px;
+            max-width: 1080px;
+            min-height: 1920px;
+            aspect-ratio: 9/16;
+        }
+
+        /* Ajustes para el textarea del mensaje */
+        #vistaPreviaMensaje {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
     </style>
 {% endblock %}
 
@@ -1149,26 +1210,37 @@
                 <div class="col-md-12 mb-3">
                     <div class="card">
                         <div class="card-body">
-                            <div class="row align-items-center">
-                                <div class="col-md-3">
-                                    <label for="filtroFecha" class="form-label">Filtrar por fecha</label>
-                                    <input type="date" class="form-control" id="filtroFecha">
+                            <div class="row align-items-end">
+                                <div class="col-md-2">
+                                    <label for="filtroFechaDesde" class="form-label">Fecha desde</label>
+                                    <input type="date" class="form-control" id="filtroFechaDesde">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <label for="filtroFechaHasta" class="form-label">Fecha hasta</label>
+                                    <input type="date" class="form-control" id="filtroFechaHasta">
+                                </div>
+                                <div class="col-md-2">
                                     <label for="filtroEstadoMenu" class="form-label">Estado</label>
                                     <select class="form-select" id="filtroEstadoMenu">
                                         <option value="">Todos</option>
-                                        <option value="true">Activos</option>
-                                        <option value="false">Inactivos</option>
+                                        <option value="ACTIVE">Activos</option>
+                                        <option value="INACTIVE">Inactivos</option>
+                                        <option value="DRAFT">Borradores</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <button class="btn btn-primary w-100" onclick="filtrarMenus()">
                                         <i class="bi bi-funnel me-1"></i>
                                         Filtrar
                                     </button>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <button class="btn btn-secondary w-100" onclick="limpiarFiltrosMenu()">
+                                        <i class="bi bi-x-circle me-1"></i>
+                                        Limpiar
+                                    </button>
+                                </div>
+                                <div class="col-md-2">
                                     <button class="btn btn-success w-100" onclick="nuevoMenu()">
                                         <i class="bi bi-plus-circle me-1"></i>
                                         Nuevo Menú
@@ -1185,7 +1257,7 @@
                         <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="bi bi-calendar-day me-2"></i>
-                                Menús del Día
+                                Menús
                             </h5>
                         </div>
                         <div class="card-body">
@@ -1293,9 +1365,14 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="opcionCategoria" class="form-label">Categoría</label>
-                                    <select class="form-select" id="opcionCategoria">
-                                        <option value="">Seleccionar categoría</option>
-                                    </select>
+                                    <div class="input-group">
+                                        <select class="form-select" id="opcionCategoria">
+                                            <option value="">Seleccionar categoría</option>
+                                        </select>
+                                        <button class="btn btn-outline-primary" type="button" onclick="mostrarModalNuevaCategoria()" title="Crear nueva categoría">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -1326,6 +1403,41 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" onclick="guardarOpcion()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para crear nueva categoría -->
+    <div class="modal fade" id="nuevaCategoriaModal" tabindex="-1" aria-labelledby="nuevaCategoriaModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="nuevaCategoriaModalLabel">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Nueva Categoría
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="nuevaCategoriaForm">
+                        <div class="mb-3">
+                            <label for="nuevaCategoriaNombre" class="form-label">Nombre de la Categoría *</label>
+                            <input type="text" class="form-control" id="nuevaCategoriaNombre" placeholder="Ej: Principio, Proteína, Entrada" required maxlength="50">
+                            <small class="text-muted">Nombre que identifica la categoría</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nuevaCategoriaDescripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="nuevaCategoriaDescripcion" rows="2" placeholder="Descripción opcional de la categoría"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarNuevaCategoria()">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Crear Categoría
+                    </button>
                 </div>
             </div>
         </div>
@@ -1472,9 +1584,106 @@
         </div>
     </div>
 
+    <!-- Modal de Vista Previa y Exportación del Menú -->
+    <div class="modal fade" id="vistaPreviaModal" tabindex="-1" aria-labelledby="vistaPreviaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="vistaPreviaModalLabel">
+                        <i class="bi bi-eye me-2"></i>
+                        Vista Previa del Menú
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Panel de edición (izquierda) -->
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Editar Menú</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="vistaPreviaNombreRestaurante" class="form-label">Nombre del Restaurante</label>
+                                        <input type="text" class="form-control form-control-sm" id="vistaPreviaNombreRestaurante" value="PLATÓNICO" placeholder="PLATÓNICO">
+                                        <small class="text-muted">Puedes incluir emojis, por ejemplo: PLATÓNICO 🍽️</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="vistaPreviaLema" class="form-label">Lema del Restaurante</label>
+                                        <input type="text" class="form-control form-control-sm" id="vistaPreviaLema" value="Amor al primer bocado ❤️" placeholder="Amor al primer bocado ❤️">
+                                        <small class="text-muted">Puedes incluir emojis, por ejemplo: Amor al primer bocado ❤️</small>
+                                    </div>
+                                    <hr>
+                                    <div class="mb-3">
+                                        <label for="vistaPreviaTituloMenu" class="form-label">Título del Menú</label>
+                                        <input type="text" class="form-control form-control-sm" id="vistaPreviaTituloMenu" value="Menú del día" placeholder="Menú del día">
+                                        <small class="text-muted">Título que aparecerá antes de los platos (puedes incluir emojis, por ejemplo: Menú del día 🍽️)</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="vistaPreviaPrecioMenu" class="form-label">Precio del Menú</label>
+                                        <input type="number" class="form-control form-control-sm" id="vistaPreviaPrecioMenu" min="0" step="1000" placeholder="14000">
+                                        <small class="text-muted">Precio que aparecerá junto al título del menú</small>
+                                    </div>
+                                    <hr>
+                                    <div class="mb-3">
+                                        <label class="form-label">Color del Título</label>
+                                        <input type="color" class="form-control form-control-color" id="vistaPreviaColorTitulo" value="#8B4513">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Color de Fondo</label>
+                                        <input type="color" class="form-control form-control-color" id="vistaPreviaColorFondo" value="#F5F5DC">
+                                    </div>
+                                    <hr>
+                                    <div class="mb-3">
+                                        <label for="vistaPreviaMensaje" class="form-label">Mensaje Personalizado</label>
+                                        <textarea class="form-control form-control-sm" id="vistaPreviaMensaje" rows="4" placeholder="Ejemplo:&#10;Domicilios: 300 123 4567&#10;WhatsApp: 300 123 4567&#10;Horario: Lunes a Viernes 12:00 PM - 3:00 PM"></textarea>
+                                        <small class="text-muted">Mensaje que aparecerá al final del menú (puedes usar múltiples líneas)</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="vistaPreviaFormato" class="form-label">Formato de Exportación</label>
+                                        <select class="form-select form-select-sm" id="vistaPreviaFormato">
+                                            <option value="auto">Automático (según contenido)</option>
+                                            <option value="9:16">Vertical 9:16 (Teléfonos)</option>
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-primary w-100" onclick="actualizarVistaPrevia()">
+                                        <i class="bi bi-arrow-clockwise me-1"></i>
+                                        Actualizar Vista
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Vista previa (derecha) -->
+                        <div class="col-md-9">
+                            <div id="menuPreviewContainer" style="background-color: #F5F5DC; padding: 30px; border-radius: 10px; font-family: 'Arial', sans-serif;">
+                                <div id="menuPreviewContent">
+                                    <!-- El contenido del menú se cargará aquí -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-success" onclick="exportarMenuAPNG('auto')">
+                        <i class="bi bi-download me-1"></i>
+                        Exportar PNG (Automático)
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="exportarMenuAPNG('9:16')">
+                        <i class="bi bi-phone me-1"></i>
+                        Exportar PNG (9:16 - Móvil)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block extra_js %}
+<!-- html2canvas library for image export -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
         // Variables globales
         let opciones = [];
@@ -1511,9 +1720,27 @@
 
         // Inicializar la página
         document.addEventListener('DOMContentLoaded', function() {
+            inicializarFiltrosFecha();
             cargarDatos();
             configurarEventos();
         });
+
+        // Inicializar filtros de fecha con últimos 30 días
+        function inicializarFiltrosFecha() {
+            const hoy = new Date();
+            const hace30Dias = new Date(hoy);
+            hace30Dias.setDate(hoy.getDate() - 30);
+            
+            const fechaDesde = document.getElementById('filtroFechaDesde');
+            const fechaHasta = document.getElementById('filtroFechaHasta');
+            
+            if (fechaDesde) {
+                fechaDesde.value = hace30Dias.toISOString().split('T')[0];
+            }
+            if (fechaHasta) {
+                fechaHasta.value = hoy.toISOString().split('T')[0];
+            }
+        }
 
         // Configurar eventos
         function configurarEventos() {
@@ -1692,13 +1919,18 @@
             select.innerHTML = '<option value="">Seleccionar categoría</option>';
             
             if (categorias && categorias.length > 0) {
-                categorias.forEach(categoria => {
+                // Filtrar y ordenar categorías alfabéticamente
+                const categoriasFiltradas = categorias
+                    .filter(categoria => categoria.nombre !== '_platos_fijos')
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
+                
+                categoriasFiltradas.forEach(categoria => {
                     const option = document.createElement('option');
                     option.value = categoria.id;
                     option.textContent = categoria.nombre;
                     select.appendChild(option);
                 });
-                console.log(`✅ Agregadas ${categorias.length} categorías al select`);
+                console.log(`✅ Agregadas ${categoriasFiltradas.length} categorías al select (ordenadas alfabéticamente)`);
             } else {
                 console.warn('⚠️ No hay categorías para renderizar en el select');
             }
@@ -1706,6 +1938,122 @@
             // También poblar el selector de filtros
             console.log('🔧 Llamando a poblarFiltroCategorias...');
             poblarFiltroCategorias();
+        }
+
+        // Función para mostrar el modal de nueva categoría
+        function mostrarModalNuevaCategoria() {
+            // Limpiar el formulario
+            document.getElementById('nuevaCategoriaForm').reset();
+            
+            // Mostrar el modal
+            const modal = new bootstrap.Modal(document.getElementById('nuevaCategoriaModal'));
+            modal.show();
+            
+            // Enfocar en el campo de nombre
+            setTimeout(() => {
+                document.getElementById('nuevaCategoriaNombre').focus();
+            }, 300);
+        }
+
+        // Función para guardar una nueva categoría
+        async function guardarNuevaCategoria() {
+            const nombre = document.getElementById('nuevaCategoriaNombre').value.trim();
+            const descripcion = document.getElementById('nuevaCategoriaDescripcion').value.trim() || null;
+            
+            // Validar nombre
+            if (!nombre) {
+                showAlert('El nombre de la categoría es obligatorio', 'warning');
+                document.getElementById('nuevaCategoriaNombre').focus();
+                return;
+            }
+            
+            // Validar que no sea la categoría especial
+            if (nombre === '_platos_fijos') {
+                showAlert('No se puede crear una categoría con el nombre "_platos_fijos"', 'warning');
+                document.getElementById('nuevaCategoriaNombre').focus();
+                return;
+            }
+            
+            // Validar longitud del nombre
+            if (nombre.length > 50) {
+                showAlert('El nombre de la categoría no puede tener más de 50 caracteres', 'warning');
+                document.getElementById('nuevaCategoriaNombre').focus();
+                return;
+            }
+            
+            try {
+                // Preparar datos (sin orden, se ordenarán alfabéticamente)
+                const categoriaData = {
+                    nombre: nombre,
+                    descripcion: descripcion,
+                    orden: 0, // Valor por defecto, pero no se mostrará en el formulario
+                    is_active: true
+                };
+                
+                console.log('🔄 Creando categoría:', categoriaData);
+                
+                // Crear la categoría
+                const response = await fetch('/api/v1/restaurant-menu/categorias/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(categoriaData)
+                });
+                
+                if (response.ok) {
+                    const nuevaCategoria = await response.json();
+                    console.log('✅ Categoría creada:', nuevaCategoria);
+                    
+                    // Cerrar el modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('nuevaCategoriaModal'));
+                    modal.hide();
+                    
+                    // Recargar categorías
+                    await cargarCategorias();
+                    
+                    // Seleccionar la nueva categoría en el select
+                    setTimeout(() => {
+                        const select = document.getElementById('opcionCategoria');
+                        if (select) {
+                            select.value = nuevaCategoria.id;
+                            console.log('✅ Categoría seleccionada:', nuevaCategoria.nombre);
+                        }
+                    }, 300);
+                    
+                    showAlert(`Categoría "${nombre}" creada exitosamente`, 'success');
+                } else {
+                    const errorData = await response.json();
+                    console.error('❌ Error HTTP:', response.status, errorData);
+                    
+                    // Mostrar mensaje de error más descriptivo
+                    let mensajeError = 'Error desconocido';
+                    if (errorData.detail) {
+                        if (typeof errorData.detail === 'string') {
+                            mensajeError = errorData.detail;
+                        } else if (typeof errorData.detail === 'object') {
+                            // Puede ser un objeto con múltiples errores
+                            if (Array.isArray(errorData.detail)) {
+                                mensajeError = errorData.detail.map(e => e.msg || e).join(', ');
+                            } else if (errorData.detail.error || errorData.detail.message) {
+                                mensajeError = errorData.detail.error || errorData.detail.message;
+                            }
+                        }
+                    }
+                    
+                    // Verificar si el error es porque ya existe la categoría
+                    if (mensajeError.includes('Ya existe') || mensajeError.includes('ya existe')) {
+                        showAlert(`La categoría "${nombre}" ya existe. Por favor, elige otro nombre.`, 'warning');
+                    } else {
+                        showAlert(`Error creando categoría: ${mensajeError}`, 'error');
+                    }
+                    
+                    console.error('❌ Detalles del error:', errorData);
+                }
+            } catch (error) {
+                console.error('❌ Error creando categoría:', error);
+                showAlert(`Error de conexión: ${error.message}`, 'error');
+            }
         }
         
         // Función para poblar el filtro de categorías
@@ -1722,8 +2070,14 @@
             categoriasList.innerHTML = '';
             
             if (categorias && categorias.length > 0) {
-                console.log(`📋 Agregando ${categorias.length} categorías al filtro`);
-                categorias.forEach(categoria => {
+                // Filtrar y ordenar categorías alfabéticamente
+                const categoriasFiltradas = categorias
+                    .filter(categoria => categoria.nombre !== '_platos_fijos')
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
+                
+                console.log(`📋 Agregando ${categoriasFiltradas.length} categorías al filtro (ordenadas alfabéticamente)`);
+                
+                categoriasFiltradas.forEach(categoria => {
                     const li = document.createElement('li');
                     li.innerHTML = `
                         <div class="dropdown-item-text">
@@ -1816,18 +2170,27 @@
                 const data = await response.json();
                 // El nuevo API devuelve { menus: [...], total: N }
                 if (data.menus) {
-                    // Adaptar estructura: convertir menus a formato esperado
-                    menus = (data.menus || []).map(menu => ({
-                        id: menu.id,
-                        fecha: menu.fecha,
-                        nombre: menu.nombre,
-                        descripcion: menu.descripcion || '',
-                        precio: parseFloat(menu.precio) || 0,
-                        estado: menu.estado || 'DRAFT',
-                        activo: menu.activo || false,
-                        total_platos: menu.total_platos || 0,
-                        categorias_platos: menu.categorias_platos || {}
-                    }));
+                    // Calcular fecha de hace 30 días
+                    const hoy = new Date();
+                    const hace30Dias = new Date(hoy);
+                    hace30Dias.setDate(hoy.getDate() - 30);
+                    const fechaLimite = hace30Dias.toISOString().split('T')[0];
+                    
+                    // Adaptar estructura y filtrar últimos 30 días
+                    menus = (data.menus || [])
+                        .map(menu => ({
+                            id: menu.id,
+                            fecha: menu.fecha,
+                            nombre: menu.nombre,
+                            descripcion: menu.descripcion || '',
+                            precio: parseFloat(menu.precio) || 0,
+                            estado: menu.estado || 'DRAFT',
+                            activo: menu.activo || false,
+                            total_platos: menu.total_platos || 0,
+                            categorias_platos: menu.categorias_platos || {}
+                        }))
+                        .filter(menu => menu.fecha >= fechaLimite)
+                        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // Más recientes primero
                     
                     // Renderizar lista de menús (pestaña Menú del Día)
                     const menusListContainer = document.getElementById('menusList');
@@ -3342,9 +3705,18 @@
             }
 
             try {
+                // Obtener platos fijos seleccionados
+                const platosFijosCheckboxes = document.querySelectorAll('.plato-fijo-checkbox:checked');
+                const platosFijosIds = Array.from(platosFijosCheckboxes).map(cb => parseInt(cb.value));
+                
                 // Obtener platos variables seleccionados (agrupados por categoría)
                 const platosVariablesCheckboxes = document.querySelectorAll('.plato-variable-checkbox:checked');
                 const categoriasPlatos = {}; // Estructura: { "Principio": [1,2], "Proteína": [3,4] }
+                
+                // Agregar platos fijos seleccionados con una clave especial
+                if (platosFijosIds.length > 0) {
+                    categoriasPlatos['_platos_fijos'] = platosFijosIds;
+                }
                 
                 // Agrupar platos variables por categoría usando la categoría asignada al plato
                 platosVariablesCheckboxes.forEach(checkbox => {
@@ -3675,16 +4047,461 @@
             `;
         }
 
-        // Funciones auxiliares para menús
-        function verMenu(menuId) {
-            const menu = menus.find(m => m.id === menuId);
-            if (!menu) {
-                showAlert('Menú no encontrado', 'error');
+        // Función para filtrar menús
+        function filtrarMenus() {
+            const fechaDesde = document.getElementById('filtroFechaDesde').value;
+            const fechaHasta = document.getElementById('filtroFechaHasta').value;
+            const estadoFiltro = document.getElementById('filtroEstadoMenu').value;
+            
+            // Validar rango de fechas
+            if (fechaDesde && fechaHasta && fechaDesde > fechaHasta) {
+                showAlert('La fecha desde no puede ser mayor que la fecha hasta', 'warning');
                 return;
             }
             
-            // Aquí puedes implementar un modal para ver detalles del menú
-            showAlert(`Ver detalles del menú: ${menu.nombre}`, 'info');
+            // Limitar a últimos 30 días
+            const hoy = new Date();
+            const hace30Dias = new Date(hoy);
+            hace30Dias.setDate(hoy.getDate() - 30);
+            const fechaLimite30Dias = hace30Dias.toISOString().split('T')[0];
+            
+            // Aplicar filtros
+            let menusFiltrados = menus.filter(menu => {
+                // Filtro por rango de fechas (dentro de los últimos 30 días)
+                if (fechaDesde && menu.fecha < fechaDesde) return false;
+                if (fechaHasta && menu.fecha > fechaHasta) return false;
+                if (menu.fecha < fechaLimite30Dias) return false;
+                
+                // Filtro por estado
+                if (estadoFiltro && menu.estado !== estadoFiltro) return false;
+                
+                return true;
+            });
+            
+            // Renderizar menús filtrados
+            renderizarMenusLista(menusFiltrados);
+            
+            if (menusFiltrados.length === 0) {
+                showAlert('No se encontraron menús con los filtros aplicados', 'info');
+            } else {
+                showAlert(`Se encontraron ${menusFiltrados.length} menú(s)`, 'success');
+            }
+        }
+
+        // Función para limpiar filtros de menús
+        function limpiarFiltrosMenu() {
+            inicializarFiltrosFecha();
+            document.getElementById('filtroEstadoMenu').value = '';
+            renderizarMenusLista(menus);
+            showAlert('Filtros limpiados', 'info');
+        }
+
+        // Funciones auxiliares para menús
+        async function verMenu(menuId) {
+            try {
+                // Buscar el menú en la lista local
+                let menu = menus.find(m => m.id === menuId);
+                
+                // Si no está en la lista local, cargarlo desde el servidor
+                if (!menu) {
+                    const response = await fetch(`/api/v1/restaurant-menu/menus/?limit=1000`);
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    menu = (data.menus || []).find(m => m.id === menuId);
+                }
+                
+                if (!menu) {
+                    showAlert('Menú no encontrado', 'error');
+                    return;
+                }
+                
+                // Cargar menú completo desde el servidor para obtener todos los datos
+                const menuResponse = await fetch(`/api/v1/restaurant-menu/menus/?limit=1000`);
+                if (menuResponse.ok) {
+                    const menuData = await menuResponse.json();
+                    const menuCompleto = (menuData.menus || []).find(m => m.id === menuId);
+                    if (menuCompleto) {
+                        console.log('📥 Menú cargado desde servidor:', menuCompleto);
+                        console.log('📥 categorias_platos:', menuCompleto.categorias_platos);
+                        menu = menuCompleto;
+                    }
+                }
+                
+                // Mostrar modal de vista previa
+                await mostrarModalVistaPrevia(menu);
+            } catch (error) {
+                console.error('Error cargando menú:', error);
+                showAlert(`Error al cargar el menú: ${error.message}`, 'error');
+            }
+        }
+
+        // Variable global para almacenar el menú actual en vista previa
+        let menuVistaPrevia = null;
+
+        // Función para mostrar el modal de vista previa
+        async function mostrarModalVistaPrevia(menu) {
+            menuVistaPrevia = menu;
+            
+            // Llenar campos de edición del restaurante (con valores por defecto)
+            document.getElementById('vistaPreviaNombreRestaurante').value = 'PLATÓNICO';
+            document.getElementById('vistaPreviaLema').value = 'Amor al primer bocado ❤️';
+            
+            // Inicializar título y precio del menú
+            document.getElementById('vistaPreviaTituloMenu').value = 'Menú del día';
+            document.getElementById('vistaPreviaPrecioMenu').value = menu.precio || 14000;
+            
+            // Inicializar mensaje personalizado (vacío por defecto)
+            document.getElementById('vistaPreviaMensaje').value = '';
+            
+            // Inicializar formato de exportación
+            document.getElementById('vistaPreviaFormato').value = 'auto';
+            
+            // Cargar platos fijos y variables
+            await cargarPlatosParaVistaPrevia(menu);
+            
+            // Renderizar vista previa inicial
+            actualizarVistaPrevia();
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('vistaPreviaModal'));
+            modal.show();
+        }
+
+        // Función para cargar platos fijos y variables para la vista previa
+        async function cargarPlatosParaVistaPrevia(menu) {
+            try {
+                // Cargar platos fijos
+                const responseFijos = await fetch('/api/v1/restaurant-menu/platos/?tipo=Plato_Fijo&activo=true');
+                const dataFijos = await responseFijos.json();
+                menuVistaPrevia.platosFijos = dataFijos.platos || [];
+                
+                // Los platos variables ya vienen en categorias_platos del menú
+                // La estructura es: { "Categoría": [platos con detalles] }
+                menuVistaPrevia.platosVariablesPorCategoria = menu.categorias_platos || {};
+                
+                console.log('📋 Platos para vista previa:', {
+                    fijos: menuVistaPrevia.platosFijos.length,
+                    variablesPorCategoria: menuVistaPrevia.platosVariablesPorCategoria
+                });
+            } catch (error) {
+                console.error('Error cargando platos para vista previa:', error);
+                menuVistaPrevia.platosFijos = [];
+                menuVistaPrevia.platosVariablesPorCategoria = {};
+            }
+        }
+
+        // Función para actualizar la vista previa
+        function actualizarVistaPrevia() {
+            if (!menuVistaPrevia) return;
+            
+            // Obtener valores editables
+            const nombreRestaurante = document.getElementById('vistaPreviaNombreRestaurante').value || 'PLATÓNICO';
+            const lemaRestaurante = document.getElementById('vistaPreviaLema').value || 'Amor al primer bocado ❤️';
+            const tituloMenu = document.getElementById('vistaPreviaTituloMenu').value || 'Menú del día';
+            const precioMenu = parseFloat(document.getElementById('vistaPreviaPrecioMenu').value) || menuVistaPrevia.precio || 14000;
+            const colorTitulo = document.getElementById('vistaPreviaColorTitulo').value;
+            const colorFondo = document.getElementById('vistaPreviaColorFondo').value;
+            
+            // Actualizar color de fondo del contenedor
+            const container = document.getElementById('menuPreviewContainer');
+            if (container) {
+                container.style.backgroundColor = colorFondo;
+            }
+            
+            // Obtener platos fijos seleccionados desde la categoría especial
+            let platosFijosSeleccionados = [];
+            if (menuVistaPrevia.platosVariablesPorCategoria && menuVistaPrevia.platosVariablesPorCategoria['_platos_fijos']) {
+                const platosFijosIds = menuVistaPrevia.platosVariablesPorCategoria['_platos_fijos'];
+                // Convertir IDs a objetos de platos
+                platosFijosIds.forEach(platoId => {
+                    const id = typeof platoId === 'object' && platoId.id ? platoId.id : platoId;
+                    const plato = menuVistaPrevia.platosFijos.find(p => p.id === id);
+                    if (plato) {
+                        platosFijosSeleccionados.push(plato);
+                    }
+                });
+            }
+            
+            // Construir HTML del menú
+            let html = `
+                <div style="max-width: 800px; margin: 0 auto; padding: 40px;">
+                    <!-- Título del Restaurante -->
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: ${colorTitulo}; font-size: 48px; font-weight: bold; letter-spacing: 3px; margin: 0; font-family: 'Georgia', serif;">
+                            ${nombreRestaurante}
+                        </h1>
+                        <p style="color: ${colorTitulo}; font-size: 18px; margin: 10px 0 0 0; font-style: italic;">
+                            ${lemaRestaurante}
+                        </p>
+                    </div>
+                    
+                    <hr style="border: 2px solid ${colorTitulo}; margin: 30px 0;">
+                    
+                    <!-- Título y Precio del Menú -->
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: ${colorTitulo}; font-size: 32px; font-weight: bold; margin: 0;">
+                            ${tituloMenu}
+                            ${precioMenu > 0 ? `- ${formatearPrecio(precioMenu)}` : ''}
+                        </h2>
+                    </div>
+                    
+                    <hr style="border: 2px solid ${colorTitulo}; margin: 30px 0;">
+            `;
+            
+            // PRIMERO: Agregar platos variables por categoría (Menú del Día)
+            if (menuVistaPrevia.platosVariablesPorCategoria && Object.keys(menuVistaPrevia.platosVariablesPorCategoria).length > 0) {
+                Object.keys(menuVistaPrevia.platosVariablesPorCategoria).forEach(categoriaNombre => {
+                    // Saltar la categoría especial de platos fijos
+                    if (categoriaNombre === '_platos_fijos') {
+                        return;
+                    }
+                    
+                    const platos = menuVistaPrevia.platosVariablesPorCategoria[categoriaNombre];
+                    
+                    // Los platos pueden venir como array de objetos o array de IDs
+                    if (platos && platos.length > 0) {
+                        html += `
+                            <div style="margin-bottom: 30px;">
+                                <h3 style="color: ${colorTitulo}; font-size: 20px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">
+                                    ${categoriaNombre}:
+                                </h3>
+                                <ul style="list-style: none; padding: 0;">
+                        `;
+                        
+                        platos.forEach(plato => {
+                            // Si es un objeto con propiedades, usar directamente
+                            if (typeof plato === 'object' && plato.nombre) {
+                                html += `
+                                    <li style="padding: 6px 0; color: ${colorTitulo}; font-size: 16px;">
+                                        • ${plato.nombre}
+                                    </li>
+                                `;
+                            } else if (typeof plato === 'number') {
+                                // Si es un ID, buscar en opciones
+                                const platoObj = opciones.find(o => o.id === plato);
+                                if (platoObj) {
+                                    html += `
+                                        <li style="padding: 6px 0; color: ${colorTitulo}; font-size: 16px;">
+                                            • ${platoObj.nombre}
+                                        </li>
+                                    `;
+                                }
+                            }
+                        });
+                        
+                        html += `
+                                </ul>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            
+            // SEGUNDO: Agregar platos fijos seleccionados (Platos Especiales)
+            if (platosFijosSeleccionados && platosFijosSeleccionados.length > 0) {
+                html += `
+                    <div style="margin-bottom: 40px;">
+                        <h3 style="color: ${colorTitulo}; font-size: 24px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase;">
+                            PLATOS ESPECIALES ❤️❤️
+                        </h3>
+                        <ul style="list-style: none; padding: 0;">
+                `;
+                
+                platosFijosSeleccionados.forEach(plato => {
+                    html += `
+                        <li style="padding: 8px 0; border-bottom: 1px dotted ${colorTitulo}; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: ${colorTitulo}; font-size: 18px;">• ${plato.nombre}</span>
+                            <span style="color: ${colorTitulo}; font-size: 18px; font-weight: bold; margin-left: 20px;">
+                                ${formatearPrecio(plato.precio)}
+                            </span>
+                        </li>
+                    `;
+                });
+                
+                html += `
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            // Agregar mensaje personalizado al final
+            const mensajePersonalizado = document.getElementById('vistaPreviaMensaje').value.trim();
+            if (mensajePersonalizado) {
+                html += `
+                    <hr style="border: 2px solid ${colorTitulo}; margin: 40px 0 30px 0;">
+                    <div style="text-align: center; padding: 20px 0;">
+                        <p style="color: ${colorTitulo}; font-size: 16px; line-height: 1.8; margin: 0; white-space: pre-line;">
+                            ${mensajePersonalizado.replace(/\n/g, '<br>')}
+                        </p>
+                    </div>
+                `;
+            }
+            
+            html += `
+                </div>
+            `;
+            
+            // Actualizar contenido
+            const previewContent = document.getElementById('menuPreviewContent');
+            if (previewContent) {
+                previewContent.innerHTML = html;
+            }
+        }
+
+        // Función para exportar el menú a PNG
+        async function exportarMenuAPNG(formato = 'auto') {
+            try {
+                showAlert('Generando imagen...', 'info');
+                
+                const previewContainer = document.getElementById('menuPreviewContainer');
+                if (!previewContainer) {
+                    showAlert('Error: No se encontró el contenedor de vista previa', 'error');
+                    return;
+                }
+                
+                // Verificar que html2canvas esté disponible y esperar si aún se está cargando
+                let intentos = 0;
+                const maxIntentos = 10;
+                
+                while (typeof html2canvas === 'undefined' && intentos < maxIntentos) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    intentos++;
+                }
+                
+                if (typeof html2canvas === 'undefined') {
+                    showAlert('Error: La librería html2canvas no se pudo cargar. Por favor recarga la página o verifica tu conexión a internet.', 'error');
+                    return;
+                }
+                
+                // Guardar estilos originales
+                const originalWidth = previewContainer.style.width || window.getComputedStyle(previewContainer).width;
+                const originalMaxWidth = previewContainer.style.maxWidth || window.getComputedStyle(previewContainer).maxWidth;
+                const originalMinHeight = previewContainer.style.minHeight || window.getComputedStyle(previewContainer).minHeight;
+                const originalAspectRatio = previewContainer.style.aspectRatio || window.getComputedStyle(previewContainer).aspectRatio;
+                
+                // Ancho base para formato 9:16 (1080px es un tamaño común para imágenes de alta calidad)
+                const anchoBase9_16 = 1080;
+                const altoBase9_16 = 1920; // Proporción 9:16
+                
+                // Aplicar formato 9:16 si se solicita
+                if (formato === '9:16') {
+                    previewContainer.style.width = `${anchoBase9_16}px`;
+                    previewContainer.style.maxWidth = `${anchoBase9_16}px`;
+                    previewContainer.style.minHeight = `${altoBase9_16}px`;
+                    previewContainer.style.height = 'auto';
+                    previewContainer.style.aspectRatio = '9/16';
+                    
+                    // Ajustar contenido interno para formato vertical
+                    const previewContent = document.getElementById('menuPreviewContent');
+                    if (previewContent) {
+                        previewContent.style.maxWidth = '100%';
+                    }
+                    
+                    // Esperar a que se apliquen los estilos y se re-renderice
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                } else {
+                    // Formato automático - restaurar estilos originales
+                    previewContainer.style.width = originalWidth;
+                    previewContainer.style.maxWidth = originalMaxWidth;
+                    previewContainer.style.minHeight = originalMinHeight || '600px';
+                    previewContainer.style.height = 'auto';
+                    previewContainer.style.aspectRatio = originalAspectRatio || 'auto';
+                    
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                // Obtener nombre del menú para el nombre del archivo
+                const nombreMenu = document.getElementById('vistaPreviaNombre').value || menuVistaPrevia?.nombre || 'menu';
+                const fechaMenu = document.getElementById('vistaPreviaFecha').value || menuVistaPrevia?.fecha || '';
+                const sufijoFormato = formato === '9:16' ? '_movil' : '';
+                
+                // Configuración de html2canvas según el formato
+                const opcionesCanvas = {
+                    scale: 3, // Alta resolución
+                    backgroundColor: document.getElementById('vistaPreviaColorFondo').value || '#F5F5DC',
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true,
+                    windowWidth: formato === '9:16' ? anchoBase9_16 : undefined,
+                    windowHeight: formato === '9:16' ? altoBase9_16 : undefined
+                };
+                
+                // Generar canvas con alta resolución
+                const canvas = await html2canvas(previewContainer, opcionesCanvas);
+                
+                // Si es formato 9:16, ajustar el canvas al tamaño exacto
+                let finalCanvas = canvas;
+                if (formato === '9:16') {
+                    const targetWidth = anchoBase9_16 * 3; // Escala x3 para alta resolución
+                    const targetHeight = altoBase9_16 * 3;
+                    
+                    // Crear nuevo canvas con tamaño exacto 9:16
+                    const newCanvas = document.createElement('canvas');
+                    newCanvas.width = targetWidth;
+                    newCanvas.height = targetHeight;
+                    const ctx = newCanvas.getContext('2d');
+                    
+                    // Rellenar con color de fondo
+                    ctx.fillStyle = document.getElementById('vistaPreviaColorFondo').value || '#F5F5DC';
+                    ctx.fillRect(0, 0, targetWidth, targetHeight);
+                    
+                    // Calcular escala para ajustar el contenido
+                    const scaleX = targetWidth / canvas.width;
+                    const scaleY = targetHeight / canvas.height;
+                    const scale = Math.min(scaleX, scaleY);
+                    
+                    // Calcular dimensiones escaladas y posición para centrar
+                    const scaledWidth = canvas.width * scale;
+                    const scaledHeight = canvas.height * scale;
+                    const x = (targetWidth - scaledWidth) / 2;
+                    const y = (targetHeight - scaledHeight) / 2;
+                    
+                    // Dibujar el contenido escalado y centrado
+                    ctx.drawImage(canvas, x, y, scaledWidth, scaledHeight);
+                    
+                    finalCanvas = newCanvas;
+                }
+                
+                // Restaurar estilos originales después de capturar
+                previewContainer.style.width = originalWidth;
+                previewContainer.style.maxWidth = originalMaxWidth;
+                previewContainer.style.minHeight = originalMinHeight || '600px';
+                previewContainer.style.height = 'auto';
+                previewContainer.style.aspectRatio = originalAspectRatio || 'auto';
+                
+                // Convertir canvas a blob
+                finalCanvas.toBlob(function(blob) {
+                    if (!blob) {
+                        showAlert('Error al generar la imagen', 'error');
+                        return;
+                    }
+                    
+                    // Crear URL del blob
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Crear elemento <a> para descargar
+                    const link = document.createElement('a');
+                    const nombreArchivo = `${nombreMenu}_${fechaMenu || 'menu'}${sufijoFormato}.png`.replace(/[^a-z0-9._-]/gi, '_');
+                    link.download = nombreArchivo;
+                    link.href = url;
+                    
+                    // Hacer clic para descargar
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // Liberar URL
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                    
+                    showAlert(`Imagen exportada exitosamente (${formato === '9:16' ? 'Formato móvil 9:16' : 'Formato automático'})`, 'success');
+                }, 'image/png', 1.0);
+                
+            } catch (error) {
+                console.error('Error exportando a PNG:', error);
+                showAlert(`Error al exportar: ${error.message}`, 'error');
+            }
         }
 
         async function cargarMenuParaEditar(menuId) {
@@ -3713,25 +4530,21 @@
 
         async function editarMenu(menuId) {
             try {
-                // Buscar el menú en la lista local primero
-                let menu = menus.find(m => m.id === menuId);
-                
-                // Si no está en la lista local, cargarlo desde el servidor
-                if (!menu) {
-                    const response = await fetch(`/api/v1/restaurant-menu/menus/?limit=1000`);
-                    if (!response.ok) {
-                        throw new Error(`Error HTTP: ${response.status}`);
-                    }
-                    const data = await response.json();
-                    menu = (data.menus || []).find(m => m.id === menuId);
+                // Siempre cargar el menú desde el servidor para obtener los datos más recientes
+                const response = await fetch(`/api/v1/restaurant-menu/menus/?limit=1000`);
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
                 }
+                const data = await response.json();
+                const menu = (data.menus || []).find(m => m.id === menuId);
                 
                 if (!menu) {
                     showAlert('Menú no encontrado', 'error');
                     return;
                 }
                 
-                console.log('📝 Editando menú:', menu);
+                console.log('📝 Editando menú (desde servidor):', menu);
+                console.log('📝 categorias_platos:', menu.categorias_platos);
                 
                 // Configurar el modal para edición
                 document.getElementById('menuModalTitle').textContent = 'Editar Menú del Día';
@@ -3748,15 +4561,52 @@
                 
                 // Esperar un poco para que se carguen los platos antes de marcar los checkboxes
                 setTimeout(() => {
-                    // Marcar platos fijos (todos por defecto)
-                    const platosFijosCheckboxes = document.querySelectorAll('.plato-fijo-checkbox');
-                    platosFijosCheckboxes.forEach(checkbox => {
-                        checkbox.checked = true;
-                    });
+                    console.log('🔍 Editando menú, categorias_platos:', menu.categorias_platos);
                     
-                    // Marcar platos variables según las categorías del menú
+                    // Marcar platos fijos según los guardados en el menú
+                    if (menu.categorias_platos && menu.categorias_platos['_platos_fijos']) {
+                        // Si hay platos fijos guardados, marcar solo esos
+                        const platosFijos = menu.categorias_platos['_platos_fijos'];
+                        console.log('📋 Platos fijos encontrados:', platosFijos);
+                        
+                        // Los platos pueden venir como objetos o como IDs
+                        const platosFijosIds = platosFijos.map(plato => {
+                            // Si es un objeto, extraer el ID
+                            if (typeof plato === 'object' && plato.id) {
+                                return plato.id;
+                            }
+                            // Si ya es un ID, usarlo directamente
+                            return typeof plato === 'number' ? plato : parseInt(plato);
+                        });
+                        
+                        console.log('📋 Platos fijos guardados (IDs):', platosFijosIds);
+                        
+                        const platosFijosCheckboxes = document.querySelectorAll('.plato-fijo-checkbox');
+                        console.log(`📋 Encontrados ${platosFijosCheckboxes.length} checkboxes de platos fijos`);
+                        
+                        platosFijosCheckboxes.forEach(checkbox => {
+                            const platoId = parseInt(checkbox.value);
+                            const debeMarcar = platosFijosIds.includes(platoId);
+                            checkbox.checked = debeMarcar;
+                            console.log(`  - Plato ID ${platoId} (${checkbox.id}): ${debeMarcar ? '✓ marcado' : '✗ desmarcado'}`);
+                        });
+                    } else {
+                        console.log('⚠️ No se encontraron platos fijos guardados, marcando todos por defecto');
+                        // Si no hay platos fijos guardados, marcar todos por defecto (comportamiento para menús nuevos)
+                        const platosFijosCheckboxes = document.querySelectorAll('.plato-fijo-checkbox');
+                        platosFijosCheckboxes.forEach(checkbox => {
+                            checkbox.checked = true;
+                        });
+                    }
+                    
+                    // Marcar platos variables según las categorías del menú (excluyendo la clave especial de platos fijos)
                     if (menu.categorias_platos) {
                         Object.keys(menu.categorias_platos).forEach(categoriaNombre => {
+                            // Saltar la clave especial de platos fijos
+                            if (categoriaNombre === '_platos_fijos') {
+                                return;
+                            }
+                            
                             const platosIds = menu.categorias_platos[categoriaNombre];
                             platosIds.forEach(plato => {
                                 const platoId = typeof plato === 'object' ? plato.id : plato;

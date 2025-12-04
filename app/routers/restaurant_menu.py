@@ -107,20 +107,31 @@ def get_categorias(
 @router.post("/categorias/", response_model=CategoriaMenuResponse)
 def create_categoria(categoria: CategoriaMenuCreate, db: Session = Depends(get_db)):
     """Crear nueva categoría de menú"""
-    # Verificar que no exista una categoría con el mismo nombre
-    existing = db.query(CategoriaMenuRestaurante).filter(CategoriaMenuRestaurante.nombre == categoria.nombre).first()
-    if existing:
+    try:
+        # Verificar que no exista una categoría con el mismo nombre
+        existing = db.query(CategoriaMenuRestaurante).filter(
+            CategoriaMenuRestaurante.nombre == categoria.nombre
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Ya existe una categoría con el nombre '{categoria.nombre}'"
+            )
+        
+        db_categoria = CategoriaMenuRestaurante(**categoria.dict())
+        db.add(db_categoria)
+        db.commit()
+        db.refresh(db_categoria)
+        
+        return CategoriaMenuResponse.from_orm(db_categoria)
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
         raise HTTPException(
-            status_code=400,
-            detail=f"Ya existe una categoría con el nombre '{categoria.nombre}'"
+            status_code=500,
+            detail=f"Error al crear la categoría: {str(e)}"
         )
-    
-    db_categoria = CategoriaMenuRestaurante(**categoria.dict())
-    db.add(db_categoria)
-    db.commit()
-    db.refresh(db_categoria)
-    
-    return db_categoria
 
 
 @router.put("/categorias/{categoria_id}", response_model=CategoriaMenuResponse)
@@ -454,6 +465,42 @@ def create_menu(menu: MenuDiaCreate, db: Session = Depends(get_db)):
         
         # Agregar platos por categoría
         for categoria_nombre, platos_ids in menu.categorias_platos.items():
+            # Manejar platos fijos de forma especial
+            if categoria_nombre == '_platos_fijos':
+                # Guardar platos fijos seleccionados en menu_categoria_platos con categoría especial
+                # Buscar o crear categoría especial para platos fijos
+                categoria_fijos = db.query(CategoriaMenuRestaurante).filter(
+                    CategoriaMenuRestaurante.nombre == '_platos_fijos'
+                ).first()
+                
+                if not categoria_fijos:
+                    # Crear categoría especial para platos fijos si no existe
+                    categoria_fijos = CategoriaMenuRestaurante(
+                        nombre='_platos_fijos',
+                        descripcion='Platos fijos seleccionados para el menú',
+                        orden=0,
+                        is_active=True
+                    )
+                    db.add(categoria_fijos)
+                    db.flush()
+                
+                # Agregar platos fijos a la categoría especial
+                for plato_id in platos_ids:
+                    # Verificar que el plato existe y es de tipo Plato_Fijo
+                    plato = db.query(PlatoRestaurante).filter(
+                        PlatoRestaurante.id == plato_id,
+                        PlatoRestaurante.tipo == 'Plato_Fijo',
+                        PlatoRestaurante.activo == True
+                    ).first()
+                    if plato:
+                        mcp = MenuCategoriaPlato(
+                            menu_dia_id=db_menu.id,
+                            categoria_id=categoria_fijos.id,
+                            plato_id=plato_id
+                        )
+                        db.add(mcp)
+                continue
+                
             # Buscar la categoría
             categoria = db.query(CategoriaMenuRestaurante).filter(CategoriaMenuRestaurante.nombre == categoria_nombre).first()
             if not categoria:
@@ -539,7 +586,14 @@ def update_menu(menu_id: int, menu: MenuDiaUpdate, db: Session = Depends(get_db)
         if menu.categorias_platos is not None:
             # Primero validar todas las categorías y platos antes de hacer cambios
             categorias_validas = {}
+            platos_fijos_ids = []
+            
             for categoria_nombre, platos_ids in menu.categorias_platos.items():
+                # Manejar platos fijos de forma especial
+                if categoria_nombre == '_platos_fijos':
+                    platos_fijos_ids = platos_ids
+                    continue
+                    
                 # Buscar la categoría
                 categoria = db.query(CategoriaMenuRestaurante).filter(CategoriaMenuRestaurante.nombre == categoria_nombre).first()
                 if not categoria:
@@ -593,6 +647,41 @@ def update_menu(menu_id: int, menu: MenuDiaUpdate, db: Session = Depends(get_db)
                 {"menu_id": menu_id}
             ).rowcount
             print(f"🗑️ Eliminadas {deleted_count} relaciones existentes para el menú {menu_id}")
+            
+            # Guardar platos fijos seleccionados si se proporcionaron
+            if platos_fijos_ids:
+                # Buscar o crear categoría especial para platos fijos
+                categoria_fijos = db.query(CategoriaMenuRestaurante).filter(
+                    CategoriaMenuRestaurante.nombre == '_platos_fijos'
+                ).first()
+                
+                if not categoria_fijos:
+                    # Crear categoría especial para platos fijos si no existe
+                    categoria_fijos = CategoriaMenuRestaurante(
+                        nombre='_platos_fijos',
+                        descripcion='Platos fijos seleccionados para el menú',
+                        orden=0,
+                        is_active=True
+                    )
+                    db.add(categoria_fijos)
+                    db.flush()
+                
+                # Agregar platos fijos a la categoría especial
+                for plato_id in platos_fijos_ids:
+                    # Verificar que el plato existe y es de tipo Plato_Fijo
+                    plato = db.query(PlatoRestaurante).filter(
+                        PlatoRestaurante.id == plato_id,
+                        PlatoRestaurante.tipo == 'Plato_Fijo',
+                        PlatoRestaurante.activo == True
+                    ).first()
+                    if plato:
+                        mcp = MenuCategoriaPlato(
+                            menu_dia_id=menu_id,
+                            categoria_id=categoria_fijos.id,
+                            plato_id=plato_id
+                        )
+                        db.add(mcp)
+                print(f"✅ Guardados {len(platos_fijos_ids)} platos fijos para el menú {menu_id}")
             
             # Verificar nuevamente que el menú sigue existiendo después de eliminar relaciones
             menu_check_after = db.execute(
