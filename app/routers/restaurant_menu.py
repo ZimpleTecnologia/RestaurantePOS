@@ -793,6 +793,53 @@ def despublicar_menu(menu_id: int, db: Session = Depends(get_db)):
     return {"message": "Menú despublicado exitosamente"}
 
 
+@router.delete("/menus/{menu_id}")
+def delete_menu(menu_id: int, db: Session = Depends(get_db)):
+    """Eliminar menú del día (solo si está desactivado)"""
+    try:
+        # Buscar el menú
+        menu = db.query(MenuDia).filter(MenuDia.id == menu_id).first()
+        if not menu:
+            raise HTTPException(status_code=404, detail="Menú no encontrado")
+        
+        # Guardar información del menú antes de eliminarlo
+        menu_nombre = menu.nombre
+        menu_estado = menu.estado
+        
+        # Verificar que el menú NO esté activo
+        if menu_estado == MenuDiaEstado.ACTIVE.value:
+            raise HTTPException(
+                status_code=400,
+                detail="No se puede eliminar un menú activo. Primero debes pausarlo o desactivarlo."
+            )
+        
+        # Eliminar todas las relaciones en menu_categoria_platos
+        from sqlalchemy import text
+        deleted_relations = db.execute(
+            text("DELETE FROM menu_categoria_platos WHERE menu_dia_id = :menu_id"),
+            {"menu_id": menu_id}
+        ).rowcount
+        
+        # Eliminar el menú
+        db.delete(menu)
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Menú eliminado exitosamente. Se eliminaron {deleted_relations} relación(es) de platos.",
+            "menu_id": menu_id,
+            "menu_nombre": menu_nombre
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al eliminar el menú: {str(e)}"
+        )
+
+
 # ============================================================================
 # ENDPOINTS PARA ACOMPAÑAMIENTOS FIJOS
 # ============================================================================

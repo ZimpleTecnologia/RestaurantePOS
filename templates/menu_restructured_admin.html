@@ -10,41 +10,32 @@
 
 {% block extra_css %}
 <style>
-        :root {
-            --primary-brown: #4E342E;
-            --light-beige: #FAF3E0;
-            --golden-yellow: #FFC107;
-            --warm-red: #E64A19;
-            --light-brown: #6D4C41;
-            --subtle-brown: #BCAAA4;
-            --medium-gray: #616161;
-            --white: #FFFFFF;
-        }
+        /* Los colores están definidos en /static/css/platonico-theme.css */
 
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: var(--light-beige);
-            color: var(--primary-brown);
+            background-color: var(--bg-main);
+            color: var(--text-dark);
         }
 
         .main-header {
-            background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-lighter) 100%);
             color: var(--white);
             padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-md);
         }
 
         .card {
-            border: 1px solid var(--subtle-brown);
+            border: 1px solid var(--secondary-lighter);
             border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(78, 52, 46, 0.1);
-            background-color: var(--white);
-            transition: transform 0.2s ease;
+            box-shadow: var(--shadow-md);
+            background-color: var(--bg-white);
+            transition: var(--transition-normal);
         }
 
         .card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(78, 52, 46, 0.15);
+            box-shadow: var(--shadow-lg);
         }
 
         /* Sistema de Notificaciones Personalizado */
@@ -168,18 +159,18 @@
         }
 
         .btn-primary-custom {
-            background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-lighter) 100%);
             border: none;
             color: var(--white);
             border-radius: 10px;
             padding: 10px 20px;
             font-weight: 500;
-            transition: all 0.3s ease;
+            transition: var(--transition-normal);
         }
 
         .btn-primary-custom:hover {
-            background: var(--golden-yellow);
-            color: var(--primary-brown);
+            background: linear-gradient(135deg, var(--primary-darker) 0%, var(--primary-color) 100%);
+            color: var(--white);
             transform: translateY(-2px);
         }
 
@@ -199,7 +190,7 @@
 
         /* Botón de refrescar moderno */
         .btn-refresh-modern {
-            background: linear-gradient(135deg, var(--light-brown) 0%, var(--primary-brown) 100%);
+            background: linear-gradient(135deg, var(--primary-lighter) 0%, var(--primary-color) 100%);
             border: none;
             color: white;
             padding: 12px 24px;
@@ -209,7 +200,7 @@
             position: relative;
             overflow: hidden;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(109, 76, 65, 0.3);
+            box-shadow: var(--shadow-md);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -218,13 +209,13 @@
 
         .btn-refresh-modern:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(109, 76, 65, 0.4);
-            background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
+            box-shadow: var(--shadow-lg);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-darker) 100%);
         }
 
         .btn-refresh-modern:active {
             transform: translateY(0);
-            box-shadow: 0 4px 15px rgba(109, 76, 65, 0.3);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-refresh-modern i {
@@ -237,9 +228,9 @@
 
         /* Botón de nuevo plato moderno */
         .btn-new-dish-modern {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-lighter) 100%);
             border: none;
-            color: white;
+            color: var(--primary-color);
             padding: 12px 24px;
             border-radius: 12px;
             font-weight: 600;
@@ -247,7 +238,7 @@
             position: relative;
             overflow: hidden;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            box-shadow: var(--shadow-pink-md);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -307,30 +298,30 @@
         }
 
         .semana-actual {
-            border-color: var(--primary-brown);
-            background: linear-gradient(135deg, var(--light-beige) 0%, #f8f6f4 100%);
-            box-shadow: 0 4px 15px rgba(78, 52, 46, 0.15);
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--bg-main) 0%, var(--bg-soft) 100%);
+            box-shadow: var(--shadow-md);
         }
 
         .dia-calendario {
-            background: var(--white);
-            border: 1px solid var(--subtle-brown);
+            background: var(--bg-white);
+            border: 1px solid var(--secondary-lighter);
             border-radius: 10px;
             padding: 12px;
             min-height: 200px;
-            transition: all 0.3s ease;
+            transition: var(--transition-normal);
             position: relative;
         }
 
         .dia-calendario:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(78, 52, 46, 0.15);
+            box-shadow: var(--shadow-lg);
         }
 
         .dia-hoy {
-            border-color: var(--primary-brown);
-            background: linear-gradient(135deg, var(--white) 0%, #f8f6f4 100%);
-            box-shadow: 0 4px 15px rgba(78, 52, 46, 0.2);
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--bg-white) 0%, var(--bg-main) 100%);
+            box-shadow: var(--shadow-md);
         }
 
         .dia-header {
@@ -342,7 +333,7 @@
 
         .dia-nombre {
             font-weight: 600;
-            color: var(--primary-brown);
+            color: var(--primary-color);
             font-size: 0.9rem;
             text-transform: uppercase;
         }
@@ -350,11 +341,11 @@
         .dia-numero {
             font-size: 1.5rem;
             font-weight: bold;
-            color: var(--dark-brown);
+            color: var(--text-dark);
         }
 
         .dia-hoy .dia-numero {
-            background: var(--primary-brown);
+            background: var(--primary-color);
             color: white;
             width: 30px;
             height: 30px;
@@ -366,22 +357,22 @@
         }
 
         .menu-dia-card {
-            background: var(--white);
-            border: 1px solid var(--subtle-brown);
+            background: var(--bg-white);
+            border: 1px solid var(--secondary-lighter);
             border-radius: 8px;
             padding: 10px;
             margin-bottom: 8px;
-            transition: all 0.3s ease;
+            transition: var(--transition-normal);
         }
 
         .menu-dia-card:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(78, 52, 46, 0.15);
+            box-shadow: var(--shadow-md);
         }
 
         .menu-hoy {
-            border-color: var(--primary-brown);
-            background: linear-gradient(135deg, var(--white) 0%, #f8f6f4 100%);
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--bg-white) 0%, var(--bg-main) 100%);
         }
 
         .menu-header {
@@ -562,44 +553,44 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
 
-        /* Tarjeta 1: Total Opciones - Azul vibrante */
+        /* Tarjeta 1: Total Opciones - Rojo vino principal */
         .stats-card:nth-child(1) {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-lighter) 100%);
             color: white;
         }
 
         .stats-card:nth-child(1):hover {
-            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+            box-shadow: var(--shadow-xl);
         }
 
-        /* Tarjeta 2: Platos Fijos - Verde esmeralda */
+        /* Tarjeta 2: Platos Fijos - Rosa acento */
         .stats-card:nth-child(2) {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-lighter) 100%);
+            color: var(--primary-color);
         }
 
         .stats-card:nth-child(2):hover {
-            box-shadow: 0 20px 40px rgba(17, 153, 142, 0.4);
+            box-shadow: var(--shadow-pink-lg);
         }
 
-        /* Tarjeta 3: Platos Variables - Naranja vibrante */
+        /* Tarjeta 3: Platos Variables - Tono intermedio */
         .stats-card:nth-child(3) {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, var(--primary-lighter) 0%, var(--secondary-darker) 100%);
             color: white;
         }
 
         .stats-card:nth-child(3):hover {
-            box-shadow: 0 20px 40px rgba(240, 147, 251, 0.4);
+            box-shadow: var(--shadow-lg);
         }
 
-        /* Tarjeta 4: Menús Activos - Púrpura real */
+        /* Tarjeta 4: Menús Activos - Rosa suave */
         .stats-card:nth-child(4) {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-            color: #2d3748;
+            background: linear-gradient(135deg, var(--bg-soft) 0%, var(--secondary-pink) 100%);
+            color: var(--text-dark);
         }
 
         .stats-card:nth-child(4):hover {
-            box-shadow: 0 20px 40px rgba(168, 237, 234, 0.4);
+            box-shadow: var(--shadow-pink-lg);
         }
 
         .stats-number {
@@ -760,34 +751,34 @@
         }
         
         .menu-column {
-            background: var(--white);
+            background: var(--bg-white);
             border-radius: 12px;
             padding: 1.5rem;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow-sm);
         }
         
         .menu-column h5 {
-            color: var(--primary-brown);
+            color: var(--primary-color);
             margin-bottom: 1rem;
             padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--golden-yellow);
+            border-bottom: 2px solid var(--secondary-color);
         }
         
         .opcion-card {
-            background: var(--light-beige);
-            border: 2px solid var(--subtle-brown);
+            background: var(--bg-main);
+            border: 2px solid var(--secondary-lighter);
             border-radius: 12px;
             padding: 1rem;
             margin-bottom: 1rem;
-            transition: all 0.3s ease;
+            transition: var(--transition-normal);
             display: flex;
             align-items: center;
             gap: 1rem;
         }
         
         .opcion-card:hover {
-            border-color: var(--golden-yellow);
-            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+            border-color: var(--secondary-color);
+            box-shadow: var(--shadow-pink-md);
             transform: translateY(-2px);
         }
         
@@ -833,17 +824,17 @@
         }
 
         .badge-fijo {
-            background: var(--primary-brown);
+            background: var(--primary-color);
             color: var(--white);
         }
 
         .badge-variable {
-            background: var(--golden-yellow);
-            color: var(--primary-brown);
+            background: var(--secondary-color);
+            color: var(--primary-color);
         }
 
         .categoria-header {
-            background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-lighter) 100%);
             color: var(--white);
             padding: 15px;
             border-radius: 10px;
@@ -851,19 +842,19 @@
         }
 
         .form-control, .form-select {
-            border: 2px solid var(--subtle-brown);
+            border: 2px solid var(--secondary-lighter);
             border-radius: 8px;
             padding: 10px 15px;
             font-size: 14px;
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: var(--primary-brown);
-            box-shadow: 0 0 0 0.2rem rgba(78, 52, 46, 0.25);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(138, 20, 38, 0.25);
         }
 
         .modal-header {
-            background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-lighter) 100%);
             color: var(--white);
             border-radius: 15px 15px 0 0;
         }
@@ -1064,13 +1055,18 @@
                                 <i class="bi bi-plus-circle me-2"></i>
                                 <span class="btn-text">Nuevo Plato</span>
                                 <div class="btn-ripple"></div>
-                    </button>
+                            </button>
+                            <button class="btn btn-new-dish-modern" onclick="nuevoMenu()" title="Crear nuevo menú del día">
+                                <i class="bi bi-calendar-plus me-2"></i>
+                                <span class="btn-text">Nuevo Menú</span>
+                                <div class="btn-ripple"></div>
+                            </button>
                             <button class="btn btn-refresh-modern" onclick="sincronizarDatos()" title="Refrescar datos">
                                 <i class="bi bi-arrow-clockwise me-2"></i>
                                 <span class="btn-text">Refrescar</span>
                                 <div class="btn-ripple"></div>
-                    </button>
-                </div>
+                            </button>
+                        </div>
             </div>
         </div>
     </div>
@@ -1228,22 +1224,16 @@
                                         <option value="DRAFT">Borradores</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <button class="btn btn-primary w-100" onclick="filtrarMenus()">
                                         <i class="bi bi-funnel me-1"></i>
                                         Filtrar
                                     </button>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <button class="btn btn-secondary w-100" onclick="limpiarFiltrosMenu()">
                                         <i class="bi bi-x-circle me-1"></i>
                                         Limpiar
-                                    </button>
-                                </div>
-                                <div class="col-md-2">
-                                    <button class="btn btn-success w-100" onclick="nuevoMenu()">
-                                        <i class="bi bi-plus-circle me-1"></i>
-                                        Nuevo Menú
                                     </button>
                                 </div>
                             </div>
@@ -1544,6 +1534,30 @@
                                 <small class="text-muted">Los platos están organizados por categorías</small>
                             </div>
                             <div class="card-body">
+                                <!-- Buscador de platos en tiempo real -->
+                                <div class="mb-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white">
+                                            <i class="bi bi-search"></i>
+                                        </span>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="buscadorPlatosVariables" 
+                                               placeholder="Buscar plato por nombre..." 
+                                               oninput="filtrarPlatosVariables(this.value)">
+                                        <button class="btn btn-outline-secondary" 
+                                                type="button" 
+                                                onclick="limpiarBuscadorPlatos()"
+                                                title="Limpiar búsqueda">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Escribe para filtrar los platos automáticamente
+                                    </small>
+                                </div>
+                                
                                 <div id="platosVariablesModal">
                                     <!-- Los platos variables se cargarán aquí agrupados por categoría -->
                                 </div>
@@ -1562,23 +1576,92 @@
         </div>
     </div>
 
-    <!-- Modal para duplicar menú -->
-    <div class="modal fade" id="duplicarMenuModal" tabindex="-1">
-        <div class="modal-dialog">
+    <!-- Modal de duplicar menú eliminado -->
+
+    <!-- Modal de Confirmación de Cambio de Estado -->
+    <div class="modal fade" id="confirmarCambioEstadoMenuModal" tabindex="-1" aria-labelledby="confirmarCambioEstadoMenuLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Duplicar Menú</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <div class="modal-header" id="headerCambioEstado">
+                    <h5 class="modal-title text-white" id="confirmarCambioEstadoMenuLabel">
+                        <i class="bi me-2" id="iconoCambioEstado"></i>
+                        <span id="tituloCambioEstado"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="nuevaFecha" class="form-label">Nueva Fecha *</label>
-                        <input type="date" class="form-control" id="nuevaFecha" required>
+                    <div class="text-center py-3">
+                        <i class="bi display-1 mb-3" id="iconoGrandeCambioEstado"></i>
+                        <h5 class="mb-3" id="preguntaCambioEstado"></h5>
+                        <div class="alert mb-3" id="alertCambioEstado">
+                            <div class="mb-2">
+                                <strong>Menú:</strong> <span id="menuCambioEstadoNombre"></span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Fecha:</strong> <span id="menuCambioEstadoFecha"></span>
+                            </div>
+                            <div>
+                                <strong>Estado actual:</strong> <span id="menuCambioEstadoActual"></span>
+                            </div>
+                        </div>
+                        <p class="mb-0" id="mensajeInfoCambioEstado"></p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="duplicarMenu()">Duplicar</button>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn" id="btnConfirmarCambioEstado">
+                        <i class="bi me-1" id="iconoBotonConfirmar"></i>
+                        <span id="textoBotonConfirmar"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación de Eliminación -->
+    <div class="modal fade" id="confirmarEliminacionMenuModal" tabindex="-1" aria-labelledby="confirmarEliminacionMenuLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="confirmarEliminacionMenuLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center py-3">
+                        <i class="bi bi-trash3 display-1 text-danger mb-3"></i>
+                        <h5 class="mb-3">¿Estás seguro de eliminar este menú?</h5>
+                        <div class="alert alert-warning mb-3">
+                            <div class="mb-2">
+                                <strong>Menú:</strong> <span id="menuEliminarNombre"></span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Fecha:</strong> <span id="menuEliminarFecha"></span>
+                            </div>
+                            <div>
+                                <strong>Platos:</strong> <span id="menuEliminarPlatos"></span>
+                            </div>
+                        </div>
+                        <p class="text-danger mb-0">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            <strong>Esta acción no se puede deshacer</strong>
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmarEliminacionMenu">
+                        <i class="bi bi-trash me-1"></i>
+                        Sí, Eliminar Menú
+                    </button>
                 </div>
             </div>
         </div>
@@ -1628,11 +1711,11 @@
                                     <hr>
                                     <div class="mb-3">
                                         <label class="form-label">Color del Título</label>
-                                        <input type="color" class="form-control form-control-color" id="vistaPreviaColorTitulo" value="#8B4513">
+                                        <input type="color" class="form-control form-control-color" id="vistaPreviaColorTitulo" value="#8A1426">
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Color de Fondo</label>
-                                        <input type="color" class="form-control form-control-color" id="vistaPreviaColorFondo" value="#F5F5DC">
+                                        <input type="color" class="form-control form-control-color" id="vistaPreviaColorFondo" value="#FCE9EC">
                                     </div>
                                     <hr>
                                     <div class="mb-3">
@@ -1656,7 +1739,7 @@
                         </div>
                         <!-- Vista previa (derecha) -->
                         <div class="col-md-9">
-                            <div id="menuPreviewContainer" style="background-color: #F5F5DC; padding: 30px; border-radius: 10px; font-family: 'Arial', sans-serif;">
+                            <div id="menuPreviewContainer" style="background-color: #FCE9EC; padding: 30px; border-radius: 10px; font-family: 'Arial', sans-serif;">
                                 <div id="menuPreviewContent">
                                     <!-- El contenido del menú se cargará aquí -->
                                 </div>
@@ -2719,20 +2802,18 @@
                                     <small class="text-muted">${menu.total_platos || 0} platos</small>
                                 </div>
                                 <div class="col-md-4 text-end">
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="verMenu(${menu.id})">
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="verMenu(${menu.id})" title="Ver menú">
                                         <i class="bi bi-eye"></i> Ver
                                     </button>
-                                    <button class="btn btn-sm btn-outline-warning me-1" onclick="editarMenu(${menu.id})">
+                                    <button class="btn btn-sm btn-outline-warning me-1" onclick="editarMenu(${menu.id})" title="Editar menú">
                                         <i class="bi bi-pencil"></i> Editar
                                     </button>
-                                    <button class="btn btn-sm btn-outline-info me-1" onclick="showDuplicarMenuModal(${menu})">
-                                        <i class="bi bi-copy"></i> Duplicar
-                                    </button>
-                                    <button class="btn btn-sm ${menu.estado === 'ACTIVE' ? 'btn-outline-warning' : 'btn-outline-success'}" 
-                                            onclick="toggleMenuStatus(${menu.id})">
+                                    <button class="btn btn-sm ${menu.estado === 'ACTIVE' ? 'btn-outline-warning' : 'btn-outline-success'} me-1" 
+                                            onclick='toggleMenuStatus(${menu.id}, "${menu.estado}", ${JSON.stringify(menu)})' 
+                                            title="${menu.estado === 'ACTIVE' ? 'Pausar menú' : 'Activar menú'}">
                                         <i class="bi bi-${menu.estado === 'ACTIVE' ? 'pause' : 'play'}"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarMenu(${menu.id})">
+                                    <button class="btn btn-sm btn-outline-danger" onclick='confirmarEliminarMenu(${JSON.stringify(menu)})' title="Eliminar menú">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -3640,16 +3721,16 @@
             categoriasOrdenadas.forEach(categoriaNombre => {
                 const platosDeCategoria = platosPorCategoria[categoriaNombre];
                 
-                // Crear sección de categoría
+                // Crear sección de categoría con clase para filtrado
                 const categoriaHtml = `
-                    <div class="mb-4">
+                    <div class="mb-4 categoria-platos-group" data-categoria="${categoriaNombre}">
                         <h6 class="text-primary mb-3">
                             <i class="bi bi-tag me-2"></i>
                             ${categoriaNombre}
                         </h6>
                         <div class="row">
                             ${platosDeCategoria.map(plato => `
-                                <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="col-md-6 col-lg-4 mb-3 plato-variable-item" data-plato-id="${plato.id}">
                                     <div class="card h-100">
                                         <div class="card-body p-3">
                                             <div class="form-check">
@@ -3662,9 +3743,9 @@
                                                 <label class="form-check-label w-100" for="plato_variable_${plato.id}">
                                                     <div class="d-flex justify-content-between align-items-start">
                                                         <div>
-                                                            <strong>${plato.nombre}</strong>
+                                                            <strong class="plato-nombre">${plato.nombre}</strong>
                                                             <br>
-                                                            <small class="text-muted">${plato.descripcion || 'Sin descripción'}</small>
+                                                            <small class="text-muted plato-descripcion">${plato.descripcion || 'Sin descripción'}</small>
                                                         </div>
                                                         <div class="text-end">
                                                             <span class="badge bg-success">${formatearPrecio(plato.precio)}</span>
@@ -4224,30 +4305,37 @@
                 });
             }
             
-            // Construir HTML del menú
+            // Construir HTML del menú con logo
             let html = `
                 <div style="max-width: 800px; margin: 0 auto; padding: 40px;">
+                    <!-- Logo Platónico -->
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="/static/images/platonico_logo.png" 
+                             alt="Platónico" 
+                             style="width: 180px; height: 180px; object-fit: contain; margin: 0 auto; display: block; filter: drop-shadow(0 4px 8px rgba(138, 20, 38, 0.15));">
+                    </div>
+                    
                     <!-- Título del Restaurante -->
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <h1 style="color: ${colorTitulo}; font-size: 48px; font-weight: bold; letter-spacing: 3px; margin: 0; font-family: 'Georgia', serif;">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <h1 style="color: ${colorTitulo}; font-size: 42px; font-weight: bold; letter-spacing: 2px; margin: 0; font-family: 'Georgia', serif; text-transform: uppercase;">
                             ${nombreRestaurante}
                         </h1>
-                        <p style="color: ${colorTitulo}; font-size: 18px; margin: 10px 0 0 0; font-style: italic;">
+                        <p style="color: ${colorTitulo}; font-size: 16px; margin: 8px 0 0 0; font-style: italic; opacity: 0.9;">
                             ${lemaRestaurante}
                         </p>
                     </div>
                     
-                    <hr style="border: 2px solid ${colorTitulo}; margin: 30px 0;">
+                    <hr style="border: none; border-top: 2px solid ${colorTitulo}; margin: 25px auto; width: 80%; opacity: 0.6;">
                     
                     <!-- Título y Precio del Menú -->
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <h2 style="color: ${colorTitulo}; font-size: 32px; font-weight: bold; margin: 0;">
+                        <h2 style="color: ${colorTitulo}; font-size: 28px; font-weight: bold; margin: 0; font-family: 'Georgia', serif;">
                             ${tituloMenu}
-                            ${precioMenu > 0 ? `- ${formatearPrecio(precioMenu)}` : ''}
+                            ${precioMenu > 0 ? `<span style="font-size: 24px; color: ${colorTitulo}; opacity: 0.9;"> – ${formatearPrecio(precioMenu)}</span>` : ''}
                         </h2>
                     </div>
                     
-                    <hr style="border: 2px solid ${colorTitulo}; margin: 30px 0;">
+                    <hr style="border: none; border-top: 2px solid ${colorTitulo}; margin: 25px auto; width: 80%; opacity: 0.6;">
             `;
             
             // PRIMERO: Agregar platos variables por categoría (Menú del Día)
@@ -4413,14 +4501,14 @@
                 }
                 
                 // Obtener nombre del menú para el nombre del archivo
-                const nombreMenu = document.getElementById('vistaPreviaNombre').value || menuVistaPrevia?.nombre || 'menu';
-                const fechaMenu = document.getElementById('vistaPreviaFecha').value || menuVistaPrevia?.fecha || '';
+                const nombreMenu = menuVistaPrevia?.nombre || 'menu';
+                const fechaMenu = menuVistaPrevia?.fecha || new Date().toISOString().split('T')[0];
                 const sufijoFormato = formato === '9:16' ? '_movil' : '';
                 
                 // Configuración de html2canvas según el formato
                 const opcionesCanvas = {
                     scale: 3, // Alta resolución
-                    backgroundColor: document.getElementById('vistaPreviaColorFondo').value || '#F5F5DC',
+                    backgroundColor: document.getElementById('vistaPreviaColorFondo').value || '#FCE9EC',
                     logging: false,
                     useCORS: true,
                     allowTaint: true,
@@ -4444,7 +4532,7 @@
                     const ctx = newCanvas.getContext('2d');
                     
                     // Rellenar con color de fondo
-                    ctx.fillStyle = document.getElementById('vistaPreviaColorFondo').value || '#F5F5DC';
+                    ctx.fillStyle = document.getElementById('vistaPreviaColorFondo').value || '#FCE9EC';
                     ctx.fillRect(0, 0, targetWidth, targetHeight);
                     
                     // Calcular escala para ajustar el contenido
@@ -4639,6 +4727,261 @@
             
             // Aquí puedes implementar la eliminación del menú
             showAlert(`Eliminar menú: ${menu.nombre}`, 'info');
+        }
+        
+        /**
+         * Filtrar platos variables en tiempo real
+         */
+        function filtrarPlatosVariables(termino) {
+            const terminoBusqueda = termino.toLowerCase().trim();
+            const container = document.getElementById('platosVariablesModal');
+            
+            if (!container) return;
+            
+            // Si no hay término de búsqueda, mostrar todo
+            if (!terminoBusqueda) {
+                const categorias = container.querySelectorAll('.categoria-platos-group');
+                categorias.forEach(categoria => {
+                    categoria.style.display = 'block';
+                    const platos = categoria.querySelectorAll('.plato-variable-item');
+                    platos.forEach(plato => {
+                        plato.style.display = 'block';
+                    });
+                });
+                return;
+            }
+            
+            // Filtrar platos por nombre y descripción
+            const categorias = container.querySelectorAll('.categoria-platos-group');
+            
+            categorias.forEach(categoria => {
+                const platos = categoria.querySelectorAll('.plato-variable-item');
+                let hayPlatosVisibles = false;
+                
+                platos.forEach(plato => {
+                    const nombrePlato = plato.querySelector('.plato-nombre')?.textContent.toLowerCase() || '';
+                    const descripcionPlato = plato.querySelector('.plato-descripcion')?.textContent.toLowerCase() || '';
+                    
+                    // Buscar en nombre y descripción
+                    if (nombrePlato.includes(terminoBusqueda) || descripcionPlato.includes(terminoBusqueda)) {
+                        plato.style.display = 'block';
+                        hayPlatosVisibles = true;
+                    } else {
+                        plato.style.display = 'none';
+                    }
+                });
+                
+                // Mostrar u ocultar categoría según si tiene platos visibles
+                categoria.style.display = hayPlatosVisibles ? 'block' : 'none';
+            });
+        }
+        
+        /**
+         * Limpiar el buscador de platos
+         */
+        function limpiarBuscadorPlatos() {
+            const buscador = document.getElementById('buscadorPlatosVariables');
+            if (buscador) {
+                buscador.value = '';
+                filtrarPlatosVariables('');
+                buscador.focus();
+            }
+        }
+        
+        /* Funcionalidad de duplicar menú eliminada */
+        
+        /**
+         * Alternar estado del menú (Activo/Pausado)
+         */
+        async function toggleMenuStatus(menuId, estadoActual, menuInfo) {
+            console.log('🔄 Preparando cambio de estado:', menuId, 'Estado actual:', estadoActual);
+            
+            // Determinar nuevo estado
+            const nuevoEstado = estadoActual === 'ACTIVE' ? 'DRAFT' : 'ACTIVE';
+            const accion = nuevoEstado === 'ACTIVE' ? 'activar' : 'pausar';
+            const accionGerundio = nuevoEstado === 'ACTIVE' ? 'activando' : 'pausando';
+            
+            // Configurar modal según la acción
+            const modal = document.getElementById('confirmarCambioEstadoMenuModal');
+            const header = document.getElementById('headerCambioEstado');
+            const iconoHeader = document.getElementById('iconoCambioEstado');
+            const titulo = document.getElementById('tituloCambioEstado');
+            const iconoGrande = document.getElementById('iconoGrandeCambioEstado');
+            const pregunta = document.getElementById('preguntaCambioEstado');
+            const alert = document.getElementById('alertCambioEstado');
+            const mensajeInfo = document.getElementById('mensajeInfoCambioEstado');
+            const btnConfirmar = document.getElementById('btnConfirmarCambioEstado');
+            const iconoBoton = document.getElementById('iconoBotonConfirmar');
+            const textoBoton = document.getElementById('textoBotonConfirmar');
+            
+            if (nuevoEstado === 'ACTIVE') {
+                // Configuración para ACTIVAR
+                header.className = 'modal-header bg-success text-white';
+                iconoHeader.className = 'bi bi-check-circle me-2';
+                titulo.textContent = 'Activar Menú';
+                iconoGrande.className = 'bi bi-check-circle-fill display-1 text-success mb-3';
+                pregunta.textContent = '¿Estás seguro de activar este menú?';
+                alert.className = 'alert alert-success mb-3';
+                mensajeInfo.innerHTML = '<i class="bi bi-info-circle me-1"></i>El menú estará visible para los clientes y meseros.';
+                mensajeInfo.className = 'text-success mb-0';
+                btnConfirmar.className = 'btn btn-success';
+                iconoBoton.className = 'bi bi-check-circle me-1';
+                textoBoton.textContent = 'Sí, Activar Menú';
+            } else {
+                // Configuración para PAUSAR
+                header.className = 'modal-header bg-warning text-dark';
+                iconoHeader.className = 'bi bi-pause-circle me-2';
+                titulo.textContent = 'Pausar Menú';
+                iconoGrande.className = 'bi bi-pause-circle-fill display-1 text-warning mb-3';
+                pregunta.textContent = '¿Estás seguro de pausar este menú?';
+                alert.className = 'alert alert-warning mb-3';
+                mensajeInfo.innerHTML = '<i class="bi bi-info-circle me-1"></i>El menú dejará de estar visible para clientes y meseros.';
+                mensajeInfo.className = 'text-warning mb-0';
+                btnConfirmar.className = 'btn btn-warning';
+                iconoBoton.className = 'bi bi-pause-circle me-1';
+                textoBoton.textContent = 'Sí, Pausar Menú';
+            }
+            
+            // Llenar datos del menú
+            document.getElementById('menuCambioEstadoNombre').textContent = menuInfo.nombre;
+            document.getElementById('menuCambioEstadoFecha').textContent = new Date(menuInfo.fecha).toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const estadoTexto = estadoActual === 'ACTIVE' ? 'Activo' : 'Pausado';
+            document.getElementById('menuCambioEstadoActual').textContent = estadoTexto;
+            
+            // Mostrar modal
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+            
+            // Configurar el botón de confirmar (eliminar listener anterior si existe)
+            const nuevoBtn = btnConfirmar.cloneNode(true);
+            btnConfirmar.parentNode.replaceChild(nuevoBtn, btnConfirmar);
+            
+            nuevoBtn.addEventListener('click', async () => {
+                try {
+                    console.log(`🔄 ${accionGerundio} menú:`, menuId);
+                    
+                    // Endpoint según el estado
+                    const endpoint = nuevoEstado === 'ACTIVE'
+                        ? `/api/v1/restaurant-menu/menus/${menuId}/publicar`
+                        : `/api/v1/restaurant-menu/menus/${menuId}/despublicar`;
+                    
+                    const response = await fetch(endpoint, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || 'Error al cambiar estado');
+                    }
+                    
+                    const menuActualizado = await response.json();
+                    console.log('✅ Estado actualizado:', menuActualizado);
+                    
+                    // Cerrar modal
+                    bsModal.hide();
+                    
+                    // Mostrar mensaje de éxito
+                    showAlert(`Menú ${accion === 'activar' ? 'activado' : 'pausado'} exitosamente`, 'success');
+                    
+                    // Recargar menús
+                    await cargarMenus();
+                    
+                } catch (error) {
+                    console.error('❌ Error cambiando estado:', error);
+                    bsModal.hide();
+                    showAlert(`Error al cambiar estado: ${error.message}`, 'error');
+                }
+            });
+        }
+        
+        /**
+         * Confirmar eliminación de menú
+         */
+        let menuAEliminar = null;
+        
+        function confirmarEliminarMenu(menu) {
+            console.log('🗑️ Preparando eliminación:', menu);
+            
+            // Verificar que el menú NO esté activo
+            if (menu.estado === 'ACTIVE') {
+                showAlert('No se puede eliminar un menú activo. Primero debes pausarlo.', 'warning');
+                return;
+            }
+            
+            menuAEliminar = menu;
+            
+            // Llenar datos del modal
+            document.getElementById('menuEliminarNombre').textContent = menu.nombre;
+            document.getElementById('menuEliminarFecha').textContent = new Date(menu.fecha).toLocaleDateString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            document.getElementById('menuEliminarPlatos').textContent = `${menu.total_platos || 0} platos`;
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('confirmarEliminacionMenuModal'));
+            modal.show();
+            
+            // Configurar el botón de confirmar (eliminar listener anterior si existe)
+            const btnConfirmar = document.getElementById('btnConfirmarEliminacionMenu');
+            const nuevoBtn = btnConfirmar.cloneNode(true);
+            btnConfirmar.parentNode.replaceChild(nuevoBtn, btnConfirmar);
+            
+            nuevoBtn.addEventListener('click', async () => {
+                await eliminarMenu(menu.id);
+                modal.hide();
+            });
+        }
+        
+        /**
+         * Eliminar menú
+         */
+        async function eliminarMenu(menuId) {
+            try {
+                console.log('🗑️ Eliminando menú:', menuId);
+                
+                const response = await fetch(`/api/v1/restaurant-menu/menus/${menuId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    const errorMessage = errorData.detail || 'Error al eliminar el menú';
+                    
+                    // Si es un error 400 (menú activo), mostrar mensaje específico
+                    if (response.status === 400) {
+                        showAlert(errorMessage, 'warning');
+                    } else {
+                        showAlert(`Error al eliminar menú: ${errorMessage}`, 'error');
+                    }
+                    return;
+                }
+                
+                const result = await response.json();
+                console.log('✅ Menú eliminado exitosamente:', result);
+                
+                // Mostrar mensaje de éxito con detalles si están disponibles
+                const successMessage = result.message || 'Menú eliminado exitosamente';
+                showAlert(successMessage, 'success');
+                
+                // Recargar menús
+                await cargarMenus();
+                
+            } catch (error) {
+                console.error('❌ Error eliminando menú:', error);
+                showAlert(`Error al eliminar menú: ${error.message}`, 'error');
+            }
         }
 </script>
 {% endblock %}
