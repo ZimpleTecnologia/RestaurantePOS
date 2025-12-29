@@ -1,0 +1,969 @@
+{% extends "base.html" %}
+{% block title %}Usuarios - Admin{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/platonico-theme.css?v=2.0">
+<style>
+    .user-avatar {width: 50px; height: 50px; border-radius: 50%; background: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;}
+    
+    
+    /* Estilos para modales profesionales */
+    .modal-header.bg-success {
+        background: linear-gradient(135deg, #28a745, #20c997) !important;
+        border-bottom: none;
+    }
+    
+    .modal-header.bg-danger {
+        background: linear-gradient(135deg, var(--primary-color), #dc3545) !important;
+        border-bottom: none;
+    }
+    
+    .modal-content {
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .modal-header {
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    #exitoModal .modal-body,
+    #errorModal .modal-body {
+        padding: 2rem 1.5rem;
+    }
+    
+    .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+    
+    /* Estilos para el modal de permisos - Rediseño completo */
+    #modulosPermisos {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        max-height: 65vh;
+        overflow-y: auto;
+        padding: 1.5rem 2rem !important;
+        background: var(--bg-white);
+    }
+    
+    .modulo-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s ease;
+    }
+    
+    .modulo-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .modulo-header-section {
+        margin-bottom: 1.5rem;
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-darker));
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(138, 20, 38, 0.3);
+        border-bottom: none;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .modulo-title {
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: var(--white);
+        margin: 0 0 0.75rem 0;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        text-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        line-height: 1.3;
+    }
+    
+    .modulo-subtitle {
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.95);
+        margin: 0;
+        font-weight: 400;
+        line-height: 1.5;
+    }
+    
+    .acciones-basicas {
+        margin-top: 1.5rem;
+    }
+    
+    .acciones-grid {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .accion-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.75rem;
+        background: white;
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        transition: all 0.2s ease;
+        flex: 1;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+    
+    .accion-item:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(138, 20, 38, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .accion-label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 1.1rem;
+        text-transform: capitalize;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Toggle switch personalizado - Más grande y destacado */
+    .acciones-grid .form-check-input:checked {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+    }
+    
+    .acciones-grid .form-check-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(138, 20, 38, 0.25);
+    }
+    
+    .acciones-grid .form-switch .form-check-input {
+        width: 5rem !important;
+        height: 2.5rem !important;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .acciones-grid .form-check-input::after {
+        width: 2rem !important;
+        height: 2rem !important;
+        transition: transform 0.3s ease;
+        background-color: white;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    
+    .acciones-grid .form-check-input:checked::after {
+        transform: translateX(2.5rem) !important;
+    }
+    
+    /* Scrollbar personalizado */
+    #modulosPermisos::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    #modulosPermisos::-webkit-scrollbar-track {
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    
+    #modulosPermisos::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 10px;
+    }
+    
+    #modulosPermisos::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-darker);
+    }
+    
+    /* Animación suave para los modales */
+    .modal.fade .modal-dialog {
+        transition: transform 0.3s ease-out;
+        transform: translate(0, -50px);
+    }
+    
+    .modal.show .modal-dialog {
+        transform: translate(0, 0);
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <div><h2><i class="bi bi-people me-2"></i>Usuarios y Meseros</h2></div>
+                <div>
+                    <button class="btn btn-primary" onclick="mostrarModalNuevo()"><i class="bi bi-plus-circle me-2"></i>Nuevo Usuario</button>
+                    <button class="btn btn-outline-secondary" onclick="cargarUsuarios()"><i class="bi bi-arrow-clockwise"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-4"><input type="text" class="form-control" id="buscarUsuario" placeholder="Buscar..." oninput="filtrarUsuarios()"></div>
+        <div class="col-md-3"><select class="form-select" id="filtroRol" onchange="filtrarUsuarios()"><option value="">Todos los roles</option></select></div>
+        <div class="col-md-3"><select class="form-select" id="filtroEstado" onchange="filtrarUsuarios()"><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select></div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead><tr><th>Usuario</th><th>Teléfono</th><th>Rol</th><th>Estado</th><th>Permisos</th><th>Acciones</th></tr></thead>
+            <tbody id="tablaUsuarios"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="usuarioModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="usuarioModalLabel">Nuevo Usuario</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form id="usuarioForm">
+                    <input type="hidden" id="usuarioId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label>Usuario *</label><input type="text" class="form-control" id="username" required></div>
+                        <div class="col-md-6 mb-3"><label>Email *</label><input type="email" class="form-control" id="email" required></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label>Nombre Completo *</label><input type="text" class="form-control" id="full_name" required></div>
+                        <div class="col-md-6 mb-3"><label>Teléfono</label><input type="text" class="form-control" id="telefono"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label>Rol *</label><select class="form-select" id="role" required></select></div>
+                        <div class="col-md-6 mb-3">
+                            <label>Contraseña <span id="passwordRequired">*</span></label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password" placeholder="Nueva contraseña (min. 6 caracteres)">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword" onclick="togglePasswordVisibility()">
+                                    <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted" id="passwordHelp">Dejar en blanco para mantener la contraseña actual (solo al editar)</small>
+                        </div>
+                    </div>
+                    <div class="mb-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="is_active" checked><label class="form-check-label">Usuario activo</label></div></div>
+                </form>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarUsuario()">Guardar</button></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="permisosModal" tabindex="-1">
+    <div class="modal-dialog modal-xl" style="max-width: 1200px;">
+        <div class="modal-content" style="border: none; border-radius: 15px; overflow: hidden;">
+            <div class="modal-header" style="background: var(--bg-white); border-bottom: 2px solid var(--bg-soft); padding: 1.5rem 2rem;">
+                <div class="w-100">
+                    <h5 class="modal-title mb-2" style="font-size: 1.5rem; font-weight: 700; color: var(--text-dark);">
+                        <i class="bi bi-shield-lock me-2" style="color: var(--primary-color);"></i>Gestión de Permisos
+                    </h5>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill me-2" style="color: var(--primary-color); font-size: 1.2rem;"></i>
+                        <span style="font-size: 1rem; color: var(--text-dark); font-weight: 500;">
+                            Permisos para: <strong id="usuarioPermisoNombre"></strong>
+                        </span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="background: var(--bg-white); padding: 0;">
+                <input type="hidden" id="usuarioPermisoId">
+                <div id="modulosPermisos" style="padding: 1.5rem 2rem;"></div>
+            </div>
+            <div class="modal-footer" style="background: var(--bg-white); border-top: 2px solid var(--bg-soft); padding: 1.25rem 2rem; justify-content: space-between;">
+                <div>
+                    <button type="button" class="btn btn-secondary btn-lg" onclick="seleccionarTodos()" style="padding: 0.625rem 1.5rem; font-size: 1rem; font-weight: 600; margin-right: 1rem;">
+                        <i class="bi bi-check-all me-2"></i>Seleccionar Todos
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-lg" onclick="deseleccionarTodos()" style="padding: 0.625rem 1.5rem; font-size: 1rem; font-weight: 600;">
+                        <i class="bi bi-x-lg me-2"></i>Deseleccionar Todos
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal" style="padding: 0.625rem 1.5rem; font-size: 1rem; font-weight: 600; margin-right: 1rem;">
+                        <i class="bi bi-x-circle me-2"></i>Cerrar
+                    </button>
+                    <button type="button" class="btn btn-primary btn-lg" onclick="guardarPermisos()" style="background: var(--primary-color); border-color: var(--primary-color); padding: 0.625rem 1.5rem; font-size: 1rem; font-weight: 600;">
+                        <i class="bi bi-save me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="confirmarEliminarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">¿Estás seguro de que deseas eliminar al usuario <strong id="confirmarEliminarNombre"></strong>?</p>
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <small><strong>Importante:</strong> Esta acción no se puede deshacer. El usuario será eliminado permanentemente del sistema. 
+                    <br><br>Nota: Solo se pueden eliminar usuarios que no tengan registros relacionados (movimientos de inventario, ventas u órdenes).</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmarEliminarBtn">
+                    <i class="bi bi-trash me-2"></i>Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito -->
+<div class="modal fade" id="exitoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle-fill me-2"></i>Éxito
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                <p class="mt-3 mb-0" id="exitoMensaje"></p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">
+                    <i class="bi bi-check me-2"></i>Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Error -->
+<div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Error
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+                </div>
+                <div id="errorMensaje" class="text-center"></div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let usuariosData = [];
+let rolesDisponibles = [];
+let permisosDisponibles = [];
+let usuarioModal, permisosModal, confirmarEliminarModal, exitoModal, errorModal;
+let usuarioAEliminarId = null;
+
+// Obtener token de autenticación
+function getAuthHeaders() {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+    return {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    };
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar autenticación
+    const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+    
+    usuarioModal = new bootstrap.Modal(document.getElementById('usuarioModal'));
+    permisosModal = new bootstrap.Modal(document.getElementById('permisosModal'));
+    confirmarEliminarModal = new bootstrap.Modal(document.getElementById('confirmarEliminarModal'));
+    exitoModal = new bootstrap.Modal(document.getElementById('exitoModal'));
+    errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+    
+    // Event listener para confirmar eliminación
+    document.getElementById('confirmarEliminarBtn').addEventListener('click', function() {
+        if (usuarioAEliminarId) {
+            ejecutarEliminarUsuario(usuarioAEliminarId);
+        }
+    });
+    
+    cargarRoles();
+    cargarPermisos();
+    cargarUsuarios();
+});
+
+async function cargarRoles() {
+    const response = await fetch('/api/v1/usuarios/roles/disponibles', {
+        headers: getAuthHeaders()
+    });
+    if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+    }
+    const data = await response.json();
+    rolesDisponibles = data.roles;
+    const select = document.getElementById('role');
+    const filtro = document.getElementById('filtroRol');
+    select.innerHTML = data.roles.map(r => `<option value="${r.value}">${r.label}</option>`).join('');
+    filtro.innerHTML += data.roles.map(r => `<option value="${r.value}">${r.label}</option>`).join('');
+}
+
+async function cargarPermisos() {
+    const response = await fetch('/api/v1/permisos/', {
+        headers: getAuthHeaders()
+    });
+    if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+    }
+    const data = await response.json();
+    permisosDisponibles = data.permisos;
+}
+
+async function cargarUsuarios() {
+    try {
+        const response = await fetch('/api/v1/usuarios/', {
+            headers: getAuthHeaders()
+        });
+        
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error al cargar usuarios:', errorData);
+            mostrarError('Error al cargar usuarios: ' + (errorData.detail || 'Error desconocido'));
+            return;
+        }
+        
+        const data = await response.json();
+        
+        // Validar que la respuesta tenga la estructura esperada
+        if (!data || !data.usuarios) {
+            console.error('Respuesta inválida:', data);
+            usuariosData = [];
+            renderizarUsuarios([]);
+            return;
+        }
+        
+        usuariosData = data.usuarios || [];
+        renderizarUsuarios(usuariosData);
+    } catch (error) {
+        console.error('Error al cargar usuarios:', error);
+        mostrarError('Error de conexión al cargar usuarios. Por favor, verifica tu conexión e intenta nuevamente.');
+        usuariosData = [];
+        renderizarUsuarios([]);
+    }
+}
+
+// Función para obtener la clase Bootstrap del rol
+function getRoleBadgeClass(role) {
+    const roleClasses = {
+        'ADMIN': 'bg-danger',
+        'MESERO': 'bg-success',
+        'COCINA': 'bg-warning',
+        'CAJA': 'bg-info'
+    };
+    return roleClasses[role] || 'bg-secondary';
+}
+
+function renderizarUsuarios(usuarios) {
+    const tbody = document.getElementById('tablaUsuarios');
+    
+    // Validar que usuarios sea un array
+    if (!usuarios || !Array.isArray(usuarios)) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No hay usuarios disponibles</td></tr>';
+        return;
+    }
+    
+    if (usuarios.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No hay usuarios registrados</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = usuarios.map(u => {
+        const roleBadgeClass = getRoleBadgeClass(u.role);
+        return `
+        <tr>
+            <td><div class="d-flex align-items-center"><div class="user-avatar me-2">${u.username.charAt(0).toUpperCase()}</div><div><strong>${u.full_name}</strong><br><small class="text-muted">@${u.username}</small></div></div></td>
+            <td>${u.telefono ? `<i class="bi bi-telephone me-2"></i>${u.telefono}` : '<span class="text-muted"><i class="bi bi-telephone-x me-2"></i>Sin teléfono</span>'}</td>
+            <td><span class="badge ${roleBadgeClass}">${u.role}</span></td>
+            <td><span class="badge bg-${u.is_active ? 'success' : 'secondary'}">${u.is_active ? 'Activo' : 'Inactivo'}</span></td>
+            <td><button class="btn btn-sm btn-outline-primary" onclick="gestionarPermisos(${u.id}, '${u.full_name}')" title="Gestionar Permisos"><i class="bi bi-shield-lock"></i> Permisos</button></td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick='editarUsuario(${JSON.stringify(u)})'><i class="bi bi-pencil"></i></button>
+                ${u.is_active ? 
+                    `<button class="btn btn-sm btn-outline-secondary" disabled title="Desactiva el usuario primero para poder eliminarlo">
+                        <i class="bi bi-trash"></i>
+                    </button>` : 
+                    `<button class="btn btn-sm btn-outline-danger" onclick="eliminarUsuario(${u.id}, '${u.username}', ${u.is_active})">
+                        <i class="bi bi-trash"></i>
+                    </button>`
+                }
+            </td>
+        </tr>
+    `;
+    }).join('');
+}
+
+function filtrarUsuarios() {
+    const busqueda = document.getElementById('buscarUsuario').value.toLowerCase();
+    const rol = document.getElementById('filtroRol').value;
+    const estado = document.getElementById('filtroEstado').value;
+    let filtrados = usuariosData;
+    if (busqueda) filtrados = filtrados.filter(u => u.full_name.toLowerCase().includes(busqueda) || u.username.toLowerCase().includes(busqueda) || u.email.toLowerCase().includes(busqueda));
+    if (rol) filtrados = filtrados.filter(u => u.role === rol);
+    if (estado !== '') filtrados = filtrados.filter(u => u.is_active === (estado === 'true'));
+    renderizarUsuarios(filtrados);
+}
+
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('togglePasswordIcon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('bi-eye');
+        toggleIcon.classList.add('bi-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('bi-eye-slash');
+        toggleIcon.classList.add('bi-eye');
+    }
+}
+
+function mostrarModalNuevo() {
+    document.getElementById('usuarioModalLabel').textContent = 'Nuevo Usuario';
+    document.getElementById('usuarioForm').reset();
+    document.getElementById('usuarioId').value = '';
+    document.getElementById('password').required = true;
+    document.getElementById('passwordRequired').style.display = 'inline';
+    document.getElementById('passwordHelp').textContent = 'Contraseña requerida (mínimo 6 caracteres)';
+    document.getElementById('password').placeholder = 'Contraseña (min. 6 caracteres)';
+    document.getElementById('password').type = 'password';
+    document.getElementById('togglePasswordIcon').classList.remove('bi-eye-slash');
+    document.getElementById('togglePasswordIcon').classList.add('bi-eye');
+    usuarioModal.show();
+}
+
+function editarUsuario(usuario) {
+    document.getElementById('usuarioModalLabel').textContent = 'Editar Usuario';
+    document.getElementById('usuarioId').value = usuario.id;
+    document.getElementById('username').value = usuario.username;
+    document.getElementById('email').value = usuario.email;
+    document.getElementById('full_name').value = usuario.full_name;
+    document.getElementById('telefono').value = usuario.telefono || '';
+    document.getElementById('role').value = usuario.role;
+    document.getElementById('password').value = '';
+    document.getElementById('password').required = false;
+    document.getElementById('passwordRequired').style.display = 'none';
+    document.getElementById('passwordHelp').textContent = 'Dejar en blanco para mantener la contraseña actual';
+    document.getElementById('password').placeholder = 'Nueva contraseña (dejar vacío para mantener actual)';
+    document.getElementById('password').type = 'password';
+    document.getElementById('togglePasswordIcon').classList.remove('bi-eye-slash');
+    document.getElementById('togglePasswordIcon').classList.add('bi-eye');
+    document.getElementById('is_active').checked = usuario.is_active;
+    usuarioModal.show();
+}
+
+async function guardarUsuario() {
+    const id = document.getElementById('usuarioId').value;
+    const passwordValue = document.getElementById('password').value.trim();
+    
+    const data = {
+        username: document.getElementById('username').value,
+        email: document.getElementById('email').value,
+        full_name: document.getElementById('full_name').value,
+        telefono: document.getElementById('telefono').value || null,
+        role: document.getElementById('role').value,
+        is_active: document.getElementById('is_active').checked
+    };
+    
+    // Si es nuevo usuario, la contraseña es obligatoria
+    if (!id) {
+        if (!passwordValue) {
+            mostrarError('La contraseña es obligatoria para nuevos usuarios');
+            return;
+        }
+        data.password = passwordValue;
+    } else {
+        // Si es edición, solo incluir contraseña si se proporciona una nueva
+        if (passwordValue) {
+            data.password = passwordValue;
+        }
+    }
+    
+    try {
+        const url = id ? `/api/v1/usuarios/${id}` : '/api/v1/usuarios/';
+        const response = await fetch(url, {
+            method: id ? 'PUT' : 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            let errorMessage = '';
+            
+            // Si es un error 422, mostrar los detalles de validación
+            if (response.status === 422 && errorData.detail) {
+                if (Array.isArray(errorData.detail)) {
+                    errorMessage = '<ul class="mb-0 text-start">';
+                    errorData.detail.forEach(err => {
+                        const campo = err.loc[err.loc.length - 1];
+                        errorMessage += `<li><strong>${campo}</strong>: ${err.msg}</li>`;
+                    });
+                    errorMessage += '</ul>';
+                } else {
+                    errorMessage = errorData.detail;
+                }
+            } else {
+                errorMessage = errorData.detail || 'Error desconocido al procesar la solicitud';
+            }
+            
+            mostrarError(errorMessage);
+            return;
+        }
+        
+        const mensaje = id ? 
+            `Usuario <strong>${data.full_name}</strong> actualizado exitosamente.` : 
+            `Usuario <strong>${data.full_name}</strong> creado exitosamente.`;
+        
+        mostrarExito(mensaje);
+        usuarioModal.hide();
+        cargarUsuarios();
+    } catch (error) {
+        console.error('Error al guardar usuario:', error);
+        mostrarError('Error de conexión: ' + error.message);
+    }
+}
+
+function eliminarUsuario(id, username, isActive) {
+    // Verificar que el usuario esté desactivado
+    if (isActive) {
+        mostrarError(`No se puede eliminar el usuario <strong>${username}</strong> porque está activo.<br><br>Debes desactivarlo primero antes de poder eliminarlo.`);
+        return;
+    }
+    
+    usuarioAEliminarId = id;
+    document.getElementById('confirmarEliminarNombre').textContent = username;
+    confirmarEliminarModal.show();
+}
+
+async function ejecutarEliminarUsuario(id) {
+    try {
+        confirmarEliminarModal.hide();
+        
+        const response = await fetch(`/api/v1/usuarios/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Error al eliminar el usuario');
+        }
+        
+        const data = await response.json();
+        mostrarExito(`Usuario <strong>${data.usuario.full_name || data.usuario.username}</strong> eliminado exitosamente.`);
+        usuarioAEliminarId = null;
+        cargarUsuarios();
+    } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+        mostrarError('Error al eliminar: ' + error.message);
+        usuarioAEliminarId = null;
+    }
+}
+
+function mostrarExito(mensaje) {
+    document.getElementById('exitoMensaje').innerHTML = mensaje;
+    exitoModal.show();
+}
+
+function mostrarError(mensaje) {
+    document.getElementById('errorMensaje').innerHTML = mensaje;
+    errorModal.show();
+}
+
+// Mapeo de módulos de navegación a módulos de permisos
+// Los módulos de navegación que se ven en la barra superior
+const modulosNavegacion = [
+    { nombre: 'Administración', codigoPermiso: 'administracion', icono: 'bi-shield-lock' },
+    { nombre: 'Cocina', codigoPermiso: 'operaciones', icono: 'bi-fire' },
+    { nombre: 'Gestión Menús', codigoPermiso: 'operaciones', icono: 'bi-gear' },
+    { nombre: 'Inventario', codigoPermiso: 'almacen', icono: 'bi-box' },
+    { nombre: 'Meseros', codigoPermiso: 'operaciones', icono: 'bi-person' },
+    { nombre: 'Pedidos Menú', codigoPermiso: 'operaciones', icono: 'bi-list-ul' },
+    { nombre: 'Recetas', codigoPermiso: 'operaciones', icono: 'bi-book' },
+    { nombre: 'Caja y Ventas', codigoPermiso: 'financiero', icono: 'bi-cash-stack' },
+    { nombre: 'Reportes', codigoPermiso: 'reportes', icono: 'bi-graph-up' },
+    { nombre: 'Configuración', codigoPermiso: 'administracion', icono: 'bi-gear' }
+];
+
+// Mapeo de módulos a descripciones
+const descripcionesModulos = {
+    'administracion': 'Gestión de usuarios, mesas y permisos del sistema',
+    'operaciones': 'Gestión de meseros, pedidos, cocina y operaciones',
+    'financiero': 'Gestión de ventas, caja y transacciones financieras',
+    'almacen': 'Gestión de inventario y productos',
+    'reportes': 'Visualización de reportes y estadísticas'
+};
+
+// Mapeo de módulos de permisos a permisos base (permisos de visualización)
+const permisosBaseModulos = {
+    'administracion': ['mesas', 'usuarios', 'permisos'],
+    'operaciones': ['meseros', 'cocina'],
+    'financiero': ['ventas', 'caja'],
+    'almacen': ['inventario'],
+    'reportes': ['reportes']
+};
+
+let permisosUsuarioActual = [];
+
+async function gestionarPermisos(usuarioId, nombre) {
+    document.getElementById('usuarioPermisoId').value = usuarioId;
+    document.getElementById('usuarioPermisoNombre').textContent = nombre;
+    
+    try {
+        // Cargar permisos del usuario
+        const responsePermisos = await fetch(`/api/v1/permisos/usuario/${usuarioId}`, {
+            headers: getAuthHeaders()
+        });
+        if (responsePermisos.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        permisosUsuarioActual = await responsePermisos.json();
+        
+        // Cargar todos los permisos para mapear
+        const responseTodos = await fetch('/api/v1/permisos/', {
+            headers: getAuthHeaders()
+        });
+        if (responseTodos.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        const dataTodos = await responseTodos.json();
+        
+        renderizarModulosPermisos(dataTodos.permisos, permisosUsuarioActual);
+        
+        permisosModal.show();
+    } catch (error) {
+        console.error('Error al cargar permisos:', error);
+        mostrarError('Error al cargar los permisos. Por favor, intenta nuevamente.');
+    }
+}
+
+function renderizarModulosPermisos(todosPermisos, permisosUsuario) {
+    const permisosIdsUsuario = new Set(permisosUsuario.map(p => p.id));
+    const permisosPorModulo = {};
+    const permisosPorCodigo = {};
+    
+    // Organizar permisos por módulo y por código
+    todosPermisos.forEach(p => {
+        if (!permisosPorModulo[p.modulo]) {
+            permisosPorModulo[p.modulo] = [];
+        }
+        permisosPorModulo[p.modulo].push(p);
+        permisosPorCodigo[p.codigo] = p;
+    });
+    
+    // Agrupar módulos de navegación por módulo de permisos
+    const modulosAgrupados = {};
+    modulosNavegacion.forEach(modNav => {
+        const codigoModulo = modNav.codigoPermiso;
+        if (!modulosAgrupados[codigoModulo]) {
+            modulosAgrupados[codigoModulo] = [];
+        }
+        modulosAgrupados[codigoModulo].push(modNav);
+    });
+    
+    const contenedor = document.getElementById('modulosPermisos');
+    
+    // Renderizar cada módulo de navegación individualmente
+    contenedor.innerHTML = modulosNavegacion.map(modNav => {
+        const codigoModulo = modNav.codigoPermiso;
+        const permisosModulo = permisosPorModulo[codigoModulo] || [];
+        const permisosBaseCodigos = permisosBaseModulos[codigoModulo] || [];
+        
+        // Verificar si el usuario tiene al menos uno de los permisos base del módulo
+        const permisosBaseEncontrados = permisosBaseCodigos
+            .map(codigo => permisosPorCodigo[codigo])
+            .filter(p => p !== undefined);
+        
+        // Para cada módulo de navegación, verificar si tiene acceso
+        // Si el módulo está en el grupo, verificamos los permisos base
+        const puedeVer = permisosBaseEncontrados.some(p => permisosIdsUsuario.has(p.id));
+        
+        // ID único para cada módulo de navegación
+        const moduloId = modNav.nombre.toLowerCase().replace(/\s+/g, '_');
+        
+        const nombreModulo = modNav.nombre;
+        const descripcionModulo = descripcionesModulos[codigoModulo] || '';
+        
+        return `
+            <div class="modulo-card" 
+                 id="modulo_${moduloId}" 
+                 data-codigo-modulo="${codigoModulo}">
+                <div class="modulo-header-section">
+                    <h6 class="modulo-title">${nombreModulo}</h6>
+                    <p class="modulo-subtitle">${descripcionModulo}</p>
+                </div>
+                
+                <div class="acciones-basicas">
+                    <div class="acciones-grid">
+                        <div class="accion-item">
+                            <span class="accion-label">Ver</span>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" 
+                                       id="toggle_ver_${moduloId}" 
+                                       ${puedeVer ? 'checked' : ''}
+                                       onchange="toggleVerModulo('${moduloId}', '${codigoModulo}', this.checked)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleVerModulo(moduloId, codigoModulo, activar) {
+    // Función simplificada - solo maneja el toggle de ver
+    console.log(`Toggle Ver para ${moduloId}: ${activar}`);
+}
+
+function seleccionarTodos() {
+    const todosToggles = document.querySelectorAll('#modulosPermisos .form-check-input');
+    todosToggles.forEach(toggle => {
+        if (!toggle.disabled) {
+            toggle.checked = true;
+            // Disparar evento onchange si existe
+            const evento = new Event('change');
+            toggle.dispatchEvent(evento);
+        }
+    });
+}
+
+function deseleccionarTodos() {
+    const todosToggles = document.querySelectorAll('#modulosPermisos .form-check-input');
+    todosToggles.forEach(toggle => {
+        toggle.checked = false;
+        // Disparar evento onchange si existe
+        const evento = new Event('change');
+        toggle.dispatchEvent(evento);
+    });
+}
+
+async function guardarPermisos() {
+    const usuarioId = document.getElementById('usuarioPermisoId').value;
+    const modulosCards = document.querySelectorAll('.modulo-card');
+    
+    try {
+        // Obtener todos los permisos disponibles
+        const responseTodos = await fetch('/api/v1/permisos/', {
+            headers: getAuthHeaders()
+        });
+        const dataTodos = await responseTodos.json();
+        const todosPermisos = dataTodos.permisos;
+        const permisosPorCodigo = {};
+        todosPermisos.forEach(p => {
+            permisosPorCodigo[p.codigo] = p;
+        });
+        
+        const permisosAAplicar = [];
+        const modulosProcesados = {}; // Para evitar duplicar permisos base
+        
+        // Procesar cada módulo de navegación
+        modulosCards.forEach(card => {
+            const moduloId = card.id.replace('modulo_', '');
+            const codigoModulo = card.getAttribute('data-codigo-modulo');
+            const toggleVer = document.getElementById(`toggle_ver_${moduloId}`);
+            if (toggleVer && toggleVer.checked && !modulosProcesados[codigoModulo]) {
+                // Módulo activado: agregar permisos base del módulo (solo una vez por módulo de permisos)
+                const permisosBaseCodigos = permisosBaseModulos[codigoModulo] || [];
+                permisosBaseCodigos.forEach(codigo => {
+                    const permiso = permisosPorCodigo[codigo];
+                    if (permiso && !permisosAAplicar.includes(permiso.id)) {
+                        permisosAAplicar.push(permiso.id);
+                    }
+                });
+                
+                modulosProcesados[codigoModulo] = true;
+            }
+        });
+        
+        // Remover todos los permisos actuales primero
+        const responsePermisos = await fetch(`/api/v1/permisos/usuario/${usuarioId}`, {
+            headers: getAuthHeaders()
+        });
+        const permisosActuales = await responsePermisos.json();
+        
+        for (const permiso of permisosActuales) {
+            try {
+                await fetch(`/api/v1/permisos/usuario/${usuarioId}/remover/${permiso.id}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+            } catch (error) {
+                console.error(`Error al remover permiso ${permiso.id}:`, error);
+            }
+        }
+        
+        // Asignar nuevos permisos
+        if (permisosAAplicar.length > 0) {
+            const response = await fetch(`/api/v1/permisos/usuario/${usuarioId}/asignar`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({permiso_ids: permisosAAplicar})
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Error al guardar permisos');
+            }
+        }
+        
+        mostrarExito('Permisos actualizados exitosamente.');
+        permisosModal.hide();
+        cargarUsuarios();
+    } catch (error) {
+        console.error('Error al guardar permisos:', error);
+        mostrarError('Error al guardar los permisos: ' + error.message);
+    }
+}
+
+</script>
+{% endblock %}
+
+

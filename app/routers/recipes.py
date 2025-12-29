@@ -37,7 +37,7 @@ def create_recipe(
     db: Session = Depends(get_db)
 ):
     """Crear nueva receta"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para crear recetas"
@@ -162,7 +162,7 @@ def update_recipe(
     db: Session = Depends(get_db)
 ):
     """Actualizar receta"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para actualizar recetas"
@@ -192,7 +192,7 @@ def delete_recipe(
     db: Session = Depends(get_db)
 ):
     """Eliminar receta (desactivar)"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para eliminar recetas"
@@ -221,7 +221,7 @@ def add_recipe_item(
     db: Session = Depends(get_db)
 ):
     """Agregar ingrediente a una receta"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para modificar recetas"
@@ -288,7 +288,7 @@ def update_recipe_item(
     db: Session = Depends(get_db)
 ):
     """Actualizar ingrediente de receta"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para modificar recetas"
@@ -318,7 +318,7 @@ def delete_recipe_item(
     db: Session = Depends(get_db)
 ):
     """Eliminar ingrediente de receta"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para modificar recetas"
@@ -393,7 +393,7 @@ def consume_inventory(
     consumption_service: InventoryConsumptionService = Depends(get_inventory_consumption_service)
 ):
     """Consumir inventario al vender un producto"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.CAJA]:
+    if current_user.role not in [UserRole.ADMIN, UserRole.CAJA]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para consumir inventario"

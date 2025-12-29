@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}Administración de Mesas - Sistema POS{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/platonico-theme.css?v=2.0">
+<style>
+    .mesa-card {
+        border-left: 4px solid var(--primary-color);
+        transition: all 0.3s ease;
+    }
+    .mesa-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .badge-activo {
+        background-color: #28a745;
+    }
+    .badge-inactivo {
+        background-color: #dc3545;
+    }
+    .stat-card {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0"><i class="bi bi-table me-2"></i>Gestión de Mesas</h2>
+                    <p class="text-muted">Administra las mesas del restaurante</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary" onclick="mostrarModalNuevaMesa()">
+                        <i class="bi bi-plus-circle me-2"></i>Nueva Mesa
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="cargarMesas()">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <h5><i class="bi bi-table me-2"></i>Total Mesas</h5>
+                <h2 id="totalMesas">0</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                <h5><i class="bi bi-check-circle me-2"></i>Activas</h5>
+                <h2 id="mesasActivas">0</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card" style="background: linear-gradient(135deg, #dc3545, #f56268);">
+                <h5><i class="bi bi-x-circle me-2"></i>Inactivas</h5>
+                <h2 id="mesasInactivas">0</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="buscarMesa" placeholder="Buscar por nombre o número..." oninput="filtrarMesas()">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filtroEstado" onchange="filtrarMesas()">
+                <option value="">Todos los estados</option>
+                <option value="true">Activas</option>
+                <option value="false">Inactivas</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Lista de Mesas -->
+    <div class="row" id="listaMesas">
+        <!-- Se llenará dinámicamente -->
+    </div>
+</div>
+
+<!-- Modal Nueva/Editar Mesa -->
+<div class="modal fade" id="mesaModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mesaModalLabel">Nueva Mesa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="mesaForm">
+                    <input type="hidden" id="mesaId">
+                    <div class="mb-3">
+                        <label class="form-label">Número de Mesa *</label>
+                        <input type="number" class="form-control" id="mesaNumero" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre *</label>
+                        <input type="text" class="form-control" id="mesaNombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Capacidad (opcional)</label>
+                        <input type="number" class="form-control" id="mesaCapacidad" min="1" max="50">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="mesaEstado" checked>
+                            <label class="form-check-label" for="mesaEstado">Mesa activa</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarMesa()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let mesasData = [];
+    let mesaModal;
+
+    // Obtener token de autenticación
+    function getAuthHeaders() {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verificar autenticación
+        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        mesaModal = new bootstrap.Modal(document.getElementById('mesaModal'));
+        cargarMesas();
+    });
+
+    async function cargarMesas() {
+        try {
+            const response = await fetch('/api/v1/mesas/', {
+                headers: getAuthHeaders()
+            });
+            
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            const data = await response.json();
+            
+            mesasData = data.mesas;
+            actualizarEstadisticas(data.mesas);
+            renderizarMesas(data.mesas);
+        } catch (error) {
+            console.error('Error:', error);
+            showAlert('Error al cargar mesas', 'error');
+        }
+    }
+
+    function actualizarEstadisticas(mesas) {
+        document.getElementById('totalMesas').textContent = mesas.length;
+        document.getElementById('mesasActivas').textContent = mesas.filter(m => m.estado).length;
+        document.getElementById('mesasInactivas').textContent = mesas.filter(m => !m.estado).length;
+    }
+
+    function renderizarMesas(mesas) {
+        const container = document.getElementById('listaMesas');
+        if (mesas.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center py-5"><p>No hay mesas registradas</p></div>';
+            return;
+        }
+
+        container.innerHTML = mesas.map(mesa => `
+            <div class="col-md-4 mb-3">
+                <div class="card mesa-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="card-title">${mesa.nombre}</h5>
+                                <p class="text-muted mb-2">Mesa #${mesa.numero}</p>
+                                ${mesa.capacidad ? `<p class="mb-2"><i class="bi bi-people me-1"></i>${mesa.capacidad} personas</p>` : ''}
+                            </div>
+                            <span class="badge ${mesa.estado ? 'badge-activo' : 'badge-inactivo'}">
+                                ${mesa.estado ? 'Activa' : 'Inactiva'}
+                            </span>
+                        </div>
+                        <div class="d-flex gap-2 mt-3">
+                            <button class="btn btn-sm btn-outline-primary" onclick='editarMesa(${JSON.stringify(mesa)})'>
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-${mesa.estado ? 'warning' : 'success'}" 
+                                    onclick="toggleEstado(${mesa.id}, ${mesa.estado})">
+                                <i class="bi bi-${mesa.estado ? 'pause' : 'play'}"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="eliminarMesa(${mesa.id}, '${mesa.nombre}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function filtrarMesas() {
+        const busqueda = document.getElementById('buscarMesa').value.toLowerCase();
+        const estado = document.getElementById('filtroEstado').value;
+
+        let mesasFiltradas = mesasData;
+
+        if (busqueda) {
+            mesasFiltradas = mesasFiltradas.filter(m => 
+                m.nombre.toLowerCase().includes(busqueda) || 
+                m.numero.toString().includes(busqueda)
+            );
+        }
+
+        if (estado !== '') {
+            mesasFiltradas = mesasFiltradas.filter(m => m.estado === (estado === 'true'));
+        }
+
+        renderizarMesas(mesasFiltradas);
+    }
+
+    function mostrarModalNuevaMesa() {
+        document.getElementById('mesaModalLabel').textContent = 'Nueva Mesa';
+        document.getElementById('mesaForm').reset();
+        document.getElementById('mesaId').value = '';
+        document.getElementById('mesaEstado').checked = true;
+        mesaModal.show();
+    }
+
+    function editarMesa(mesa) {
+        document.getElementById('mesaModalLabel').textContent = 'Editar Mesa';
+        document.getElementById('mesaId').value = mesa.id;
+        document.getElementById('mesaNumero').value = mesa.numero;
+        document.getElementById('mesaNombre').value = mesa.nombre;
+        document.getElementById('mesaCapacidad').value = mesa.capacidad || '';
+        document.getElementById('mesaEstado').checked = mesa.estado;
+        mesaModal.show();
+    }
+
+    async function guardarMesa() {
+        const id = document.getElementById('mesaId').value;
+        const data = {
+            numero: parseInt(document.getElementById('mesaNumero').value),
+            nombre: document.getElementById('mesaNombre').value,
+            capacidad: document.getElementById('mesaCapacidad').value ? 
+                       parseInt(document.getElementById('mesaCapacidad').value) : null,
+            estado: document.getElementById('mesaEstado').checked
+        };
+
+        try {
+            const url = id ? `/api/v1/mesas/${id}` : '/api/v1/mesas/';
+            const method = id ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
+                headers: getAuthHeaders(),
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail);
+            }
+
+            showAlert(id ? 'Mesa actualizada' : 'Mesa creada', 'success');
+            mesaModal.hide();
+            cargarMesas();
+        } catch (error) {
+            showAlert(error.message, 'error');
+        }
+    }
+
+    async function toggleEstado(id, estadoActual) {
+        try {
+            const response = await fetch(`/api/v1/mesas/${id}/activar`, {
+                method: 'PATCH',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({estado: !estadoActual})
+            });
+
+            if (!response.ok) throw new Error('Error al cambiar estado');
+
+            showAlert('Estado actualizado', 'success');
+            cargarMesas();
+        } catch (error) {
+            showAlert(error.message, 'error');
+        }
+    }
+
+    async function eliminarMesa(id, nombre) {
+        if (!confirm(`¿Eliminar la mesa "${nombre}"?`)) return;
+
+        try {
+            const response = await fetch(`/api/v1/mesas/${id}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            if (!response.ok) throw new Error('Error al eliminar');
+
+            showAlert('Mesa eliminada', 'success');
+            cargarMesas();
+        } catch (error) {
+            showAlert(error.message, 'error');
+        }
+    }
+
+    function showAlert(message, type) {
+        alert(message); // Reemplazar con tu sistema de notificaciones
+    }
+</script>
+{% endblock %}
+

@@ -26,7 +26,7 @@ def get_daily_summary(
 ):
     """Resumen diario del restaurante"""
     
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.CAJA]:
+    if current_user.role not in [UserRole.ADMIN, UserRole.CAJA]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para ver reportes"
@@ -154,7 +154,7 @@ def get_kitchen_performance(
 ):
     """Reporte de rendimiento de cocina"""
     
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR, UserRole.COCINA]:
+    if current_user.role not in [UserRole.ADMIN, UserRole.COCINA]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para ver este reporte"
@@ -253,7 +253,7 @@ def get_waiter_performance(
     # Los meseros solo pueden ver su propio rendimiento
     if current_user.role == UserRole.MESERO:
         waiter_id = current_user.id
-    elif current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR]:
+    elif current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para ver este reporte"
@@ -357,7 +357,7 @@ def get_table_turnover(
 ):
     """Reporte de rotación de mesas"""
     
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para ver este reporte"

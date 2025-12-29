@@ -193,16 +193,6 @@
                 { href: '/reports', icon: 'bi-graph-up', text: 'Reportes' },
                 { href: '/settings', icon: 'bi-gear', text: 'Configuración' }
             ],
-            'SUPERVISOR': [
-                { href: '/', icon: 'bi-house-door', text: 'Dashboard' },
-                { href: '/products', icon: 'bi-box', text: 'Productos' },
-                { href: '/kitchen', icon: 'bi-fire', text: 'Cocina' },
-                { href: '/waiters', icon: 'bi-person-badge', text: 'Meseros' },
-                { href: '/inventory', icon: 'bi-archive', text: 'Inventario' },
-                { href: '/caja-ventas', icon: 'bi-cash-coin', text: 'Caja y Ventas' },
-                { href: '/reports', icon: 'bi-graph-up', text: 'Reportes' },
-                { href: '/settings', icon: 'bi-gear', text: 'Configuración' }
-            ],
             'MESERO': [
                 { href: '/waiters', icon: 'bi-person-badge', text: 'Meseros' }
             ],
@@ -212,10 +202,6 @@
             'CAJA': [
                 { href: '/caja-ventas', icon: 'bi-cash-coin', text: 'Caja y Ventas' }
             ],
-            'ALMACEN': [
-                { href: '/inventory', icon: 'bi-archive', text: 'Inventario' },
-                { href: '/products', icon: 'bi-box', text: 'Productos' }
-            ]
         };
 
         // Función para cargar el menú según el rol
@@ -276,11 +262,9 @@
         function getRoleDisplayName(role) {
             const roleNames = {
                 'ADMIN': 'Administrador',
-                'SUPERVISOR': 'Supervisor',
                 'MESERO': 'Mesero',
                 'COCINA': 'Cocina',
-                'CAJA': 'Caja',
-                'ALMACEN': 'Almacén'
+                'CAJA': 'Caja'
             };
             return roleNames[role] || role;
         }

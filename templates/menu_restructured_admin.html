@@ -1055,7 +1055,7 @@
                                 <i class="bi bi-plus-circle me-2"></i>
                                 <span class="btn-text">Nuevo Plato</span>
                                 <div class="btn-ripple"></div>
-                            </button>
+                    </button>
                             <button class="btn btn-new-dish-modern" onclick="nuevoMenu()" title="Crear nuevo menú del día">
                                 <i class="bi bi-calendar-plus me-2"></i>
                                 <span class="btn-text">Nuevo Menú</span>
@@ -1065,8 +1065,8 @@
                                 <i class="bi bi-arrow-clockwise me-2"></i>
                                 <span class="btn-text">Refrescar</span>
                                 <div class="btn-ripple"></div>
-                            </button>
-                        </div>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1356,9 +1356,9 @@
                                 <div class="mb-3">
                                     <label for="opcionCategoria" class="form-label">Categoría</label>
                                     <div class="input-group">
-                                        <select class="form-select" id="opcionCategoria">
-                                            <option value="">Seleccionar categoría</option>
-                                        </select>
+                                    <select class="form-select" id="opcionCategoria">
+                                        <option value="">Seleccionar categoría</option>
+                                    </select>
                                         <button class="btn btn-outline-primary" type="button" onclick="mostrarModalNuevaCategoria()" title="Crear nueva categoría">
                                             <i class="bi bi-plus-circle"></i>
                                         </button>
@@ -1687,7 +1687,7 @@
                                     <h6 class="mb-0">Editar Menú</h6>
                                 </div>
                                 <div class="card-body">
-                                    <div class="mb-3">
+                    <div class="mb-3">
                                         <label for="vistaPreviaNombreRestaurante" class="form-label">Nombre del Restaurante</label>
                                         <input type="text" class="form-control form-control-sm" id="vistaPreviaNombreRestaurante" value="PLATÓNICO" placeholder="PLATÓNICO">
                                         <small class="text-muted">Puedes incluir emojis, por ejemplo: PLATÓNICO 🍽️</small>
@@ -1834,16 +1834,16 @@
                 const categoriaSelect = document.getElementById('opcionCategoria');
                 
                 if (categoriaSelect) {
-                    if (tipo === 'Variable') {
+                if (tipo === 'Variable') {
                         // Habilitar categoría para platos variables
-                        categoriaSelect.required = true;
-                        categoriaSelect.disabled = false;
-                        categoriaSelect.style.display = 'block';
-                    } else {
+                    categoriaSelect.required = true;
+                    categoriaSelect.disabled = false;
+                    categoriaSelect.style.display = 'block';
+                } else {
                         // Deshabilitar para platos fijos
-                        categoriaSelect.required = false;
-                        categoriaSelect.disabled = true;
-                        categoriaSelect.value = '';
+                    categoriaSelect.required = false;
+                    categoriaSelect.disabled = true;
+                    categoriaSelect.value = '';
                     }
                 }
                 
@@ -1953,7 +1953,7 @@
                 
                 // Combinar ambos tipos de platos
                 opciones = [...platosFijos, ...platosVariables];
-                renderizarOpciones();
+                    renderizarOpciones();
                 console.log(`✅ Cargadas ${opciones.length} opciones (${platosFijos.length} fijos + ${platosVariables.length} variables)`);
             } catch (error) {
                 console.error('Error cargando opciones:', error);
@@ -2322,14 +2322,14 @@
                 const platosVariables = opciones.filter(o => o.tipo === 'Variable').length;
                 const menusActivos = menus.filter(m => m.estado === 'ACTIVE').length;
                 
-                // Usar animación para actualizar números
+                    // Usar animación para actualizar números
                 animarNumero('totalOpciones', totalOpciones);
                 animarNumero('platosFijos', platosFijos);
                 animarNumero('platosVariables', platosVariables);
                 animarNumero('menusActivos', menusActivos);
-                
-                // Actualizar contadores de pestañas
-                actualizarContadoresPestanas();
+                    
+                    // Actualizar contadores de pestañas
+                    actualizarContadoresPestanas();
             } catch (error) {
                 console.error('Error cargando estadísticas:', error);
                 // Actualizar contadores con datos locales en caso de error
@@ -2986,8 +2986,8 @@
             const opcion = opciones.find(o => o.id === opcionId);
             if (!opcion) {
                 showAlert('Opción no encontrada', 'error');
-                return;
-            }
+                    return;
+                }
 
             // Configurar el modal para edición
             document.getElementById('opcionModalTitle').textContent = 'Editar Plato';
@@ -3000,7 +3000,7 @@
             // Configurar categoría según el tipo
             const categoriaSelect = document.getElementById('opcionCategoria');
             if (categoriaSelect) {
-                if (opcion.tipo === 'Variable') {
+            if (opcion.tipo === 'Variable') {
                     categoriaSelect.disabled = false;
                     categoriaSelect.required = true;
                     categoriaSelect.style.display = 'block';
@@ -3011,8 +3011,8 @@
                         categoriaSelect.value = opcion.categoria_id;
                     } else {
                         categoriaSelect.value = '';
-                    }
-                } else {
+                }
+            } else {
                     categoriaSelect.disabled = true;
                     categoriaSelect.required = false;
                     categoriaSelect.value = '';
@@ -3074,11 +3074,11 @@
                 });
 
                 console.log('📡 Respuesta del servidor:', response.status, response.statusText);
-
+                
                 if (response.ok) {
-                    const data = await response.json();
-                    console.log('📥 Respuesta del servidor:', data);
-                    
+                const data = await response.json();
+                console.log('📥 Respuesta del servidor:', data);
+
                     if (data.success) {
                         if (data.action === "already_inactive" && data.menu_count > 0) {
                             // Si está en menús, mostrar opciones de eliminación
@@ -3407,7 +3407,7 @@
                 
                 // Agregar categoría si es plato variable
                 if (tipoFrontend === 'Variable') {
-                    const categoriaId = document.getElementById('opcionCategoria').value;
+                const categoriaId = document.getElementById('opcionCategoria').value;
                     if (categoriaId) {
                         platoData.categoria_id = parseInt(categoriaId);
                     }
@@ -3424,7 +3424,7 @@
                 if (opcionEditando) {
                     // Editar plato existente
                     url = `/api/v1/restaurant-menu/platos/${opcionEditando}`;
-                    method = 'PUT';
+                        method = 'PUT';
                 } else {
                     // Crear nuevo plato
                     url = '/api/v1/restaurant-menu/platos/';
@@ -3432,9 +3432,9 @@
                 }
                 
                 console.log('📤 Enviando a:', url, method);
-                
-                response = await fetch(url, {
-                    method: method,
+                        
+                        response = await fetch(url, {
+                            method: method,
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -3475,18 +3475,18 @@
                     }
                     
                     const accion = opcionEditando ? 'actualizado' : 'creado';
-                    const nombreOpcion = document.getElementById('opcionNombre').value.trim();
+                        const nombreOpcion = document.getElementById('opcionNombre').value.trim();
                     showAlert(`Plato "${nombreOpcion}" ${accion} exitosamente`, 'success');
-                    
-                    // Cerrar modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('opcionModal'));
-                    modal.hide();
-                    
-                    // Limpiar formulario
-                    limpiarFormularioOpcion();
-                    
-                    // Recargar datos
-                    await refrescarDatos('opciones');
+                        
+                        // Cerrar modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('opcionModal'));
+                        modal.hide();
+                        
+                        // Limpiar formulario
+                        limpiarFormularioOpcion();
+                        
+                        // Recargar datos
+                        await refrescarDatos('opciones');
                 } else {
                     const errorData = await response.json();
                     console.error('❌ Error HTTP:', response.status, errorData);
@@ -3607,12 +3607,12 @@
                 
                 console.log(`✅ Cargadas ${platosFijos.length} platos fijos y ${platosVariables.length} platos variables`);
                     
-                // Renderizar platos fijos en el modal
-                renderizarPlatosFijosEnModal(platosFijos);
+                    // Renderizar platos fijos en el modal
+                    renderizarPlatosFijosEnModal(platosFijos);
                     
                 // Renderizar platos variables en el modal (necesitamos cargar categorías para agruparlos)
                 await cargarCategorias(); // Asegurar que tenemos las categorías
-                renderizarPlatosVariablesEnModal(platosVariables);
+                    renderizarPlatosVariablesEnModal(platosVariables);
             } catch (error) {
                 console.error('❌ Error cargando opciones:', error);
                 showAlert(`Error de conexión: ${error.message}`, 'error');
@@ -3682,8 +3682,8 @@
                     <div class="alert alert-info text-center">
                         <i class="bi bi-info-circle me-2"></i>
                         No hay platos variables activos disponibles.
-                    </div>
-                `;
+                        </div>
+                    `;
                 return;
             }
             
@@ -3733,7 +3733,7 @@
                                 <div class="col-md-6 col-lg-4 mb-3 plato-variable-item" data-plato-id="${plato.id}">
                                     <div class="card h-100">
                                         <div class="card-body p-3">
-                                            <div class="form-check">
+                    <div class="form-check">
                                                 <input class="form-check-input plato-variable-checkbox" 
                                                        type="checkbox" 
                                                        value="${plato.id}" 
@@ -3751,15 +3751,15 @@
                                                             <span class="badge bg-success">${formatearPrecio(plato.precio)}</span>
                                                         </div>
                                                     </div>
-                                                </label>
+                        </label>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             `).join('')}
-                        </div>
                     </div>
-                `;
+                </div>
+            `;
                 container.insertAdjacentHTML('beforeend', categoriaHtml);
             });
         }
@@ -3871,17 +3871,17 @@
                 console.log('📡 Respuesta del servidor:', response.status, response.statusText);
 
                 if (response.ok) {
-                    const data = await response.json();
+                const data = await response.json();
                     console.log('📥 Respuesta del servidor:', data);
                     
                     // Cerrar modal primero (antes de cualquier otra operación)
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('menuModal'));
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('menuModal'));
                     if (modal) {
                         modal.hide();
                     }
-                    
+                        
                     // Limpiar formulario y resetear modo edición
-                    limpiarFormularioMenu();
+                        limpiarFormularioMenu();
                     menuEditando = null;
                     
                     // Mostrar mensaje de éxito
@@ -4193,11 +4193,11 @@
                     menu = (data.menus || []).find(m => m.id === menuId);
                 }
                 
-                if (!menu) {
-                    showAlert('Menú no encontrado', 'error');
-                    return;
-                }
-                
+            if (!menu) {
+                showAlert('Menú no encontrado', 'error');
+                return;
+            }
+            
                 // Cargar menú completo desde el servidor para obtener todos los datos
                 const menuResponse = await fetch(`/api/v1/restaurant-menu/menus/?limit=1000`);
                 if (menuResponse.ok) {
@@ -4626,11 +4626,11 @@
                 const data = await response.json();
                 const menu = (data.menus || []).find(m => m.id === menuId);
                 
-                if (!menu) {
-                    showAlert('Menú no encontrado', 'error');
-                    return;
-                }
-                
+            if (!menu) {
+                showAlert('Menú no encontrado', 'error');
+                return;
+            }
+            
                 console.log('📝 Editando menú (desde servidor):', menu);
                 console.log('📝 categorias_platos:', menu.categorias_platos);
                 

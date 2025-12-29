@@ -5,12 +5,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 import os
 
 from app.config import settings as app_settings
 from app.database import create_tables
-from app.routers import auth, products, inventory, settings, notifications, reports, kitchen, caja_ventas, waiters, recipes, menu, websocket, carta_restaurante, menus_unified, menus_public_simple, restaurant_menu, test_simple, debug_menus, debug_menus_sql, menu_restructured, menu_restructured_simple
+from app.routers import auth, products, inventory, settings, notifications, reports, kitchen, caja_ventas, waiters, recipes, menu, websocket, carta_restaurante, menus_unified, menus_public_simple, restaurant_menu, test_simple, debug_menus, debug_menus_sql, menu_restructured, menu_restructured_simple, mesas, usuarios, permisos
 from app.models import *  # Importar todos los modelos para crear las tablas
 from app.middleware import AuthMiddleware, SessionTimeoutMiddleware
 from app.middlewares.inventory_access import InventoryAccessMiddleware
@@ -22,6 +24,26 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
+)
+
+# Exception handler para errores de validación
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Handler personalizado para errores de validación"""
+    errors = exc.errors()
+    error_details = []
+    for error in errors:
+        error_details.append({
+            "loc": list(error["loc"]),
+            "msg": error["msg"],
+            "type": error["type"],
+            "input": str(error.get("input", ""))[:100]  # Limitar tamaño para evitar problemas
+        })
+    print(f"❌ Error de validación en {request.url.path}:")
+    print(f"   Errores: {error_details}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": error_details}
 )
 
 # Agregar middlewares de autenticación y timeout
@@ -71,6 +93,11 @@ app.include_router(debug_menus.router, prefix="/api/v1")
 app.include_router(debug_menus_sql.router, prefix="/api/v1")
 app.include_router(menu_restructured.router, prefix="/api/v1/menu-restructured")
 app.include_router(menu_restructured_simple.router, prefix="/api/v1/menu-restructured-simple")
+
+# Routers del Módulo de Administración
+app.include_router(mesas.router, prefix="/api/v1")
+app.include_router(usuarios.router, prefix="/api/v1")
+app.include_router(permisos.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
@@ -229,6 +256,34 @@ async def module_development_page(request: Request):
     return templates.TemplateResponse("module_development.html", {"request": request})
 
 
+# ============================================================================
+# RUTAS DEL MÓDULO DE ADMINISTRACIÓN
+# ============================================================================
+
+@app.get("/admin/administracion", response_class=HTMLResponse)
+async def admin_index_page(request: Request):
+    """Página principal del módulo de administración"""
+    return templates.TemplateResponse("admin/index.html", {"request": request})
+
+
+@app.get("/admin/mesas", response_class=HTMLResponse)
+async def admin_mesas_page(request: Request):
+    """Página de administración de mesas"""
+    return templates.TemplateResponse("admin/mesas.html", {"request": request})
+
+
+@app.get("/admin/usuarios", response_class=HTMLResponse)
+async def admin_usuarios_page(request: Request):
+    """Página de administración de usuarios/meseros"""
+    return templates.TemplateResponse("admin/usuarios.html", {"request": request})
+
+
+@app.get("/admin/permisos", response_class=HTMLResponse)
+async def admin_permisos_page(request: Request):
+    """Página de administración de permisos"""
+    return templates.TemplateResponse("admin/permisos.html", {"request": request})
+
+
 @app.get("/health")
 async def health_check():
     """Verificación de salud de la aplicación"""
@@ -257,7 +312,12 @@ async def api_info():
             "caja_ventas": "/api/v1/caja-ventas",
             "waiters": "/api/v1/waiters",
             "menu": "/api/v1/menu",
-            "websocket": "/ws"
+            "websocket": "/ws",
+            "administracion": {
+                "mesas": "/api/v1/mesas",
+                "usuarios": "/api/v1/usuarios",
+                "permisos": "/api/v1/permisos"
+            }
         }
     }
 

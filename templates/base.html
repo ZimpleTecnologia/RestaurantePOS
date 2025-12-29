@@ -324,73 +324,15 @@
         
         <!-- Sección derecha con navegación -->
         <div class="header-right">
-            <ul class="nav-modules">
+            <ul class="nav-modules" id="nav-modules-list">
+                <!-- Home (siempre primero) -->
                 <li>
                     <a href="/" class="nav-module" id="nav-dashboard">
                         <i class="bi bi-house-door"></i>
                         <span class="nav-module-text">Home</span>
                     </a>
                 </li>
-                <li>
-                    <a href="/admin/menus" class="nav-module" id="nav-admin">
-                        <i class="bi bi-gear"></i>
-                        <span class="nav-module-text">Gestión Menús</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/meseros/menus" class="nav-module" id="nav-meseros">
-                        <i class="bi bi-person-badge"></i>
-                        <span class="nav-module-text">Meseros</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/kitchen" class="nav-module" id="nav-kitchen">
-                        <i class="bi bi-fire"></i>
-                        <span class="nav-module-text">Cocina</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/kitchen/menu-orders" class="nav-module" id="nav-kitchen-menu">
-                        <i class="bi bi-list-check"></i>
-                        <span class="nav-module-text">Pedidos Menú</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/waiters" class="nav-module" id="nav-waiters">
-                        <i class="bi bi-person-badge"></i>
-                        <span class="nav-module-text">Meseros</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/inventory" class="nav-module" id="nav-inventory">
-                        <i class="bi bi-archive"></i>
-                        <span class="nav-module-text">Inventario</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/recipes" class="nav-module" id="nav-recipes">
-                        <i class="bi bi-book"></i>
-                        <span class="nav-module-text">Recetas</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/caja-ventas" class="nav-module" id="nav-sales">
-                        <i class="bi bi-cash-coin"></i>
-                        <span class="nav-module-text">Caja y Ventas</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/reports" class="nav-module" id="nav-reports">
-                        <i class="bi bi-graph-up"></i>
-                        <span class="nav-module-text">Reportes</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/settings" class="nav-module" id="nav-settings">
-                        <i class="bi bi-gear"></i>
-                        <span class="nav-module-text">Configuración</span>
-                    </a>
-                </li>
+                <!-- Los demás módulos se cargarán dinámicamente según permisos -->
             </ul>
             
             <!-- Botón de logout -->
@@ -421,8 +363,79 @@
             }
         }
 
-        // Marcar enlace activo basado en la URL actual
-        document.addEventListener('DOMContentLoaded', function() {
+        // Función para cargar módulos visibles según permisos
+        async function cargarModulosVisibles() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                if (!token) {
+                    // Si no hay token, solo mostrar Home
+                    return;
+                }
+                
+                const response = await fetch('/api/v1/auth/modulos-visibles', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.status === 401) {
+                    // Token inválido, redirigir a login
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user_info');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                if (!response.ok) {
+                    console.error('Error al cargar módulos visibles');
+                    return;
+                }
+                
+                const data = await response.json();
+                const modulos = data.modulos || [];
+                const navModulesList = document.getElementById('nav-modules-list');
+                
+                // Mapeo de nombres a IDs para los módulos
+                const idMap = {
+                    'Administración': 'nav-administracion',
+                    'Cocina': 'nav-kitchen',
+                    'Gestión Menús': 'nav-admin',
+                    'Inventario': 'nav-inventory',
+                    'Meseros': 'nav-meseros',
+                    'Pedidos Menú': 'nav-kitchen-menu',
+                    'Recetas': 'nav-recipes',
+                    'Caja y Ventas': 'nav-sales',
+                    'Reportes': 'nav-reports',
+                    'Configuración': 'nav-settings'
+                };
+                
+                // Limpiar módulos existentes (excepto Home)
+                const existingModules = navModulesList.querySelectorAll('li:not(:first-child)');
+                existingModules.forEach(li => li.remove());
+                
+                // Agregar módulos visibles
+                modulos.forEach(modulo => {
+                    const li = document.createElement('li');
+                    const id = idMap[modulo.nombre] || `nav-${modulo.nombre.toLowerCase().replace(/\s+/g, '-')}`;
+                    li.innerHTML = `
+                        <a href="${modulo.url}" class="nav-module" id="${id}">
+                            <i class="bi ${modulo.icono}"></i>
+                            <span class="nav-module-text">${modulo.nombre}</span>
+                        </a>
+                    `;
+                    navModulesList.appendChild(li);
+                });
+                
+                // Marcar módulo activo después de cargar
+                marcarModuloActivo();
+            } catch (error) {
+                console.error('Error al cargar módulos visibles:', error);
+            }
+        }
+        
+        // Función para marcar enlace activo basado en la URL actual
+        function marcarModuloActivo() {
             const currentPath = window.location.pathname;
             const navModules = document.querySelectorAll('.nav-module');
             
@@ -446,6 +459,12 @@
                     dashboardModule.classList.add('active');
                 }
             }
+        }
+        
+        // Marcar enlace activo al cargar y después de cargar módulos
+        document.addEventListener('DOMContentLoaded', function() {
+            marcarModuloActivo();
+            cargarModulosVisibles();
         });
         
         // Función para manejar el scroll horizontal en móviles

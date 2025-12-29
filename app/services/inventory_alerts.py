@@ -160,9 +160,9 @@ class InventoryAlertService:
         """Crear notificaciones para alertas de inventario"""
         notifications = []
         
-        # Obtener usuarios que deben recibir notificaciones
+        # Obtener usuarios que deben recibir notificaciones (solo ADMIN ahora)
         users = db.query(User).filter(
-            User.role.in_([UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR])
+            User.role == UserRole.ADMIN
         ).all()
         
         for alert in alerts:

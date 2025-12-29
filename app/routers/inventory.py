@@ -48,7 +48,7 @@ def create_location(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Crear nueva ubicación de inventario"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para crear ubicaciones"
@@ -96,7 +96,7 @@ def create_lot(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Crear nuevo lote de inventario"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para crear lotes"
@@ -151,7 +151,7 @@ def create_movement(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Crear movimiento de inventario"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR, UserRole.CAJA]:
+    if current_user.role not in [UserRole.ADMIN, UserRole.CAJA]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para crear movimientos de inventario"
@@ -171,7 +171,7 @@ def bulk_adjustment(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Ajuste masivo de stock"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para realizar ajustes masivos"
@@ -191,7 +191,7 @@ def transfer_stock(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Transferir stock entre ubicaciones"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para transferir stock"
@@ -274,7 +274,7 @@ def acknowledge_alert(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Reconocer alerta de inventario"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para reconocer alertas"
@@ -296,7 +296,7 @@ def create_count(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Crear conteo físico"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para crear conteos físicos"
@@ -317,7 +317,7 @@ def add_count_item(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Agregar item a conteo físico"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para agregar items a conteos"
@@ -338,7 +338,7 @@ def complete_count(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Completar conteo físico"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para completar conteos"
@@ -371,7 +371,7 @@ def get_movement_report(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Obtener reporte de movimientos de inventario"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para ver reportes de movimientos"
@@ -387,7 +387,7 @@ def get_low_stock_report(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Obtener reporte de productos con stock bajo"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para ver reportes de stock bajo"
@@ -431,7 +431,7 @@ def get_expiration_report(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Obtener reporte de productos próximos a expirar"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para ver reportes de expiración"
@@ -536,7 +536,7 @@ def adjust_stock_legacy(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Ajustar stock (endpoint legacy)"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR, UserRole.CAJA]:
+    if current_user.role not in [UserRole.ADMIN, UserRole.CAJA]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para ajustar stock"
@@ -608,7 +608,7 @@ def upload_excel_inventory(
     inventory_service: InventoryService = Depends(get_inventory_service)
 ):
     """Cargar inventario desde archivo Excel"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.ALMACEN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tienes permisos para cargar inventario desde Excel"

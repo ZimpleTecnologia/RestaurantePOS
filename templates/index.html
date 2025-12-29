@@ -86,14 +86,27 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <!-- Inventario -->
+                                    <!-- Administración (NUEVO) -->
                                     <div class="col-md-4 col-lg-3 mb-3">
-                                        <a href="/inventory" class="text-decoration-none">
+                                        <a href="/admin/administracion" class="text-decoration-none">
                                             <div class="card h-100 border-0 shadow-sm hover-card">
                                                 <div class="card-body text-center">
-                                                    <i class="bi bi-archive text-warning" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Inventario</h6>
-                                                    <p class="card-text text-muted small">Control de stock y movimientos</p>
+                                                    <i class="bi bi-shield-lock" style="font-size: 2.5rem; color: var(--primary-color);"></i>
+                                                    <h6 class="card-title mt-3">Administración</h6>
+                                                    <p class="card-text text-muted small">Mesas, Usuarios y Permisos</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Caja / Ventas -->
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/caja-ventas" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-cash-coin text-success" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Caja / Ventas</h6>
+                                                    <p class="card-text text-muted small">Procesamiento de pagos y cierre</p>
                                                 </div>
                                             </div>
                                         </a>
@@ -112,6 +125,19 @@
                                         </a>
                                     </div>
                                     
+                                    <!-- Inventario -->
+                                    <div class="col-md-4 col-lg-3 mb-3">
+                                        <a href="/inventory" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-archive text-warning" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Inventario</h6>
+                                                    <p class="card-text text-muted small">Control de stock y movimientos</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
                                     <!-- Pedidos a Cocina -->
                                     <div class="col-md-4 col-lg-3 mb-3">
                                         <a href="/kitchen" class="text-decoration-none">
@@ -120,19 +146,6 @@
                                                     <i class="bi bi-fire text-danger" style="font-size: 2.5rem;"></i>
                                                     <h6 class="card-title mt-3">Pedidos a Cocina</h6>
                                                     <p class="card-text text-muted small">Gestión de pedidos y preparación</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    
-                                    <!-- Caja / Ventas -->
-                                    <div class="col-md-4 col-lg-3 mb-3">
-                                        <a href="/caja-ventas" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-cash-coin text-success" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Caja / Ventas</h6>
-                                                    <p class="card-text text-muted small">Procesamiento de pagos y cierre</p>
                                                 </div>
                                             </div>
                                         </a>
@@ -154,14 +167,27 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <!-- Vista de Meseros -->
+                                    <!-- Administración (NUEVO) -->
                                     <div class="col-md-6 col-lg-4 mb-3">
-                                        <a href="/meseros/menus" class="text-decoration-none">
+                                        <a href="/admin/administracion" class="text-decoration-none">
                                             <div class="card h-100 border-0 shadow-sm hover-card">
                                                 <div class="card-body text-center">
-                                                    <i class="bi bi-calendar-check text-success" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Menú del Día</h6>
-                                                    <p class="card-text text-muted small">Vista para meseros</p>
+                                                    <i class="bi bi-shield-lock" style="font-size: 2.5rem; color: var(--primary-color);"></i>
+                                                    <h6 class="card-title mt-3">Administración</h6>
+                                                    <p class="card-text text-muted small">Mesas, Usuarios y Permisos</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
+                                    <!-- Configuración -->
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <a href="/settings" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-gear text-secondary" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Configuración</h6>
+                                                    <p class="card-text text-muted small">Ajustes del sistema</p>
                                                 </div>
                                             </div>
                                         </a>
@@ -180,6 +206,19 @@
                                         </a>
                                     </div>
                                     
+                                    <!-- Menú del Día (Vista Meseros) -->
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <a href="/meseros/menus" class="text-decoration-none">
+                                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                                <div class="card-body text-center">
+                                                    <i class="bi bi-calendar-check text-success" style="font-size: 2.5rem;"></i>
+                                                    <h6 class="card-title mt-3">Menú del Día</h6>
+                                                    <p class="card-text text-muted small">Vista para meseros</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    
                                     <!-- Reportes -->
                                     <div class="col-md-6 col-lg-4 mb-3">
                                         <a href="/reports" class="text-decoration-none">
@@ -192,17 +231,7 @@
                                             </div>
                                         </a>
                                     </div>
-                                    <div class="col-md-4 col-lg-3 mb-3">
-                                        <a href="/settings" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-gear text-secondary" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Configuración</h6>
-                                                    <p class="card-text text-muted small">Ajustes del sistema</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
+                                    
                                 </div>
                             </div>
                         </div>

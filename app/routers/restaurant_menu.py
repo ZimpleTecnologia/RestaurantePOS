@@ -122,7 +122,7 @@ def create_categoria(categoria: CategoriaMenuCreate, db: Session = Depends(get_d
         db.add(db_categoria)
         db.commit()
         db.refresh(db_categoria)
-        
+    
         return CategoriaMenuResponse.from_orm(db_categoria)
     except HTTPException:
         raise
@@ -500,7 +500,7 @@ def create_menu(menu: MenuDiaCreate, db: Session = Depends(get_db)):
                         )
                         db.add(mcp)
                 continue
-                
+            
             # Buscar la categoría
             categoria = db.query(CategoriaMenuRestaurante).filter(CategoriaMenuRestaurante.nombre == categoria_nombre).first()
             if not categoria:
