@@ -82,10 +82,24 @@ class InventoryConsumptionService:
                     "consumed_items": []
                 }
             
+            # Determinar si hay ingredientes con stock insuficiente
             consumed_items = []
             insufficient_stock_items = []
-            
-            # Verificar stock disponible para todos los ingredientes
+            for recipe_item in recipe_items:
+                required_quantity = recipe_item.quantity * quantity
+                ingredient = self.db.query(Product).filter(Product.id == recipe_item.product_id).first()
+                
+                if ingredient and ingredient.is_inventory_product:
+                    if ingredient.stock_quantity < required_quantity:
+                        insufficient_stock_items.append({
+                            "ingredient_id": ingredient.id,
+                            "ingredient_name": ingredient.name,
+                            "required": required_quantity,
+                            "available": ingredient.stock_quantity,
+                            "shortage": required_quantity - ingredient.stock_quantity
+                        })
+
+            # Consumir el inventario (permitiendo negativo según requerimiento)
             for recipe_item in recipe_items:
                 required_quantity = recipe_item.quantity * quantity
                 
@@ -94,62 +108,44 @@ class InventoryConsumptionService:
                     Product.id == recipe_item.product_id
                 ).first()
                 
-                if not ingredient:
-                    logger.error(f"Ingrediente con ID {recipe_item.product_id} no encontrado")
+                if not ingredient or not ingredient.is_inventory_product:
                     continue
-                
-                # Verificar si es un producto de inventario
-                if not ingredient.is_inventory_product:
-                    logger.warning(f"Producto {ingredient.name} no es una materia prima")
-                    continue
-                
-                # Verificar stock disponible
-                if ingredient.stock_quantity < required_quantity:
-                    insufficient_stock_items.append({
-                        "ingredient_id": ingredient.id,
-                        "ingredient_name": ingredient.name,
-                        "required": required_quantity,
-                        "available": ingredient.stock_quantity,
-                        "shortage": required_quantity - ingredient.stock_quantity
-                    })
-            
-            # Si hay ingredientes con stock insuficiente, no proceder
-            if insufficient_stock_items:
-                return {
-                    "success": False,
-                    "message": "Stock insuficiente para algunos ingredientes",
-                    "insufficient_stock": insufficient_stock_items,
-                    "consumed_items": []
-                }
-            
-            # Consumir el inventario
-            for recipe_item in recipe_items:
-                required_quantity = recipe_item.quantity * quantity
-                
-                # Obtener el producto ingrediente
-                ingredient = self.db.query(Product).filter(
-                    Product.id == recipe_item.product_id
-                ).first()
+
+                # Calcular nuevos valores
+                previous_stock = ingredient.stock_quantity
+                new_stock = previous_stock - required_quantity
                 
                 # Crear movimiento de inventario
                 movement = InventoryMovement(
                     product_id=ingredient.id,
                     user_id=user_id,
-                    movement_type=MovementType.SALIDA,
+                    adjustment_type=MovementType.SALIDA,
                     reason=MovementReason.VENTA,
-                    reason_detail=f"Consumo por venta de {product.name}",
+                    # reason_detail deprecado en favor de notes en este modelo
                     quantity=required_quantity,
-                    previous_stock=ingredient.stock_quantity,
-                    new_stock=ingredient.stock_quantity - required_quantity,
-                    reference_type="sale",
-                    reference_id=sale_id,
-                    notes=f"Consumo automático por venta de {product.name} (cantidad: {quantity})"
+                    previous_stock=previous_stock,
+                    new_stock=new_stock,
+                    # reference_type/id no están en el modelo actual de InventoryMovement en inventory.py
+                    # adaptando a los campos reales vistos en view_file
+                    notes=f"Consumo automático por venta de {product.name} (cantidad: {quantity}). ID Venta: {sale_id}"
                 )
                 
                 self.db.add(movement)
                 
-                # Actualizar stock del ingrediente
-                ingredient.stock_quantity -= required_quantity
+                # Actualizar stock del ingrediente (permite negativo)
+                ingredient.stock_quantity = new_stock
+                
+                # Generar alerta si el stock es negativo (Deuda de Stock)
+                if new_stock < 0:
+                    from app.models.inventory import InventoryAlert
+                    alert = InventoryAlert(
+                        product_id=ingredient.id,
+                        alert_type="shortage",
+                        alert_level="critical",
+                        message=f"⚠️ DEUDA DE STOCK: El producto {ingredient.name} quedó en {new_stock} {ingredient.unit} tras la venta de {product.name}.",
+                        is_active=True
+                    )
+                    self.db.add(alert)
                 
                 consumed_items.append({
                     "ingredient_id": ingredient.id,
@@ -157,19 +153,25 @@ class InventoryConsumptionService:
                     "quantity_consumed": required_quantity,
                     "unit": recipe_item.unit,
                     "unit_cost": float(ingredient.purchase_price or 0),
-                    "total_cost": float((ingredient.purchase_price or 0) * required_quantity)
+                    "total_cost": float((ingredient.purchase_price or 0) * required_quantity),
+                    "is_negative": new_stock < 0
                 })
             
             # Confirmar cambios
             self.db.commit()
             
+            message = "Consumo de inventario realizado exitosamente"
+            if insufficient_stock_items:
+                message += " (con alerta de deuda de stock)"
+            
             logger.info(f"Consumo de inventario exitoso para producto {product.name} (cantidad: {quantity})")
             
             return {
                 "success": True,
-                "message": "Consumo de inventario realizado exitosamente",
+                "message": message,
                 "consumed_items": consumed_items,
-                "total_cost": sum(item["total_cost"] for item in consumed_items)
+                "total_cost": sum(item["total_cost"] for item in consumed_items),
+                "has_shortage": len(insufficient_stock_items) > 0
             }
             
         except Exception as e:

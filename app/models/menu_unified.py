@@ -1,11 +1,24 @@
 """
 Modelo unificado para el sistema de Gestión de Menús
+
+DEPRECATED: Este módulo ha sido migrado a restaurant_menu.py
+Los modelos aquí contenidos ahora son aliases de restaurant_menu.py
 """
+import warnings
+warnings.warn(
+    "El módulo 'app.models.menu_unified' está deprecado. Use 'app.models.restaurant_menu' en su lugar.",
+    DeprecationWarning,
+    stacklevel=2
+)
+
 from sqlalchemy import Column, Integer, String, Date, Boolean, DateTime, Text, ForeignKey, Table
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import date
+
+# Imports de restaurant_menu para backward compatibility
+from app.models.restaurant_menu import MenuDia, PlatoRestaurante, CategoriaMenuRestaurante
 
 
 # Tabla intermedia para la relación many-to-many entre Menu y Plato

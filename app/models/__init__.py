@@ -1,4 +1,6 @@
-# Importar todos los modelos para facilitar su uso
+"""
+Modelos de base de datos del Sistema POS
+"""
 from .user import User
 from .product import Product, ProductCategory, Category, SubCategory
 from .sale import Sale, SaleItem, PaymentMethod
@@ -8,14 +10,13 @@ from .location import Location, Table
 from .inventory import InventoryMovement
 from .recipe import Recipe, RecipeItem
 from .settings import SystemSettings
-from .order import Order, OrderItem
-from .menu import MenuDayOld, CategoriaMenu, OpcionMenu, MenuStatus as OldMenuStatus, MenuStatus
-from .carta_restaurante import CartaRestaurante, MenuDia as MenuDiaCarta, MenuOpcion, TipoPlato, CategoriaPlato
-from .menu_restructured import CategoriaPlatoVariable, OpcionPlato, MenuDiaRestructured, MenuDiaOpcion
-from .mesa import Mesa
+from .order import Order, OrderItem, OrderStatus, OrderType, OrderSource, ItemType, OrderItemOption
 from .permiso import Permiso, usuario_permiso
 
+from .restaurant_menu import MenuDia, PlatoRestaurante, CategoriaMenuRestaurante, MenuCategoriaPlato, AcompanamientoFijo
+
 __all__ = [
+    # Modelos principales
     "User",
     "Product", 
     "ProductCategory",
@@ -38,21 +39,18 @@ __all__ = [
     "SystemSettings",
     "Order",
     "OrderItem",
-    "MenuDayOld",
-    "CategoriaMenu", 
-    "OpcionMenu",
-    "OldMenuStatus",
-    "MenuStatus",
-    "CartaRestaurante",
-    "MenuDiaCarta",
-    "MenuOpcion",
-    "TipoPlato",
-    "CategoriaPlato",
-    "CategoriaPlatoVariable",
-    "OpcionPlato",
-    "MenuDiaRestructured",
-    "MenuDiaOpcion",
-    "Mesa",
+    "OrderStatus",
+    "OrderType",
+    "OrderSource",
+    "ItemType",
+    "OrderItemOption",
     "Permiso",
-    "usuario_permiso"
-] 
+    "usuario_permiso",
+    
+    # Modelos de menú - PRINCIPAL
+    "MenuDia",
+    "PlatoRestaurante",
+    "CategoriaMenuRestaurante",
+    "MenuCategoriaPlato",
+    "AcompanamientoFijo",
+]

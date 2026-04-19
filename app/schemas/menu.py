@@ -1,11 +1,20 @@
 """
 Schemas para el sistema de menú del día
+
+DEPRECATED: Usar schemas de restaurant_menu en su lugar
 """
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import date, datetime
 from decimal import Decimal
-from app.models.menu import MenuStatus
+from enum import Enum
+
+
+class MenuStatus(str, Enum):
+    """Estados del menú del día"""
+    ACTIVE = "activo"
+    INACTIVE = "inactivo"
+    DRAFT = "borrador"
 
 
 class CategoriaMenuBase(BaseModel):

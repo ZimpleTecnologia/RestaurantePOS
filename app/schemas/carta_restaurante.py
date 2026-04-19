@@ -1,11 +1,29 @@
 """
 Schemas para el sistema de Carta Restaurante
+
+DEPRECATED: Usar schemas de restaurant_menu en su lugar
 """
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
-from app.models.carta_restaurante import TipoPlato, CategoriaPlato
+from enum import Enum
+
+
+class TipoPlato(str, Enum):
+    """Tipos de platos en la carta"""
+    FIJO = "Fijo"
+    VARIABLE = "Variable"
+
+
+class CategoriaPlato(str, Enum):
+    """Categorías de platos"""
+    ENTRADA = "Entrada"
+    PLATO_PRINCIPAL = "Plato Principal"
+    ACOMPANAMIENTO = "Acompañamiento"
+    BEBIDA = "Bebida"
+    POSTRE = "Postre"
+    OTRO = "Otro"
 
 
 # ==================== SCHEMAS PARA CARTA RESTAURANTE ====================

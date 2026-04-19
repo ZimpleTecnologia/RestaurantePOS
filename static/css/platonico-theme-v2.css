@@ -1,0 +1,89 @@
+/**
+ * RestaurantePOS - Nueva Identidad Visual
+ * Sistema POS Moderno para Restaurantes
+ * 
+ * Paleta de colores inspirada en restaurantes modernos:
+ * - Primary: Verde esmeralda (éxito, dinero)
+ * - Secondary: Naranja Warm (energía, appetito)
+ * - Neutral: Grises modernos
+ */
+
+/* ========== TAILWIND CONFIG ========== */
+/* Esta configuración se integra con TailwindCSS */
+
+/* ========== CUSTOM PROPERTIES ========== */
+
+:root {
+    /* ========== COLORES PRINCIPALES ZIMPLEPOS (PLATÓNICO TECH) ========== */
+    
+    /* Primary - Rojo Vino (elegancia, pasión, calor de hogar) */
+    --zimple-wine-50: #F9EBEB;
+    --zimple-wine-100: #F3D7D7;
+    --zimple-wine-200: #E7AFB0;
+    --zimple-wine-300: #DB8788;
+    --zimple-wine-400: #CF5F61;
+    --zimple-wine-500: #7A1E2C;
+    --zimple-wine-600: #6B1825;
+    --zimple-wine-700: #5A1420;
+    --zimple-wine-800: #4A101B;
+    --zimple-wine-900: #3A0C15;
+    
+    /* Secondary - Marrón Claro (tierra, madera, artesanal) */
+    --zimple-brown-50: #F9F4EE;
+    --zimple-brown-100: #F3E9DD;
+    --zimple-brown-200: #E7D3BB;
+    --zimple-brown-300: #DBBD99;
+    --zimple-brown-400: #CFA777;
+    --zimple-brown-500: #A67C52;
+    --zimple-brown-600: #956F4A;
+    --zimple-brown-700: #846241;
+    --zimple-brown-800: #735539;
+    --zimple-brown-900: #5C3A21;
+    
+    /* Neutral - Grises y Negros Tecnológicos */
+    --zimple-gray-50: #F2E8D5; /* Beige de fondo */
+    --zimple-gray-100: #E8DCC4;
+    --zimple-gray-200: #D9BBAE;
+    --zimple-gray-300: #C2A89C;
+    --zimple-gray-400: #938178;
+    --zimple-gray-500: #6B7280;
+    --zimple-gray-600: #4B5563;
+    --zimple-gray-700: #374151;
+    --zimple-gray-800: #2B2B2B; /* Negro tecnológico */
+    --zimple-gray-900: #1A1A1A;
+    
+    /* Semantic Colors */
+    --color-success: #5D8A4A;
+    --color-warning: #D4A84B;
+    --color-error: #B84A4A;
+    --color-info: #4A7BB8;
+    --color-primary: #7A1E2C;
+    --color-secondary: #A67C52;
+    
+    /* ========== ALIAS PARA COMPATIBILIDAD ========== */
+    --primary-color: #7A1E2C;
+    --secondary-color: #A67C52;
+    --bg-main: #F2E8D5;
+    --bg-white: #ffffff;
+    --text-dark: #2B2B2B;
+    --text-muted: #5C3A21;
+    --white: #ffffff;
+    
+    /* Sombras */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    
+    /* Bordes */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-full: 9999px;
+    
+    /* Transiciones */
+    --transition-fast: 150ms ease;
+    --transition-normal: 200ms ease;
+    --transition-slow: 300ms ease;
+}

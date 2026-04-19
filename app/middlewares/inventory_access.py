@@ -43,8 +43,7 @@ class InventoryAccessMiddleware(BaseHTTPMiddleware):
         "/api/v1/reports",
         "/api/v1/settings",
         "/api/v1/recipes",
-        "/api/v1/menu",
-        "/api/v1/carta_restaurante"
+        "/api/v1/restaurant-menu"
     ]
     
     async def dispatch(self, request: Request, call_next):

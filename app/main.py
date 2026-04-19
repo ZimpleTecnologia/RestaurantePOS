@@ -12,7 +12,7 @@ import os
 
 from app.config import settings as app_settings
 from app.database import create_tables
-from app.routers import auth, products, inventory, settings, notifications, reports, kitchen, caja_ventas, waiters, recipes, menu, websocket, carta_restaurante, menus_unified, menus_public_simple, restaurant_menu, test_simple, debug_menus, debug_menus_sql, menu_restructured, menu_restructured_simple, mesas, usuarios, permisos
+from app.routers import auth, products, inventory, settings, notifications, reports, kitchen, caja_ventas, waiters, recipes, websocket, restaurant_menu, tables, usuarios, permisos, pedidos_mesero, pedidos_cocina
 from app.models import *  # Importar todos los modelos para crear las tablas
 from app.middleware import AuthMiddleware, SessionTimeoutMiddleware
 from app.middlewares.inventory_access import InventoryAccessMiddleware
@@ -71,7 +71,7 @@ if os.path.exists("uploads"):
 # Configurar templates
 templates = Jinja2Templates(directory="templates")
 
-# Incluir routers
+# Incluir routers principales
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(products.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
@@ -82,31 +82,26 @@ app.include_router(reports.router, prefix="/api/v1")
 app.include_router(kitchen.router, prefix="/api/v1")
 app.include_router(caja_ventas.router, prefix="/api/v1")
 app.include_router(waiters.router, prefix="/api/v1")
-app.include_router(menu.router, prefix="/api/v1")
 app.include_router(websocket.router)
-app.include_router(carta_restaurante.router, prefix="/api/v1")
-app.include_router(menus_unified.router, prefix="/api/v1")
-app.include_router(menus_public_simple.router, prefix="/api/v1")
+
+# Router principal de menú (sistema unificado)
 app.include_router(restaurant_menu.router, prefix="/api/v1")
-app.include_router(test_simple.router, prefix="/api/v1")
-app.include_router(debug_menus.router, prefix="/api/v1")
-app.include_router(debug_menus_sql.router, prefix="/api/v1")
-app.include_router(menu_restructured.router, prefix="/api/v1/menu-restructured")
-app.include_router(menu_restructured_simple.router, prefix="/api/v1/menu-restructured-simple")
 
 # Routers del Módulo de Administración
-app.include_router(mesas.router, prefix="/api/v1")
+app.include_router(tables.router, prefix="/api/v1")
 app.include_router(usuarios.router, prefix="/api/v1")
 app.include_router(permisos.router, prefix="/api/v1")
+app.include_router(pedidos_mesero.router, prefix="/api/v1")
+app.include_router(pedidos_cocina.router, prefix="/api/v1")
 
 
 @app.on_event("startup")
 async def startup_event():
     """Evento de inicio de la aplicación"""
-    print("🚀 Iniciando Sistema POS...")
+    print("Iniciando Sistema POS...")
     # Crear tablas si no existen
     create_tables()
-    print("✅ Base de datos inicializada")
+    print("Base de datos inicializada")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -276,6 +271,28 @@ async def admin_mesas_page(request: Request):
 async def admin_usuarios_page(request: Request):
     """Página de administración de usuarios/meseros"""
     return templates.TemplateResponse("admin/usuarios.html", {"request": request})
+
+
+# ============================================================================
+# RUTAS DEL MÓDULO DE PEDIDOS A COCINA
+# ============================================================================
+
+@app.get("/pedidos/mesero", response_class=HTMLResponse)
+async def pedidos_mesero_page(request: Request):
+    """Página de toma de pedidos para meseros"""
+    return templates.TemplateResponse("pedidos/mesero.html", {"request": request})
+
+
+@app.get("/pedidos/cocina", response_class=HTMLResponse)
+async def pedidos_cocina_page(request: Request):
+    """Página de visualización de pedidos para cocina (KDS)"""
+    return templates.TemplateResponse("pedidos/cocina.html", {"request": request})
+
+
+@app.get("/pedidos/mesero/estado", response_class=HTMLResponse)
+async def pedidos_mesero_estado_page(request: Request):
+    """Página de visualización de estado de pedidos para meseros"""
+    return templates.TemplateResponse("pedidos/mesero_estado.html", {"request": request})
 
 
 @app.get("/admin/permisos", response_class=HTMLResponse)

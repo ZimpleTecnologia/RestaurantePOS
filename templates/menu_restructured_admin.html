@@ -1730,6 +1730,16 @@
                                             <option value="9:16">Vertical 9:16 (Teléfonos)</option>
                                         </select>
                                     </div>
+                                    <hr>
+                                    <div class="mb-3">
+                                        <label for="vistaPreviaPlantilla" class="form-label">Plantilla de Diseño</label>
+                                        <select class="form-select form-select-sm" id="vistaPreviaPlantilla" onchange="actualizarVistaPrevia()">
+                                            <option value="clasica">Clásica (Pergamino)</option>
+                                            <option value="moderno">Moderno (Minimalista)</option>
+                                            <option value="elegante">Elegante (Refinado)</option>
+                                        </select>
+                                        <small class="text-muted">Elige el estilo visual del menú</small>
+                                    </div>
                                     <button type="button" class="btn btn-sm btn-primary w-100" onclick="actualizarVistaPrevia()">
                                         <i class="bi bi-arrow-clockwise me-1"></i>
                                         Actualizar Vista
@@ -4239,6 +4249,9 @@
             // Inicializar formato de exportación
             document.getElementById('vistaPreviaFormato').value = 'auto';
             
+            // Inicializar plantilla de diseño
+            document.getElementById('vistaPreviaPlantilla').value = 'clasica';
+            
             // Cargar platos fijos y variables
             await cargarPlatosParaVistaPrevia(menu);
             
@@ -4273,6 +4286,518 @@
             }
         }
 
+        // Funciones para generar plantillas de menú
+        
+        // Plantilla Clásica - Estilo pergamino con decoraciones naturales
+        function generarPlantillaClasica(nombreRestaurante, lemaRestaurante, tituloMenu, precioMenu, colorTitulo, colorFondo, platosVariablesPorCategoria, platosFijosSeleccionados, mensajePersonalizado, opciones) {
+            const verdeOscuro = '#2d5016';
+            const verdeClaro = '#4a7c2a';
+            const amarilloFlor = '#ffd700';
+            const fondoPergamino = '#f5f0e8';
+            const marronOscuro = colorTitulo || '#8B4513';
+            
+            let html = `
+                <div style="max-width: 800px; margin: 0 auto; padding: 60px 50px; 
+                            background: 
+                                linear-gradient(135deg, ${fondoPergamino} 0%, #faf8f3 50%, #f5f0e8 100%),
+                                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139, 120, 100, 0.03) 2px, rgba(139, 120, 100, 0.03) 4px),
+                                radial-gradient(circle at 20% 30%, rgba(200, 180, 150, 0.15) 0%, transparent 50%),
+                                radial-gradient(circle at 80% 70%, rgba(180, 160, 140, 0.12) 0%, transparent 50%);
+                            position: relative; border-radius: 20px; 
+                            box-shadow: 0 15px 50px rgba(0,0,0,0.2), inset 0 0 100px rgba(255,255,255,0.1);
+                            border: 1px solid rgba(139, 120, 100, 0.2);">
+                    
+                    <!-- Decoración de hojas y flores - Esquina superior derecha -->
+                    <div style="position: absolute; top: 15px; right: 15px; width: 140px; height: 140px; opacity: 0.4; pointer-events: none; z-index: 0;">
+                        <svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+                            <!-- Hojas verdes -->
+                            <path d="M150,30 Q130,50 125,80 Q120,110 135,130 Q150,150 170,140 Q190,130 185,100 Q180,70 160,50 Q150,30 150,30" 
+                                  fill="${verdeClaro}" stroke="${verdeOscuro}" stroke-width="1.5" opacity="0.6"/>
+                            <path d="M160,60 Q145,75 142,100 Q139,125 150,140 Q161,155 175,148 Q189,141 186,115 Q183,89 170,75 Q160,60 160,60" 
+                                  fill="${verdeClaro}" stroke="${verdeOscuro}" stroke-width="1.5" opacity="0.6"/>
+                            <!-- Flores amarillas -->
+                            <circle cx="135" cy="90" r="4" fill="${amarilloFlor}" opacity="0.8"/>
+                            <circle cx="155" cy="85" r="3.5" fill="${amarilloFlor}" opacity="0.8"/>
+                            <circle cx="145" cy="110" r="3" fill="${amarilloFlor}" opacity="0.8"/>
+                            <circle cx="165" cy="105" r="3.5" fill="${amarilloFlor}" opacity="0.8"/>
+                            <!-- Tallos -->
+                            <path d="M140,100 Q145,120 150,140" stroke="${verdeOscuro}" stroke-width="2" fill="none" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    
+                    <!-- Decoración de hojas y flores - Esquina inferior izquierda -->
+                    <div style="position: absolute; bottom: 20px; left: 10px; width: 180px; height: 180px; opacity: 0.45; pointer-events: none; z-index: 0;">
+                        <svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+                            <!-- Hojas grandes -->
+                            <path d="M30,150 Q20,130 25,100 Q30,70 50,60 Q70,50 85,70 Q100,90 95,120 Q90,150 70,160 Q50,170 30,150" 
+                                  fill="${verdeClaro}" stroke="${verdeOscuro}" stroke-width="2" opacity="0.7"/>
+                            <path d="M50,140 Q40,120 45,95 Q50,70 65,65 Q80,60 92,75 Q104,90 100,115 Q96,140 80,148 Q64,156 50,140" 
+                                  fill="${verdeClaro}" stroke="${verdeOscuro}" stroke-width="1.5" opacity="0.7"/>
+                            <!-- Ramas -->
+                            <path d="M40,160 Q50,170 60,175 Q70,180 80,175" stroke="${verdeOscuro}" stroke-width="3" fill="none" opacity="0.6"/>
+                            <path d="M60,170 Q70,165 75,160" stroke="${verdeOscuro}" stroke-width="2" fill="none" opacity="0.6"/>
+                            <!-- Flores amarillas -->
+                            <circle cx="70" cy="120" r="5" fill="${amarilloFlor}" opacity="0.9"/>
+                            <circle cx="85" cy="115" r="4" fill="${amarilloFlor}" opacity="0.9"/>
+                            <circle cx="75" cy="140" r="4.5" fill="${amarilloFlor}" opacity="0.9"/>
+                            <circle cx="90" cy="135" r="4" fill="${amarilloFlor}" opacity="0.9"/>
+                            <circle cx="65" cy="150" r="3.5" fill="${amarilloFlor}" opacity="0.9"/>
+                        </svg>
+                    </div>
+                    
+                    <!-- Decoración de hojas y flores - Esquina inferior derecha -->
+                    <div style="position: absolute; bottom: 15px; right: 20px; width: 160px; height: 160px; opacity: 0.4; pointer-events: none; z-index: 0;">
+                        <svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
+                            <!-- Hojas -->
+                            <path d="M170,150 Q160,130 165,100 Q170,70 185,65 Q200,60 210,80 Q220,100 215,130 Q210,160 190,165 Q170,170 170,150" 
+                                  fill="${verdeClaro}" stroke="${verdeOscuro}" stroke-width="1.5" opacity="0.6"/>
+                            <path d="M180,140 Q175,120 178,100 Q181,80 190,78 Q199,76 205,90 Q211,104 208,120 Q205,136 195,138 Q185,140 180,140" 
+                                  fill="${verdeClaro}" stroke="${verdeOscuro}" stroke-width="1.5" opacity="0.6"/>
+                            <!-- Ramas -->
+                            <path d="M175,160 Q185,170 195,175" stroke="${verdeOscuro}" stroke-width="2.5" fill="none" opacity="0.5"/>
+                            <!-- Flores amarillas -->
+                            <circle cx="185" cy="120" r="4.5" fill="${amarilloFlor}" opacity="0.85"/>
+                            <circle cx="195" cy="115" r="4" fill="${amarilloFlor}" opacity="0.85"/>
+                            <circle cx="188" cy="140" r="4" fill="${amarilloFlor}" opacity="0.85"/>
+                            <circle cx="200" cy="135" r="3.5" fill="${amarilloFlor}" opacity="0.85"/>
+                        </svg>
+                    </div>
+                    
+                    <!-- Logo y Título -->
+                    <div style="text-align: center; margin-bottom: 35px; position: relative; z-index: 1;">
+                        <img src="/static/images/platonico_logo.png" 
+                             alt="Platónico" 
+                             style="width: 160px; height: 160px; object-fit: contain; margin: 0 auto 20px; display: block; 
+                                    filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.25));">
+                        <h1 style="color: ${marronOscuro}; font-size: 52px; font-weight: 900; letter-spacing: 4px; 
+                                  margin: 0; font-family: 'Georgia', 'Times New Roman', serif; text-transform: uppercase;
+                                  text-shadow: 3px 3px 6px rgba(0,0,0,0.15), 0 0 20px rgba(139, 69, 19, 0.1);">
+                            ${nombreRestaurante}
+                        </h1>
+                        <p style="color: #d2691e; font-size: 20px; margin: 12px 0 0 0; font-style: italic; 
+                                  font-family: 'Brush Script MT', 'Lucida Handwriting', cursive; font-weight: 500;
+                                  text-shadow: 1px 1px 3px rgba(0,0,0,0.1);">
+                            ${lemaRestaurante}
+                        </p>
+                    </div>
+                    
+                    <!-- Sección MENÚ DEL DÍA -->
+                    <div style="margin: 40px 0; position: relative; z-index: 1;">
+                        <div style="background: linear-gradient(135deg, ${verdeOscuro} 0%, ${verdeClaro} 100%); 
+                                   color: #fff8dc; padding: 14px 25px; border-radius: 10px; margin-bottom: 25px;
+                                   box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2);
+                                   border: 1px solid rgba(255,255,255,0.1);">
+                            <h2 style="margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; 
+                                       font-family: 'Arial', sans-serif; letter-spacing: 2px; text-shadow: 1px 1px 3px rgba(0,0,0,0.3);">
+                                ${tituloMenu.toUpperCase()} – ${formatearPrecio(precioMenu)}
+                            </h2>
+                        </div>
+            `;
+            
+            // Agregar platos variables por categoría
+            if (platosVariablesPorCategoria && Object.keys(platosVariablesPorCategoria).length > 0) {
+                Object.keys(platosVariablesPorCategoria).forEach(categoriaNombre => {
+                    if (categoriaNombre === '_platos_fijos') return;
+                    
+                    const platos = platosVariablesPorCategoria[categoriaNombre];
+                    if (platos && platos.length > 0) {
+                        html += `
+                            <div style="margin-bottom: 28px;">
+                                <h3 style="color: ${verdeOscuro}; font-size: 19px; font-weight: bold; margin-bottom: 15px; 
+                                           text-transform: capitalize; font-family: 'Arial', sans-serif;
+                                           border-bottom: 2px solid rgba(139, 120, 100, 0.3); padding-bottom: 8px;
+                                           display: inline-block; min-width: 200px;">
+                                    ${categoriaNombre}:
+                                </h3>
+                                <ul style="list-style: none; padding: 0; margin: 0;">
+                        `;
+                        
+                        platos.forEach(plato => {
+                            if (typeof plato === 'object' && plato.nombre) {
+                                html += `
+                                    <li style="padding: 10px 0 10px 20px; color: #5a4a3a; font-size: 17px; 
+                                              font-family: 'Arial', sans-serif; border-left: 4px solid ${verdeClaro}; 
+                                              margin-bottom: 6px; position: relative; font-weight: 500;">
+                                        <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); 
+                                                    width: 6px; height: 6px; background: ${amarilloFlor}; 
+                                                    border-radius: 50%; opacity: 0.6;"></span>
+                                        ${plato.nombre}
+                                    </li>
+                                `;
+                            } else if (typeof plato === 'number') {
+                                const platoObj = opciones.find(o => o.id === plato);
+                                if (platoObj) {
+                                    html += `
+                                        <li style="padding: 10px 0 10px 20px; color: #5a4a3a; font-size: 17px; 
+                                                  font-family: 'Arial', sans-serif; border-left: 4px solid ${verdeClaro}; 
+                                                  margin-bottom: 6px; position: relative; font-weight: 500;">
+                                            <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); 
+                                                        width: 6px; height: 6px; background: ${amarilloFlor}; 
+                                                        border-radius: 50%; opacity: 0.6;"></span>
+                                            ${platoObj.nombre}
+                                        </li>
+                                    `;
+                                }
+                            }
+                        });
+                        
+                        html += `</ul></div>`;
+                    }
+                });
+            }
+            
+            // Agregar platos especiales
+            if (platosFijosSeleccionados && platosFijosSeleccionados.length > 0) {
+                html += `
+                    <div style="margin: 40px 0;">
+                        <div style="background: linear-gradient(135deg, ${verdeOscuro} 0%, ${verdeClaro} 100%); 
+                                   color: #fff8dc; padding: 14px 25px; border-radius: 10px; margin-bottom: 25px;
+                                   box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2);
+                                   border: 1px solid rgba(255,255,255,0.1);">
+                            <h2 style="margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; 
+                                       font-family: 'Arial', sans-serif; letter-spacing: 2px; text-shadow: 1px 1px 3px rgba(0,0,0,0.3);">
+                                PLATOS ESPECIALES ❤️❤️
+                            </h2>
+                        </div>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                `;
+                
+                platosFijosSeleccionados.forEach(plato => {
+                    html += `
+                        <li style="padding: 12px 0; border-bottom: 1px dotted rgba(139, 120, 100, 0.4); 
+                                   display: flex; justify-content: space-between; align-items: center; 
+                                   font-family: 'Arial', sans-serif; transition: padding-left 0.2s;">
+                            <span style="color: #5a4a3a; font-size: 18px; font-weight: 500;">${plato.nombre}</span>
+                            <span style="color: ${verdeOscuro}; font-size: 18px; font-weight: bold; margin-left: 20px;">
+                                ${formatearPrecio(plato.precio)}
+                            </span>
+                        </li>
+                    `;
+                });
+                
+                html += `</ul></div>`;
+            }
+            
+            // Mensaje personalizado
+            if (mensajePersonalizado) {
+                html += `
+                    <div style="margin-top: 45px; padding-top: 30px; border-top: 3px solid ${verdeOscuro}; 
+                               position: relative; z-index: 1;">
+                        <div style="background: linear-gradient(135deg, ${verdeOscuro} 0%, ${verdeClaro} 100%); 
+                                   color: #fff8dc; padding: 12px 25px; border-radius: 10px; margin-bottom: 20px; 
+                                   text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2);
+                                   border: 1px solid rgba(255,255,255,0.1);">
+                            <p style="margin: 0; font-size: 18px; font-weight: bold; text-transform: uppercase; 
+                                     font-family: 'Arial', sans-serif; letter-spacing: 1.5px; text-shadow: 1px 1px 3px rgba(0,0,0,0.3);">
+                                DOMICILIOS GRATIS
+                            </p>
+                        </div>
+                        <p style="color: #5a4a3a; font-size: 17px; line-height: 2; margin: 0; 
+                                  text-align: center; white-space: pre-line; font-family: 'Arial', sans-serif;
+                                  font-weight: 500;">
+                            ${mensajePersonalizado.replace(/\n/g, '<br>')}
+                        </p>
+                    </div>
+                `;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+        
+        // Plantilla Moderno - Diseño limpio y minimalista
+        function generarPlantillaModerno(nombreRestaurante, lemaRestaurante, tituloMenu, precioMenu, colorTitulo, colorFondo, platosVariablesPorCategoria, platosFijosSeleccionados, mensajePersonalizado, opciones) {
+            const colorPrincipal = colorTitulo || '#2c3e50';
+            const fondoClaro = colorFondo || '#ffffff';
+            
+            let html = `
+                <div style="max-width: 800px; margin: 0 auto; padding: 50px 40px; background: ${fondoClaro}; 
+                            border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                    
+                    <!-- Logo y Título -->
+                    <div style="text-align: center; margin-bottom: 40px;">
+                        <img src="/static/images/platonico_logo.png" 
+                             alt="Platónico" 
+                             style="width: 140px; height: 140px; object-fit: contain; margin: 0 auto 20px; display: block;">
+                        <h1 style="color: ${colorPrincipal}; font-size: 44px; font-weight: 700; letter-spacing: 2px; 
+                                  margin: 0; font-family: 'Arial', 'Helvetica', sans-serif; text-transform: uppercase;">
+                            ${nombreRestaurante}
+                        </h1>
+                        <p style="color: #7f8c8d; font-size: 16px; margin: 12px 0 0 0; font-style: italic; 
+                                  font-family: 'Arial', sans-serif;">
+                            ${lemaRestaurante}
+                        </p>
+                    </div>
+                    
+                    <!-- Línea divisoria -->
+                    <div style="height: 3px; background: linear-gradient(90deg, transparent, ${colorPrincipal}, transparent); 
+                               margin: 30px 0; border-radius: 2px;"></div>
+                    
+                    <!-- Sección MENÚ DEL DÍA -->
+                    <div style="margin: 35px 0;">
+                        <div style="text-align: center; margin-bottom: 25px;">
+                            <h2 style="color: ${colorPrincipal}; font-size: 28px; font-weight: 700; margin: 0; 
+                                       font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 1px;">
+                                ${tituloMenu}
+                            </h2>
+                            <p style="color: ${colorPrincipal}; font-size: 24px; font-weight: 600; margin: 8px 0 0 0; 
+                                     font-family: 'Arial', sans-serif;">
+                                ${formatearPrecio(precioMenu)}
+                            </p>
+                        </div>
+            `;
+            
+            // Agregar platos variables por categoría
+            if (platosVariablesPorCategoria && Object.keys(platosVariablesPorCategoria).length > 0) {
+                Object.keys(platosVariablesPorCategoria).forEach(categoriaNombre => {
+                    if (categoriaNombre === '_platos_fijos') return;
+                    
+                    const platos = platosVariablesPorCategoria[categoriaNombre];
+                    if (platos && platos.length > 0) {
+                        html += `
+                            <div style="margin-bottom: 30px;">
+                                <h3 style="color: ${colorPrincipal}; font-size: 16px; font-weight: 600; margin-bottom: 15px; 
+                                           text-transform: uppercase; font-family: 'Arial', sans-serif; 
+                                           letter-spacing: 0.5px; border-bottom: 2px solid ${colorPrincipal}; 
+                                           padding-bottom: 8px; display: inline-block;">
+                                    ${categoriaNombre}
+                                </h3>
+                                <ul style="list-style: none; padding: 0; margin: 15px 0 0 0;">
+                        `;
+                        
+                        platos.forEach(plato => {
+                            if (typeof plato === 'object' && plato.nombre) {
+                                html += `
+                                    <li style="padding: 10px 0; color: #34495e; font-size: 16px; 
+                                              font-family: 'Arial', sans-serif; border-left: 4px solid ${colorPrincipal}; 
+                                              padding-left: 20px; margin-bottom: 8px;">
+                                        ${plato.nombre}
+                                    </li>
+                                `;
+                            } else if (typeof plato === 'number') {
+                                const platoObj = opciones.find(o => o.id === plato);
+                                if (platoObj) {
+                                    html += `
+                                        <li style="padding: 10px 0; color: #34495e; font-size: 16px; 
+                                                  font-family: 'Arial', sans-serif; border-left: 4px solid ${colorPrincipal}; 
+                                                  padding-left: 20px; margin-bottom: 8px;">
+                                            ${platoObj.nombre}
+                                        </li>
+                                    `;
+                                }
+                            }
+                        });
+                        
+                        html += `</ul></div>`;
+                    }
+                });
+            }
+            
+            // Agregar platos especiales
+            if (platosFijosSeleccionados && platosFijosSeleccionados.length > 0) {
+                html += `
+                    <div style="margin: 40px 0;">
+                        <div style="text-align: center; margin-bottom: 25px;">
+                            <h2 style="color: ${colorPrincipal}; font-size: 24px; font-weight: 700; margin: 0; 
+                                       font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 1px;">
+                                PLATOS ESPECIALES ❤️❤️
+                            </h2>
+                        </div>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                `;
+                
+                platosFijosSeleccionados.forEach(plato => {
+                    html += `
+                        <li style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; display: flex; 
+                                   justify-content: space-between; align-items: center; font-family: 'Arial', sans-serif;">
+                            <span style="color: #2c3e50; font-size: 17px; font-weight: 500;">${plato.nombre}</span>
+                            <span style="color: ${colorPrincipal}; font-size: 18px; font-weight: 700; margin-left: 20px;">
+                                ${formatearPrecio(plato.precio)}
+                            </span>
+                        </li>
+                    `;
+                });
+                
+                html += `</ul></div>`;
+            }
+            
+            // Mensaje personalizado
+            if (mensajePersonalizado) {
+                html += `
+                    <div style="margin-top: 50px; padding-top: 30px; border-top: 3px solid ${colorPrincipal};">
+                        <p style="color: #7f8c8d; font-size: 15px; line-height: 1.8; margin: 0; 
+                                  text-align: center; white-space: pre-line; font-family: 'Arial', sans-serif;">
+                            ${mensajePersonalizado.replace(/\n/g, '<br>')}
+                        </p>
+                    </div>
+                `;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+        
+        // Plantilla Elegante - Con decoraciones y estilo refinado
+        function generarPlantillaElegante(nombreRestaurante, lemaRestaurante, tituloMenu, precioMenu, colorTitulo, colorFondo, platosVariablesPorCategoria, platosFijosSeleccionados, mensajePersonalizado, opciones) {
+            const colorPrincipal = colorTitulo || '#8B4513';
+            const fondoElegante = colorFondo || '#faf9f6';
+            const dorado = '#d4af37';
+            
+            let html = `
+                <div style="max-width: 800px; margin: 0 auto; padding: 60px 50px; 
+                            background: linear-gradient(135deg, ${fondoElegante} 0%, #f5f3ef 100%);
+                            border: 3px double ${dorado}; border-radius: 20px; 
+                            box-shadow: 0 15px 50px rgba(0,0,0,0.12); position: relative;">
+                    
+                    <!-- Decoraciones de esquina -->
+                    <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; 
+                                border-top: 3px solid ${dorado}; border-left: 3px solid ${dorado}; opacity: 0.4;"></div>
+                    <div style="position: absolute; top: 20px; right: 20px; width: 60px; height: 60px; 
+                                border-top: 3px solid ${dorado}; border-right: 3px solid ${dorado}; opacity: 0.4;"></div>
+                    <div style="position: absolute; bottom: 20px; left: 20px; width: 60px; height: 60px; 
+                                border-bottom: 3px solid ${dorado}; border-left: 3px solid ${dorado}; opacity: 0.4;"></div>
+                    <div style="position: absolute; bottom: 20px; right: 20px; width: 60px; height: 60px; 
+                                border-bottom: 3px solid ${dorado}; border-right: 3px solid ${dorado}; opacity: 0.4;"></div>
+                    
+                    <!-- Logo y Título -->
+                    <div style="text-align: center; margin-bottom: 35px; position: relative; z-index: 1;">
+                        <img src="/static/images/platonico_logo.png" 
+                             alt="Platónico" 
+                             style="width: 160px; height: 160px; object-fit: contain; margin: 0 auto 20px; display: block; 
+                                    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));">
+                        <h1 style="color: ${colorPrincipal}; font-size: 50px; font-weight: 900; letter-spacing: 4px; 
+                                  margin: 0; font-family: 'Georgia', 'Times New Roman', serif; text-transform: uppercase;
+                                  text-shadow: 2px 2px 4px rgba(0,0,0,0.1); position: relative;">
+                            ${nombreRestaurante}
+                            <div style="position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); 
+                                       width: 120px; height: 2px; background: linear-gradient(90deg, transparent, ${dorado}, transparent);"></div>
+                        </h1>
+                        <p style="color: #b8860b; font-size: 19px; margin: 20px 0 0 0; font-style: italic; 
+                                  font-family: 'Georgia', serif; font-weight: 500;">
+                            ${lemaRestaurante}
+                        </p>
+                    </div>
+                    
+                    <!-- Sección MENÚ DEL DÍA -->
+                    <div style="margin: 40px 0; position: relative; z-index: 1;">
+                        <div style="background: linear-gradient(135deg, ${colorPrincipal}, #6b3410); 
+                                   color: white; padding: 18px 30px; border-radius: 12px; margin-bottom: 25px;
+                                   box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center;">
+                            <h2 style="margin: 0; font-size: 26px; font-weight: bold; text-transform: uppercase; 
+                                       font-family: 'Georgia', serif; letter-spacing: 2px;">
+                                ${tituloMenu}
+                            </h2>
+                            <p style="margin: 8px 0 0 0; font-size: 22px; font-weight: 600; 
+                                     font-family: 'Georgia', serif;">
+                                ${formatearPrecio(precioMenu)}
+                            </p>
+                        </div>
+            `;
+            
+            // Agregar platos variables por categoría
+            if (platosVariablesPorCategoria && Object.keys(platosVariablesPorCategoria).length > 0) {
+                Object.keys(platosVariablesPorCategoria).forEach(categoriaNombre => {
+                    if (categoriaNombre === '_platos_fijos') return;
+                    
+                    const platos = platosVariablesPorCategoria[categoriaNombre];
+                    if (platos && platos.length > 0) {
+                        html += `
+                            <div style="margin-bottom: 30px;">
+                                <h3 style="color: ${colorPrincipal}; font-size: 20px; font-weight: bold; margin-bottom: 15px; 
+                                           text-transform: capitalize; font-family: 'Georgia', serif; 
+                                           border-bottom: 2px solid ${dorado}; padding-bottom: 8px; 
+                                           display: inline-block; position: relative;">
+                                    ${categoriaNombre}
+                                    <span style="position: absolute; right: -30px; top: 50%; transform: translateY(-50%); 
+                                                color: ${dorado}; font-size: 16px;">◆</span>
+                                </h3>
+                                <ul style="list-style: none; padding: 0; margin: 15px 0 0 0;">
+                        `;
+                        
+                        platos.forEach(plato => {
+                            if (typeof plato === 'object' && plato.nombre) {
+                                html += `
+                                    <li style="padding: 10px 0 10px 25px; color: #4a4a4a; font-size: 17px; 
+                                              font-family: 'Georgia', serif; position: relative; margin-bottom: 8px;">
+                                        <span style="position: absolute; left: 0; color: ${dorado}; font-size: 14px;">◆</span>
+                                        ${plato.nombre}
+                                    </li>
+                                `;
+                            } else if (typeof plato === 'number') {
+                                const platoObj = opciones.find(o => o.id === plato);
+                                if (platoObj) {
+                                    html += `
+                                        <li style="padding: 10px 0 10px 25px; color: #4a4a4a; font-size: 17px; 
+                                                  font-family: 'Georgia', serif; position: relative; margin-bottom: 8px;">
+                                            <span style="position: absolute; left: 0; color: ${dorado}; font-size: 14px;">◆</span>
+                                            ${platoObj.nombre}
+                                        </li>
+                                    `;
+                                }
+                            }
+                        });
+                        
+                        html += `</ul></div>`;
+                    }
+                });
+            }
+            
+            // Agregar platos especiales
+            if (platosFijosSeleccionados && platosFijosSeleccionados.length > 0) {
+                html += `
+                    <div style="margin: 45px 0;">
+                        <div style="background: linear-gradient(135deg, ${colorPrincipal}, #6b3410); 
+                                   color: white; padding: 18px 30px; border-radius: 12px; margin-bottom: 25px;
+                                   box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center;">
+                            <h2 style="margin: 0; font-size: 24px; font-weight: bold; text-transform: uppercase; 
+                                       font-family: 'Georgia', serif; letter-spacing: 2px;">
+                                PLATOS ESPECIALES ❤️❤️
+                            </h2>
+                        </div>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                `;
+                
+                platosFijosSeleccionados.forEach(plato => {
+                    html += `
+                        <li style="padding: 14px 0; border-bottom: 1px solid rgba(212, 175, 55, 0.3); 
+                                   display: flex; justify-content: space-between; align-items: center; 
+                                   font-family: 'Georgia', serif;">
+                            <span style="color: #4a4a4a; font-size: 18px; font-weight: 500;">${plato.nombre}</span>
+                            <span style="color: ${colorPrincipal}; font-size: 19px; font-weight: bold; margin-left: 20px;">
+                                ${formatearPrecio(plato.precio)}
+                            </span>
+                        </li>
+                    `;
+                });
+                
+                html += `</ul></div>`;
+            }
+            
+            // Mensaje personalizado
+            if (mensajePersonalizado) {
+                html += `
+                    <div style="margin-top: 50px; padding-top: 30px; border-top: 3px double ${dorado}; 
+                               position: relative; z-index: 1;">
+                        <div style="background: linear-gradient(135deg, ${colorPrincipal}, #6b3410); 
+                                   color: white; padding: 12px 25px; border-radius: 8px; margin-bottom: 20px; 
+                                   text-align: center;">
+                            <p style="margin: 0; font-size: 17px; font-weight: bold; text-transform: uppercase; 
+                                     font-family: 'Georgia', serif; letter-spacing: 1px;">
+                                DOMICILIOS GRATIS
+                            </p>
+                        </div>
+                        <p style="color: #4a4a4a; font-size: 17px; line-height: 2; margin: 0; 
+                                  text-align: center; white-space: pre-line; font-family: 'Georgia', serif;">
+                            ${mensajePersonalizado.replace(/\n/g, '<br>')}
+                        </p>
+                    </div>
+                `;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+        
         // Función para actualizar la vista previa
         function actualizarVistaPrevia() {
             if (!menuVistaPrevia) return;
@@ -4284,11 +4809,16 @@
             const precioMenu = parseFloat(document.getElementById('vistaPreviaPrecioMenu').value) || menuVistaPrevia.precio || 14000;
             const colorTitulo = document.getElementById('vistaPreviaColorTitulo').value;
             const colorFondo = document.getElementById('vistaPreviaColorFondo').value;
+            const plantillaSeleccionada = document.getElementById('vistaPreviaPlantilla').value || 'clasica';
             
-            // Actualizar color de fondo del contenedor
+            // Actualizar color de fondo del contenedor (solo si no es plantilla específica)
             const container = document.getElementById('menuPreviewContainer');
-            if (container) {
+            if (container && plantillaSeleccionada === 'moderno') {
                 container.style.backgroundColor = colorFondo;
+            } else if (container && plantillaSeleccionada === 'clasica') {
+                container.style.backgroundColor = '#f5f0e8';
+            } else if (container && plantillaSeleccionada === 'elegante') {
+                container.style.backgroundColor = '#faf9f6';
             }
             
             // Obtener platos fijos seleccionados desde la categoría especial
@@ -4305,131 +4835,40 @@
                 });
             }
             
-            // Construir HTML del menú con logo
-            let html = `
-                <div style="max-width: 800px; margin: 0 auto; padding: 40px;">
-                    <!-- Logo Platónico -->
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <img src="/static/images/platonico_logo.png" 
-                             alt="Platónico" 
-                             style="width: 180px; height: 180px; object-fit: contain; margin: 0 auto; display: block; filter: drop-shadow(0 4px 8px rgba(138, 20, 38, 0.15));">
-                    </div>
-                    
-                    <!-- Título del Restaurante -->
-                    <div style="text-align: center; margin-bottom: 25px;">
-                        <h1 style="color: ${colorTitulo}; font-size: 42px; font-weight: bold; letter-spacing: 2px; margin: 0; font-family: 'Georgia', serif; text-transform: uppercase;">
-                            ${nombreRestaurante}
-                        </h1>
-                        <p style="color: ${colorTitulo}; font-size: 16px; margin: 8px 0 0 0; font-style: italic; opacity: 0.9;">
-                            ${lemaRestaurante}
-                        </p>
-                    </div>
-                    
-                    <hr style="border: none; border-top: 2px solid ${colorTitulo}; margin: 25px auto; width: 80%; opacity: 0.6;">
-                    
-                    <!-- Título y Precio del Menú -->
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <h2 style="color: ${colorTitulo}; font-size: 28px; font-weight: bold; margin: 0; font-family: 'Georgia', serif;">
-                            ${tituloMenu}
-                            ${precioMenu > 0 ? `<span style="font-size: 24px; color: ${colorTitulo}; opacity: 0.9;"> – ${formatearPrecio(precioMenu)}</span>` : ''}
-                        </h2>
-                    </div>
-                    
-                    <hr style="border: none; border-top: 2px solid ${colorTitulo}; margin: 25px auto; width: 80%; opacity: 0.6;">
-            `;
-            
-            // PRIMERO: Agregar platos variables por categoría (Menú del Día)
-            if (menuVistaPrevia.platosVariablesPorCategoria && Object.keys(menuVistaPrevia.platosVariablesPorCategoria).length > 0) {
-                Object.keys(menuVistaPrevia.platosVariablesPorCategoria).forEach(categoriaNombre => {
-                    // Saltar la categoría especial de platos fijos
-                    if (categoriaNombre === '_platos_fijos') {
-                        return;
-                    }
-                    
-                    const platos = menuVistaPrevia.platosVariablesPorCategoria[categoriaNombre];
-                    
-                    // Los platos pueden venir como array de objetos o array de IDs
-                    if (platos && platos.length > 0) {
-                        html += `
-                            <div style="margin-bottom: 30px;">
-                                <h3 style="color: ${colorTitulo}; font-size: 20px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">
-                                    ${categoriaNombre}:
-                                </h3>
-                                <ul style="list-style: none; padding: 0;">
-                        `;
-                        
-                        platos.forEach(plato => {
-                            // Si es un objeto con propiedades, usar directamente
-                            if (typeof plato === 'object' && plato.nombre) {
-                                html += `
-                                    <li style="padding: 6px 0; color: ${colorTitulo}; font-size: 16px;">
-                                        • ${plato.nombre}
-                                    </li>
-                                `;
-                            } else if (typeof plato === 'number') {
-                                // Si es un ID, buscar en opciones
-                                const platoObj = opciones.find(o => o.id === plato);
-                                if (platoObj) {
-                                    html += `
-                                        <li style="padding: 6px 0; color: ${colorTitulo}; font-size: 16px;">
-                                            • ${platoObj.nombre}
-                                        </li>
-                                    `;
-                                }
-                            }
-                        });
-                        
-                        html += `
-                                </ul>
-                            </div>
-                        `;
-                    }
-                });
-            }
-            
-            // SEGUNDO: Agregar platos fijos seleccionados (Platos Especiales)
-            if (platosFijosSeleccionados && platosFijosSeleccionados.length > 0) {
-                html += `
-                    <div style="margin-bottom: 40px;">
-                        <h3 style="color: ${colorTitulo}; font-size: 24px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase;">
-                            PLATOS ESPECIALES ❤️❤️
-                        </h3>
-                        <ul style="list-style: none; padding: 0;">
-                `;
-                
-                platosFijosSeleccionados.forEach(plato => {
-                    html += `
-                        <li style="padding: 8px 0; border-bottom: 1px dotted ${colorTitulo}; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: ${colorTitulo}; font-size: 18px;">• ${plato.nombre}</span>
-                            <span style="color: ${colorTitulo}; font-size: 18px; font-weight: bold; margin-left: 20px;">
-                                ${formatearPrecio(plato.precio)}
-                            </span>
-                        </li>
-                    `;
-                });
-                
-                html += `
-                        </ul>
-                    </div>
-                `;
-            }
-            
-            // Agregar mensaje personalizado al final
+            // Obtener mensaje personalizado
             const mensajePersonalizado = document.getElementById('vistaPreviaMensaje').value.trim();
-            if (mensajePersonalizado) {
-                html += `
-                    <hr style="border: 2px solid ${colorTitulo}; margin: 40px 0 30px 0;">
-                    <div style="text-align: center; padding: 20px 0;">
-                        <p style="color: ${colorTitulo}; font-size: 16px; line-height: 1.8; margin: 0; white-space: pre-line;">
-                            ${mensajePersonalizado.replace(/\n/g, '<br>')}
-                        </p>
-                    </div>
-                `;
-            }
             
-            html += `
-                </div>
-            `;
+            // Generar HTML según la plantilla seleccionada
+            let html = '';
+            switch(plantillaSeleccionada) {
+                case 'clasica':
+                    html = generarPlantillaClasica(
+                        nombreRestaurante, lemaRestaurante, tituloMenu, precioMenu, 
+                        colorTitulo, colorFondo, menuVistaPrevia.platosVariablesPorCategoria, 
+                        platosFijosSeleccionados, mensajePersonalizado, opciones
+                    );
+                    break;
+                case 'moderno':
+                    html = generarPlantillaModerno(
+                        nombreRestaurante, lemaRestaurante, tituloMenu, precioMenu, 
+                        colorTitulo, colorFondo, menuVistaPrevia.platosVariablesPorCategoria, 
+                        platosFijosSeleccionados, mensajePersonalizado, opciones
+                    );
+                    break;
+                case 'elegante':
+                    html = generarPlantillaElegante(
+                        nombreRestaurante, lemaRestaurante, tituloMenu, precioMenu, 
+                        colorTitulo, colorFondo, menuVistaPrevia.platosVariablesPorCategoria, 
+                        platosFijosSeleccionados, mensajePersonalizado, opciones
+                    );
+                    break;
+                default:
+                    html = generarPlantillaClasica(
+                        nombreRestaurante, lemaRestaurante, tituloMenu, precioMenu, 
+                        colorTitulo, colorFondo, menuVistaPrevia.platosVariablesPorCategoria, 
+                        platosFijosSeleccionados, mensajePersonalizado, opciones
+                    );
+            }
             
             // Actualizar contenido
             const previewContent = document.getElementById('menuPreviewContent');

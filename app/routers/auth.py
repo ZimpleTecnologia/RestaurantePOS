@@ -132,9 +132,11 @@ def get_modulos_visibles(
     modulos_navegacion = [
         {"nombre": "Administración", "url": "/admin/administracion", "icono": "bi-shield-lock", "codigos_permisos": ["mesas", "usuarios", "permisos"], "codigo_modulo": "administracion"},
         {"nombre": "Cocina", "url": "/kitchen", "icono": "bi-fire", "codigos_permisos": ["cocina"], "codigo_modulo": "operaciones"},
+        {"nombre": "Pedidos a Cocina", "url": "/pedidos/cocina", "icono": "bi-clipboard-check", "codigos_permisos": ["cocina"], "codigo_modulo": "operaciones"},
         {"nombre": "Gestión Menús", "url": "/admin/menus", "icono": "bi-gear", "codigos_permisos": ["meseros"], "codigo_modulo": "operaciones"},
         {"nombre": "Inventario", "url": "/inventory", "icono": "bi-archive", "codigos_permisos": ["inventario"], "codigo_modulo": "almacen"},
         {"nombre": "Meseros", "url": "/meseros/menus", "icono": "bi-person-badge", "codigos_permisos": ["meseros"], "codigo_modulo": "operaciones"},
+        {"nombre": "Mis Pedidos", "url": "/pedidos/mesero/estado", "icono": "bi-clipboard-data", "codigos_permisos": ["meseros"], "codigo_modulo": "operaciones"},
         {"nombre": "Pedidos Menú", "url": "/kitchen/menu-orders", "icono": "bi-list-check", "codigos_permisos": ["cocina"], "codigo_modulo": "operaciones"},
         {"nombre": "Recetas", "url": "/recipes", "icono": "bi-book", "codigos_permisos": ["meseros"], "codigo_modulo": "operaciones"},
         {"nombre": "Caja y Ventas", "url": "/caja-ventas", "icono": "bi-cash-coin", "codigos_permisos": ["ventas", "caja"], "codigo_modulo": "financiero"},

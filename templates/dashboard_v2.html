@@ -1,0 +1,338 @@
+{% extends "base_v2.html" %}
+
+{% block title %}Dashboard - Platónico{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 6rem;
+        height: 6rem;
+        border-radius: 50%;
+        opacity: 0.1;
+        transform: translateY(-50%) translateX(50%);
+    }
+    .stat-card-primary::before {
+        background: white;
+    }
+    .table-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 0.75rem;
+    }
+    .table-item {
+        aspect-ratio: 1;
+        border-radius: 0.75rem;
+        border-width: 2px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .table-item:hover {
+        transform: scale(1.05);
+    }
+    .table-available {
+        border-color: #A67C52;
+        background-color: #F2E8D5;
+    }
+    .table-available:hover {
+        border-color: #7A1E2C;
+        box-shadow: 0 4px 6px -1px rgba(123, 30, 43, 0.15);
+    }
+    .table-occupied {
+        border-color: #D9BBAE;
+        background-color: #D9BBAE/10;
+    }
+    .table-reserved {
+        border-color: #4A7BB8;
+        background-color: #4A7BB8/10;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="mb-8">
+    <h1 class="text-2xl font-bold" style="color: #7A1E2C;">Dashboard</h1>
+    <p style="color: #846241;">Bienvenido de nuevo, {{ current_user.full_name if current_user else 'Usuario' }}</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Ventas Hoy -->
+    <div class="stat-card stat-card-primary rounded-2xl p-6 text-white shadow-lg" style="background: linear-gradient(135deg, #7A1E2C 0%, #5A1420 100%);">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-white/80 text-sm font-medium">Ventas Hoy</p>
+                <p class="text-3xl font-bold mt-1">$12,450</p>
+                <p class="text-white/80 text-xs mt-2 flex items-center gap-1">
+                    <i class="ph ph-trend-up"></i> +12% vs ayer
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <i class="ph ph-cash-register text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pedidos Hoy -->
+    <div class="stat-card rounded-2xl p-6 text-white shadow-lg" style="background: linear-gradient(135deg, #A67C52 0%, #8a5639 100%);">
+        <div class="flex items-start justify-between">
+            <div>
+                <p class="text-white/80 text-sm font-medium">Pedidos Hoy</p>
+                <p class="text-3xl font-bold mt-1">48</p>
+                <p class="text-white/80 text-xs mt-2 flex items-center gap-1">
+                    <i class="ph ph-receipt"></i> 12 pendientes
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <i class="ph ph-receipt text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mesas Activas -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm" style="border: 1px solid #A67C52/20;">
+        <div class="flex items-start justify-between">
+            <div>
+                <p style="color: #846241;" class="text-sm font-medium">Mesas Activas</p>
+                <p class="text-3xl font-bold mt-1" style="color: #7A1E2C;">8/12</p>
+                <p class="text-sm mt-2 flex items-center gap-1" style="color: #5D8A4A;">
+                    <i class="ph ph-check-circle"></i> 4 disponibles
+                </p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #A67C52/10;">
+                <i class="ph ph-armchair text-2xl" style="color: #7A1E2C;"></i>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tiempo Promedio -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm" style="border: 1px solid #A67C52/20;">
+        <div class="flex items-start justify-between">
+            <div>
+                <p style="color: #846241;" class="text-sm font-medium">Tiempo Promedio</p>
+                <p class="text-3xl font-bold mt-1" style="color: #5C3A21;">18 min</p>
+                <p class="text-xs mt-2 flex items-center gap-1" style="color: #846241;">
+                    <i class="ph ph-clock"></i> por pedido
+                </p>
+            </div>
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background-color: #D9BBAE/10;">
+                <i class="ph ph-timer text-2xl" style="color: #A67C52;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Mesas Grid -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border: 1px solid #A67C52/20;">
+            <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: #A67C52/20;">
+                <h2 class="text-lg font-semibold" style="color: #5C3A21;">Estado de Mesas</h2>
+                <button class="text-sm font-medium" style="color: #7A1E2C;">
+                    Ver todas <i class="ph ph-arrow-right"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="table-grid">
+                    <!-- Mesa 1 - Disponible -->
+                    <div class="table-item table-available" onclick="selectTable(1)">
+                        <span class="text-2xl font-bold" style="color: #5C3A21;">1</span>
+                        <span class="text-xs" style="color: #846241;">Libre</span>
+                    </div>
+                    
+                    <!-- Mesa 2 - Ocupada -->
+                    <div class="table-item table-occupied">
+                        <span class="text-2xl font-bold" style="color: #7A1E2C;">2</span>
+                        <span class="text-xs" style="color: #7A1E2C;">Ocupada</span>
+                    </div>
+                    
+                    <!-- Mesa 3 - Disponible -->
+                    <div class="table-item table-available" onclick="selectTable(3)">
+                        <span class="text-2xl font-bold" style="color: #5C3A21;">3</span>
+                        <span class="text-xs" style="color: #846241;">Libre</span>
+                    </div>
+                    
+                    <!-- Mesa 4 - Reservada -->
+                    <div class="table-item table-reserved">
+                        <span class="text-2xl font-bold" style="color: #4A7BB8;">4</span>
+                        <span class="text-xs" style="color: #4A7BB8;">Reservada</span>
+                    </div>
+                    
+                    <!-- Mesa 5 - Disponible -->
+                    <div class="table-item table-available" onclick="selectTable(5)">
+                        <span class="text-2xl font-bold" style="color: #5C3A21;">5</span>
+                        <span class="text-xs" style="color: #846241;">Libre</span>
+                    </div>
+                    
+                    <!-- Mesa 6 - Disponible -->
+                    <div class="table-item table-available" onclick="selectTable(6)">
+                        <span class="text-2xl font-bold" style="color: #5C3A21;">6</span>
+                        <span class="text-xs" style="color: #846241;">Libre</span>
+                    </div>
+                    
+                    <!-- Mesa 7 - Ocupada -->
+                    <div class="table-item table-occupied">
+                        <span class="text-2xl font-bold" style="color: #7A1E2C;">7</span>
+                        <span class="text-xs" style="color: #7A1E2C;">Ocupada</span>
+                    </div>
+                    
+                    <!-- Mesa 8 - Disponible -->
+                    <div class="table-item table-available" onclick="selectTable(8)">
+                        <span class="text-2xl font-bold" style="color: #5C3A21;">8</span>
+                        <span class="text-xs" style="color: #846241;">Libre</span>
+                    </div>
+                    
+                    <!-- Mesa 9 - Disponible -->
+                    <div class="table-item table-available" onclick="selectTable(9)">
+                        <span class="text-2xl font-bold" style="color: #5C3A21;">9</span>
+                        <span class="text-xs" style="color: #846241;">Libre</span>
+                    </div>
+                    
+                    <!-- Mesa 10 - Disponible -->
+                    <div class="table-item table-available" onclick="selectTable(10)">
+                        <span class="text-2xl font-bold" style="color: #5C3A21;">10</span>
+                        <span class="text-xs" style="color: #846241;">Libre</span>
+                    </div>
+                    
+                    <!-- Mesa 11 - Ocupada -->
+                    <div class="table-item table-occupied">
+                        <span class="text-2xl font-bold" style="color: #7A1E2C;">11</span>
+                        <span class="text-xs" style="color: #7A1E2C;">Ocupada</span>
+                    </div>
+                    
+                    <!-- Mesa 12 - Disponible -->
+                    <div class="table-item table-available" onclick="selectTable(12)">
+                        <span class="text-2xl font-bold" style="color: #5C3A21;">12</span>
+                        <span class="text-xs" style="color: #846241;">Libre</span>
+                    </div>
+                </div>
+                
+                <!-- Legend -->
+                <div class="mt-6 flex items-center gap-6 text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded border-2" style="border-color: #A67C52; background-color: #F2E8D5;"></div>
+                        <span style="color: #735539;">Disponible</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded border-2" style="border-color: #D9BBAE; background-color: #D9BBAE/10;"></div>
+                        <span style="color: #735539;">Ocupada</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded border-2" style="border-color: #4A7BB8; background-color: #4A7BB8/10;"></div>
+                        <span style="color: #735539;">Reservada</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pedidos Recientes -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border: 1px solid #A67C52/20;">
+        <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: #A67C52/20;">
+            <h2 class="text-lg font-semibold" style="color: #5C3A21;">Pedidos Activos</h2>
+            <span class="text-xs font-medium px-2 py-1 rounded-full" style="background-color: #A67C52/20; color: #7A1E2C;">12</span>
+        </div>
+        <div class="divide-y" style="border-color: #A67C52/20;">
+            <!-- Pedido 1 -->
+            <div class="p-4 cursor-pointer" style="transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#F2E8D5'" onmouseout="this.style.backgroundColor='transparent'">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-semibold" style="color: #5C3A21;">#ORD-001</span>
+                    <span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background-color: #D4A84B/20; color: #A67C52;">En cocina</span>
+                </div>
+                <p class="text-sm" style="color: #846241;">Mesa 2 • 3 items</p>
+                <p class="text-xs mt-1" style="color: #846241;">Hace 8 min</p>
+            </div>
+            
+            <!-- Pedido 2 -->
+            <div class="p-4 cursor-pointer" style="transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#F2E8D5'" onmouseout="this.style.backgroundColor='transparent'">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-semibold" style="color: #5C3A21;">#ORD-002</span>
+                    <span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background-color: #5D8A4A/20; color: #5D8A4A;">Listo</span>
+                </div>
+                <p class="text-sm" style="color: #846241;">Mesa 7 • 5 items</p>
+                <p class="text-xs mt-1" style="color: #846241;">Hace 15 min</p>
+            </div>
+            
+            <!-- Pedido 3 -->
+            <div class="p-4 cursor-pointer" style="transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#F2E8D5'" onmouseout="this.style.backgroundColor='transparent'">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-semibold" style="color: #5C3A21;">#ORD-003</span>
+                    <span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background-color: #4A7BB8/20; color: #4A7BB8;">Pendiente</span>
+                </div>
+                <p class="text-sm" style="color: #846241;">Mesa 11 • 2 items</p>
+                <p class="text-xs mt-1" style="color: #846241;">Hace 3 min</p>
+            </div>
+            
+            <!-- Pedido 4 -->
+            <div class="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-semibold text-gray-900">#ORD-004</span>
+                    <span class="badge badge-warning">En cocina</span>
+                </div>
+                <p class="text-sm text-gray-500">Para llevar • 4 items</p>
+                <p class="text-xs text-gray-400 mt-1">Hace 12 min</p>
+            </div>
+        </div>
+        
+        <div class="p-4 border-t" style="border-color: #A67C52/20;">
+            <button class="w-full py-2 text-center text-sm font-medium" style="color: #7A1E2C;">
+                Ver todos los pedidos <i class="ph ph-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+    <a href="/caja-ventas" class="flex items-center gap-3 p-4 bg-white rounded-xl transition-all group" style="border: 1px solid #A67C52/20;" onmouseover="this.style.borderColor='#7A1E2C'; this.style.boxShadow='0 4px 6px -1px rgba(123, 30, 43, 0.15)'" onmouseout="this.style.borderColor='#A67C52/20'; this.style.boxShadow='none'">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: #A67C52/10;">
+            <i class="ph ph-plus text-xl" style="color: #7A1E2C;"></i>
+        </div>
+        <span class="font-medium" style="color: #5C3A21;">Nueva Venta</span>
+    </a>
+    
+    <a href="/waiters" class="flex items-center gap-3 p-4 bg-white rounded-xl transition-all group" style="border: 1px solid #A67C52/20;" onmouseover="this.style.borderColor='#A67C52'; this.style.boxShadow='0 4px 6px -1px rgba(184, 115, 79, 0.15)'" onmouseout="this.style.borderColor='#A67C52/20'; this.style.boxShadow='none'">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: #D9BBAE/10;">
+            <i class="ph ph-user-plus text-xl" style="color: #A67C52;"></i>
+        </div>
+        <span class="font-medium" style="color: #5C3A21;">Nuevo Pedido</span>
+    </a>
+    
+    <a href="/inventory" class="flex items-center gap-3 p-4 bg-white rounded-xl transition-all group" style="border: 1px solid #A67C52/20;" onmouseover="this.style.borderColor='#5D8A4A'; this.style.boxShadow='0 4px 6px -1px rgba(93, 138, 74, 0.15)'" onmouseout="this.style.borderColor='#A67C52/20'; this.style.boxShadow='none'">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: #5D8A4A/10;">
+            <i class="ph ph-package-plus text-xl" style="color: #5D8A4A;"></i>
+        </div>
+        <span class="font-medium" style="color: #5C3A21;">Agregar Stock</span>
+    </a>
+    
+    <a href="/reports" class="flex items-center gap-3 p-4 bg-white rounded-xl transition-all group" style="border: 1px solid #A67C52/20;" onmouseover="this.style.borderColor='#5C3A21'; this.style.boxShadow='0 4px 6px -1px rgba(74, 44, 36, 0.15)'" onmouseout="this.style.borderColor='#A67C52/20'; this.style.boxShadow='none'">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: #846241/10;">
+            <i class="ph ph-chart-line-up text-xl" style="color: #846241;"></i>
+        </div>
+        <span class="font-medium" style="color: #5C3A21;">Reportes</span>
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function selectTable(tableNumber) {
+        console.log('Mesa seleccionada:', tableNumber);
+        // Redirigir a nueva venta con mesa seleccionada
+        window.location.href = `/caja-ventas?mesa=${tableNumber}`;
+    }
+</script>
+{% endblock %}

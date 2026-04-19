@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caja - ZimplePOS</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#F9EBEB',
+                            100: '#F3D7D7',
+                            200: '#E7AFB0',
+                            300: '#DB8788',
+                            400: '#CF5F61',
+                            500: '#7A1E2C',
+                            600: '#6B1825',
+                            700: '#5A1420',
+                            800: '#4A101B',
+                            900: '#3A0C15',
+                        },
+                        secondary: {
+                            50: '#F9F4EE',
+                            100: '#F3E9DD',
+                            200: '#E7D3BB',
+                            300: '#DBBD99',
+                            400: '#CFA777',
+                            500: '#A67C52',
+                            600: '#956F4A',
+                            700: '#846241',
+                            800: '#735539',
+                            900: '#5C3A21',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        
+        .product-card {
+            @apply bg-white rounded-xl border border-gray-100 p-4 cursor-pointer transition-all;
+        }
+        .product-card:hover {
+            @apply border-primary-200 shadow-lg transform -translate-y-1;
+        }
+        .product-card.selected {
+            @apply border-primary-500 bg-primary-50 ring-2 ring-primary-500;
+        }
+        
+        .order-item {
+            @apply flex items-center justify-between py-3 border-b border-gray-50 last:border-b-0;
+        }
+        
+        .category-btn {
+            @apply px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap;
+        }
+        .category-btn.active {
+            @apply bg-primary-500 text-white;
+        }
+        .category-btn:not(.active) {
+            @apply bg-gray-100 text-gray-600 hover:bg-gray-200;
+        }
+        
+        .payment-method {
+            @apply flex items-center justify-center gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all;
+        }
+        .payment-method:hover {
+            @apply border-primary-200 bg-primary-50;
+        }
+        .payment-method.selected {
+            @apply border-primary-500 bg-primary-50;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a href="/" class="text-gray-500 hover:text-gray-700">
+                <i class="ph ph-arrow-left text-2xl"></i>
+            </a>
+            <div>
+                <h1 class="text-lg font-bold text-gray-900">Nueva Venta</h1>
+                <p class="text-sm text-gray-500">Mesa 5 - 4 personas</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
+                <i class="ph ph-clock text-xl"></i>
+            </button>
+            <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
+                <i class="ph ph-printer text-xl"></i>
+            </button>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Products Section -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Categories -->
+            <div class="bg-white border-b border-gray-100 px-6 py-3 overflow-x-auto">
+                <div class="flex gap-2">
+                    <button class="category-btn active">Todos</button>
+                    <button class="category-btn">Entradas</button>
+                    <button class="category-btn">Platos Fuertos</button>
+                    <button class="category-btn">Bebidas</button>
+                    <button class="category-btn">Postres</button>
+                    <button class="category-btn">Menú del Día</button>
+                </div>
+            </div>
+            
+            <!-- Products Grid -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <!-- Product Card -->
+                    <div class="product-card" onclick="addToOrder('Ensalada Caesar', 8500)">
+                        <div class="h-24 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                            <i class="ph ph-salad text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="font-medium text-gray-900">Ensalada César</h3>
+                        <p class="text-primary-600 font-bold mt-1">$8,500</p>
+                    </div>
+                    
+                    <!-- Product Card -->
+                    <div class="product-card" onclick="addToOrder('Pollo a la Plancha', 15000)">
+                        <div class="h-24 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                            <i class="ph ph-drumstick text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="font-medium text-gray-900">Pollo a la Plancha</h3>
+                        <p class="text-primary-600 font-bold mt-1">$15,000</p>
+                    </div>
+                    
+                    <!-- Product Card -->
+                    <div class="product-card" onclick="addToOrder('Pasta Carbonara', 12500)">
+                        <div class="h-24 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                            <i class="ph ph-bowl-food text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="font-medium text-gray-900">Pasta Carbonara</h3>
+                        <p class="text-primary-600 font-bold mt-1">$12,500</p>
+                    </div>
+                    
+                    <!-- Product Card -->
+                    <div class="product-card" onclick="addToOrder('Jugo Natural', 4500)">
+                        <div class="h-24 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                            <i class="ph ph-cup-and-saucer text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="font-medium text-gray-900">Jugo Natural</h3>
+                        <p class="text-primary-600 font-bold mt-1">$4,500</p>
+                    </div>
+                    
+                    <!-- Product Card -->
+                    <div class="product-card" onclick="addToOrder('Postre del Chef', 6500)">
+                        <div class="h-24 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                            <i class="ph ph-cake text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="font-medium text-gray-900">Postre del Chef</h3>
+                        <p class="text-primary-600 font-bold mt-1">$6,500</p>
+                    </div>
+                    
+                    <!-- Product Card -->
+                    <div class="product-card" onclick="addToOrder('Sopa del Día', 5500)">
+                        <div class="h-24 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                            <i class="ph ph-pot-steam text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="font-medium text-gray-900">Sopa del Día</h3>
+                        <p class="text-primary-600 font-bold mt-1">$5,500</p>
+                    </div>
+                    
+                    <!-- Product Card -->
+                    <div class="product-card" onclick="addToOrder('Arroz con Pollo', 11000)">
+                        <div class="h-24 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                            <i class="ph ph-bowl-rice text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="font-medium text-gray-900">Arroz con Pollo</h3>
+                        <p class="text-primary-600 font-bold mt-1">$11,000</p>
+                    </div>
+                    
+                    <!-- Product Card -->
+                    <div class="product-card" onclick="addToOrder('Cerveza Nacional', 3500)">
+                        <div class="h-24 bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                            <i class="ph ph-beer-bottle text-3xl text-gray-400"></i>
+                        </div>
+                        <h3 class="font-medium text-gray-900">Cerveza Nacional</h3>
+                        <p class="text-primary-600 font-bold mt-1">$3,500</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Panel -->
+        <div class="w-96 bg-white border-l border-gray-200 flex flex-col">
+            <!-- Order Header -->
+            <div class="px-6 py-4 border-b border-gray-100">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="font-semibold text-gray-900">Pedido Actual</h2>
+                    <button class="text-sm text-red-500 hover:text-red-600" onclick="clearOrder()">
+                        Limpiar
+                    </button>
+                </div>
+                <p class="text-sm text-gray-500">4 items • Mesa 5</p>
+            </div>
+            
+            <!-- Order Items -->
+            <div class="flex-1 overflow-y-auto px-6">
+                <div id="order-items">
+                    <!-- Order Item -->
+                    <div class="order-item">
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-900">Ensalada César</h4>
+                            <p class="text-sm text-gray-500">$8,500 c/u</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center" onclick="updateQuantity(this, -1)">
+                                <i class="ph ph-minus"></i>
+                            </button>
+                            <span class="font-medium w-6 text-center">1</span>
+                            <button class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center" onclick="updateQuantity(this, 1)">
+                                <i class="ph ph-plus"></i>
+                            </button>
+                        </div>
+                        <div class="text-right ml-4">
+                            <p class="font-bold text-gray-900">$8,500</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Order Item -->
+                    <div class="order-item">
+                        <div class="flex-1">
+                            <h4 class="font-medium text-gray-900">Pollo a la Plancha</h4>
+                            <p class="text-sm text-gray-500">$15,000 c/u</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center" onclick="updateQuantity(this, -1)">
+                                <i class="ph ph-minus"></i>
+                            </button>
+                            <span class="font-medium w-6 text-center">2</span>
+                            <button class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center" onclick="updateQuantity(this, 1)">
+                                <i class="ph ph-plus"></i>
+                            </button>
+                        </div>
+                        <div class="text-right ml-4">
+                            <p class="font-bold text-gray-900">$30,000</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="border-t border-gray-100 px-6 py-4">
+                <div class="flex justify-between text-sm text-gray-500 mb-2">
+                    <span>Subtotal</span>
+                    <span>$38,500</span>
+                </div>
+                <div class="flex justify-between text-sm text-gray-500 mb-4">
+                    <span>IVA (19%)</span>
+                    <span>$7,315</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold text-gray-900 mb-4">
+                    <span>Total</span>
+                    <span>$45,815</span>
+                </div>
+                
+                <!-- Payment Methods -->
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="payment-method selected" onclick="selectPayment(this, 'efectivo')">
+                        <i class="ph ph-money text-xl text-primary-600"></i>
+                        <span class="text-sm font-medium">Efectivo</span>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment(this, 'tarjeta')">
+                        <i class="ph ph-credit-card text-xl text-gray-600"></i>
+                        <span class="text-sm font-medium">Tarjeta</span>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="space-y-2">
+                    <button class="w-full py-3 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors">
+                        <i class="ph ph-check-circle text-xl"></i>
+                        Cobrar $45,815
+                    </button>
+                    <button class="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl flex items-center justify-center gap-2 transition-colors">
+                        <i class="ph ph-clock"></i>
+                        Guardar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function addToOrder(name, price) {
+            console.log('Agregar:', name, price);
+        }
+        
+        function updateQuantity(btn, change) {
+            console.log('Cambiar cantidad:', change);
+        }
+        
+        function selectPayment(element, method) {
+            document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+        
+        function clearOrder() {
+            if (confirm('¿Limpiar el pedido actual?')) {
+                console.log('Limpiar pedido');
+            }
+        }
+    </script>
+</body>
+</html>

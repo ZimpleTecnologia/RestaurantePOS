@@ -1,358 +1,113 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema POS{% endblock %}</title>
-    
+
     <!-- Favicon - Logo Platónico -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/platonico_logo.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/platonico_logo.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/platonico_logo.png">
-    <link rel="shortcut icon" href="/static/images/platonico_logo.png">
-    
+    <link rel="icon" type="image/jpeg" sizes="32x32" href="/static/images/platonico_logo.jpg">
+    <link rel="icon" type="image/jpeg" sizes="16x16" href="/static/images/platonico_logo.jpg">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/platonico_logo.jpg">
+    <link rel="shortcut icon" href="/static/images/platonico_logo.jpg">
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Google Fonts - Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts - Cormorant Garamond & Outfit -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Platónico Theme -->
-    <link rel="stylesheet" href="/static/css/platonico-theme.css?v=2.0">
-    <!-- Custom CSS -->
-    <style>
-        * {
-            font-family: 'Poppins', sans-serif;
-        }
-        
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-dark);
-        }
-        
-        /* Header horizontal */
-        .main-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            height: 60px;
-            display: flex;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .header-left {
-            background-color: var(--primary-brown);
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            min-width: 250px;
-        }
-        
-        .header-right {
-            background-color: var(--primary-brown);
-            flex: 1;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            overflow-x: auto;
-        }
-        
-        .logo-section {
-            display: flex;
-            align-items: center;
-            color: white;
-        }
-        
-        /* Logo Plantónico para la barra de navegación */
-        .plantonico-logo-nav {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .logo-image-nav {
-            width: 50px;
-            height: 50px;
-            object-fit: contain;
-            filter: drop-shadow(0 2px 6px rgba(138, 20, 38, 0.25));
-            transition: transform 0.3s ease;
-            border-radius: 10px;
-            background-color: var(--bg-white);
-            padding: 4px;
-        }
-        
-        .logo-image-nav:hover {
-            transform: scale(1.08);
-            filter: drop-shadow(0 4px 8px rgba(138, 20, 38, 0.35));
-        }
-        
-        .logo-text-nav {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .logo-title-nav {
-            font-family: 'Poppins', sans-serif;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--white);
-            margin: 0;
-            line-height: 1;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-        }
-        
-        .logo-subtitle-nav {
-            font-family: 'Poppins', sans-serif;
-            font-size: 10px;
-            color: var(--white);
-            margin: 1px 0 0 0;
-            line-height: 1;
-            opacity: 0.9;
-            font-weight: 400;
-        }
-        
-        .nav-modules {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-        
-        .nav-module {
-            display: flex;
-            align-items: center;
-            color: var(--white);
-            text-decoration: none;
-            padding: 6px 10px;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-        
-        .nav-module:hover {
-            background-color: var(--secondary-color);
-            color: var(--primary-color);
-            text-decoration: none;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-pink-md);
-        }
-        
-        .nav-module.active {
-            background-color: var(--primary-darker);
-            color: var(--white);
-            border-bottom: 3px solid var(--secondary-color);
-        }
-        
-        /* Botón de logout */
-        .logout-btn {
-            background-color: var(--warm-red);
-            color: var(--white);
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            margin-left: auto;
-        }
-        
-        .logout-btn:hover {
-            background-color: #c62828;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(230, 74, 25, 0.3);
-        }
-        
-        .logout-btn i {
-            font-size: 16px;
-        }
-        
-        .nav-module i {
-            font-size: 18px;
-            margin-right: 6px;
-            color: var(--secondary-color);
-        }
-        
-        .nav-module.active i {
-            color: var(--white);
-        }
-        
-        .nav-module:hover i {
-            color: var(--primary-color);
-        }
-        
-        .nav-module-text {
-            font-size: 13px;
-            font-weight: 500;
-        }
-        
-        /* Contenido principal */
-        .main-content {
-            margin-top: 60px;
-            min-height: calc(100vh - 60px);
-            padding: 20px;
-            background-color: var(--bg-main);
-        }
-        
-        .card {
-            border: 1px solid var(--secondary-lighter);
-            border-radius: 15px;
-            box-shadow: var(--shadow-md);
-            background-color: var(--bg-white);
-            transition: var(--transition-normal);
-        }
-        
-        .card:hover {
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-2px);
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-brown);
-            border-color: var(--primary-brown);
-            border-radius: 8px;
-            color: var(--white);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-darker);
-            border-color: var(--primary-darker);
-            color: var(--white);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .stats-card {
-            background: linear-gradient(135deg, var(--primary-brown) 0%, var(--light-brown) 100%);
-            color: var(--white);
-            border: 1px solid var(--subtle-brown);
-            transition: all 0.3s ease;
-        }
-        
-        .stats-card:hover {
-            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-lighter) 100%);
-            color: var(--primary-color);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-pink-lg);
-        }
-        
-        .table-responsive {
-            border-radius: 10px;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header-left {
-                min-width: 200px;
-                padding: 0 15px;
-            }
-            
-            .nav-modules {
-                gap: 15px;
-            }
-            
-            .nav-module-text {
-                display: none;
-            }
-            
-            .nav-module i {
-                margin-right: 0;
-            }
-        }
-        
-        /* Scrollbar personalizada para navegación */
-        .header-right::-webkit-scrollbar {
-            height: 4px;
-        }
-        
-        .header-right::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .header-right::-webkit-scrollbar-thumb {
-            background: var(--header-orange);
-            border-radius: 2px;
-        }
-        
-        /* Transiciones suaves para cambios de tema */
-        .sidebar, .btn-primary, .stats-card {
-            transition: all 0.3s ease;
-        }
-        
-        /* Efectos hover para las tarjetas de módulos */
-        .hover-card {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .hover-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
-        }
-        
-        .hover-card:hover .card-title {
-            color: var(--primary-color) !important;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/platonico-theme.css?v=2.1">
+    <link rel="stylesheet" href="/static/css/dashboard-refined.css?v=1.0">
+    <link rel="stylesheet" href="/static/css/components/ui-components.css?v=2.0">
+
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <!-- Header horizontal -->
-    <header class="main-header">
-        <!-- Sección izquierda con logo -->
-        <div class="header-left">
-            <div class="logo-section">
-                <div class="plantonico-logo-nav">
-                    <img src="/static/images/platonico_logo.png" alt="Plantónico Logo" class="logo-image-nav">
-                    <div class="logo-text-nav">
-                        <h1 class="logo-title-nav">PLANTÓNICO</h1>
-                        <p class="logo-subtitle-nav">Amor al primer bocado</p>
-                    </div>
+
+<body class="bg-[#FDFBF7]">
+    <div class="app-wrapper">
+        <!-- Sidebar Inteligente (Refined) -->
+        <aside class="sidebar-refined" id="main-sidebar">
+            <div class="sidebar-header flex items-center gap-3 px-6 py-8">
+                <div
+                    class="sidebar-logo w-[50px] h-[50px] flex-shrink-0 rounded-xl overflow-hidden shadow-lg border-2 border-white/10">
+                    <img src="/static/images/platonico_logo.jpg" alt="P" class="w-full h-full object-cover">
+                </div>
+                <div class="logo-text overflow-hidden">
+                    <h1 class="font-serif text-xl leading-none tracking-widest text-white mb-1">PLATÓNICO</h1>
+                    <p class="text-[0.6rem] uppercase tracking-[0.3em] text-[#A67C52] font-bold">Amor al primer bocado
+                    </p>
                 </div>
             </div>
+
+            <nav class="sidebar-nav">
+                <a href="/" class="sidebar-link active" id="nav-dashboard">
+                    <i class="bi bi-house-door"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <div class="nav-group-title">Operaciones</div>
+                <div id="nav-modules-list">
+                    <!-- Los módulos se cargan aquí dinámicamente -->
+                </div>
+
+                <div class="nav-group-title">Cuenta</div>
+                <a href="#" class="sidebar-link" onclick="logout()">
+                    <i class="bi bi-box-arrow-right text-red-400"></i>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Layout Central -->
+        <div class="main-layout">
+            <!-- Top Header (Contextual) -->
+            <header class="top-header-refined">
+                <div class="header-welcome">
+                    <button class="sidebar-toggle" id="sidebar-toggle-btn" title="Alternar barra lateral">
+                        <i class="bi bi-list fs-4"></i>
+                    </button>
+                    <div>
+                        <span class="text-[0.65rem] uppercase tracking-[0.25em] text-[#A67C52] font-bold"
+                            id="currentDateHeader">22 DE MARZO, 2026</span>
+                        <h2 class="text-2xl font-serif text-[#5C3A21]">Dashboard Principal</h2>
+                    </div>
+                </div>
+
+                <div class="header-actions flex items-center gap-6">
+                    <div class="flex items-center gap-3">
+                        <div class="text-end">
+                            <p class="text-sm font-bold text-[#2B2B2B] mb-0" id="userNameLabel">Admin User</p>
+                            <p class="text-[0.65rem] uppercase tracking-wider text-gray-400 mb-0">Administrador</p>
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-[#F2E8D5] flex items-center justify-center text-[#7A1E2C] font-bold border-2 border-white shadow-sm">
+                            AD
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Área de Contenido -->
+            <main class="content-area">
+                {% block content %}{% endblock %}
+            </main>
         </div>
-        
-        <!-- Sección derecha con navegación -->
-        <div class="header-right">
-            <ul class="nav-modules" id="nav-modules-list">
-                <!-- Home (siempre primero) -->
-                <li>
-                    <a href="/" class="nav-module" id="nav-dashboard">
-                        <i class="bi bi-house-door"></i>
-                        <span class="nav-module-text">Home</span>
-                    </a>
-                </li>
-                <!-- Los demás módulos se cargarán dinámicamente según permisos -->
-            </ul>
-            
-            <!-- Botón de logout -->
-            <button class="logout-btn" onclick="logout()" title="Cerrar sesión">
-                <i class="bi bi-box-arrow-right"></i>
-                <span class="nav-module-text">Salir</span>
-            </button>
-        </div>
-    </header>
-    
-    <!-- Contenido principal -->
-    <main class="main-content">
-        {% block content %}{% endblock %}
-    </main>
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Custom JS -->
+    <!-- Phosphor Icons para un look más moderno -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <script>
         // Función para cerrar sesión
         function logout() {
@@ -367,121 +122,119 @@
         async function cargarModulosVisibles() {
             try {
                 const token = localStorage.getItem('auth_token');
-                if (!token) {
-                    // Si no hay token, solo mostrar Home
-                    return;
+                if (!token) return;
+
+                // Cargar nombre de usuario si existe
+                const userInfo = localStorage.getItem('user_info');
+                if (userInfo) {
+                    const user = JSON.parse(userInfo);
+                    document.getElementById('userNameLabel').textContent = user.full_name || user.username || 'Usuario';
+                    const initials = (user.full_name || user.username || 'U').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                    document.querySelector('.header-actions .font-bold.border-2').textContent = initials;
                 }
-                
+
                 const response = await fetch('/api/v1/auth/modulos-visibles', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });
-                
+
                 if (response.status === 401) {
-                    // Token inválido, redirigir a login
-                    localStorage.removeItem('auth_token');
-                    localStorage.removeItem('user_info');
                     window.location.href = '/login';
                     return;
                 }
-                
-                if (!response.ok) {
-                    console.error('Error al cargar módulos visibles');
-                    return;
-                }
-                
+
+                if (!response.ok) return;
+
                 const data = await response.json();
                 const modulos = data.modulos || [];
                 const navModulesList = document.getElementById('nav-modules-list');
-                
-                // Mapeo de nombres a IDs para los módulos
+
                 const idMap = {
-                    'Administración': 'nav-administracion',
-                    'Cocina': 'nav-kitchen',
-                    'Gestión Menús': 'nav-admin',
-                    'Inventario': 'nav-inventory',
-                    'Meseros': 'nav-meseros',
-                    'Pedidos Menú': 'nav-kitchen-menu',
-                    'Recetas': 'nav-recipes',
-                    'Caja y Ventas': 'nav-sales',
-                    'Reportes': 'nav-reports',
-                    'Configuración': 'nav-settings'
+                    'Administración': 'sidebar-admin',
+                    'Cocina': 'sidebar-kitchen',
+                    'Gestión Menús': 'sidebar-menus',
+                    'Inventario': 'sidebar-inventory',
+                    'Meseros': 'sidebar-waiters',
+                    'Pedidos Menú': 'sidebar-menu-orders',
+                    'Recetas': 'sidebar-recipes',
+                    'Caja y Ventas': 'sidebar-sales',
+                    'Reportes': 'sidebar-reports',
+                    'Configuración': 'sidebar-settings'
                 };
-                
-                // Limpiar módulos existentes (excepto Home)
-                const existingModules = navModulesList.querySelectorAll('li:not(:first-child)');
-                existingModules.forEach(li => li.remove());
-                
-                // Agregar módulos visibles
+
+                navModulesList.innerHTML = '';
+
                 modulos.forEach(modulo => {
-                    const li = document.createElement('li');
-                    const id = idMap[modulo.nombre] || `nav-${modulo.nombre.toLowerCase().replace(/\s+/g, '-')}`;
-                    li.innerHTML = `
-                        <a href="${modulo.url}" class="nav-module" id="${id}">
-                            <i class="bi ${modulo.icono}"></i>
-                            <span class="nav-module-text">${modulo.nombre}</span>
-                        </a>
+                    const id = idMap[modulo.nombre] || `sidebar-${modulo.nombre.toLowerCase().replace(/\s+/g, '-')}`;
+                    const a = document.createElement('a');
+                    a.href = modulo.url;
+                    a.className = 'sidebar-link';
+                    a.id = id;
+
+                    // Mapear iconos de Bootstrap a Phosphor si es necesario o mantener Bootstrap
+                    const iconClass = modulo.icono.startsWith('bi-') ? modulo.icono : `bi-${modulo.icono}`;
+
+                    a.innerHTML = `
+                        <i class="${iconClass}"></i>
+                        <span>${modulo.nombre}</span>
                     `;
-                    navModulesList.appendChild(li);
+                    navModulesList.appendChild(a);
                 });
-                
-                // Marcar módulo activo después de cargar
+
                 marcarModuloActivo();
             } catch (error) {
                 console.error('Error al cargar módulos visibles:', error);
             }
         }
-        
-        // Función para marcar enlace activo basado en la URL actual
+
         function marcarModuloActivo() {
             const currentPath = window.location.pathname;
-            const navModules = document.querySelectorAll('.nav-module');
-            
-            // Remover clase active de todos los módulos
-            navModules.forEach(module => {
-                module.classList.remove('active');
-            });
-            
-            // Agregar clase active al módulo actual
-            navModules.forEach(module => {
-                const href = module.getAttribute('href');
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+
+            sidebarLinks.forEach(link => {
+                link.classList.remove('active');
+                const href = link.getAttribute('href');
                 if (href === currentPath || (currentPath.startsWith(href) && href !== '/')) {
-                    module.classList.add('active');
+                    link.classList.add('active');
                 }
             });
-            
-            // Si estamos en la raíz, marcar dashboard como activo
+
             if (currentPath === '/') {
-                const dashboardModule = document.getElementById('nav-dashboard');
-                if (dashboardModule) {
-                    dashboardModule.classList.add('active');
-                }
+                document.getElementById('nav-dashboard').classList.add('active');
             }
         }
-        
-        // Marcar enlace activo al cargar y después de cargar módulos
-        document.addEventListener('DOMContentLoaded', function() {
-            marcarModuloActivo();
+
+        function updateHeaderDate() {
+            const now = new Date();
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('currentDateHeader').textContent = now.toLocaleDateString('es-ES', options).toUpperCase();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            updateHeaderDate();
             cargarModulosVisibles();
-        });
-        
-        // Función para manejar el scroll horizontal en móviles
-        function handleHorizontalScroll() {
-            const headerRight = document.querySelector('.header-right');
-            if (headerRight) {
-                headerRight.addEventListener('wheel', function(e) {
-                    if (e.deltaY !== 0) {
-                        e.preventDefault();
-                        headerRight.scrollLeft += e.deltaY;
-                    }
+
+            // Lógica para el toggle del sidebar
+            const toggleBtn = document.getElementById('sidebar-toggle-btn');
+            const wrapper = document.querySelector('.app-wrapper');
+            
+            // Cargar estado inicial desde localStorage
+            const sidebarCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+            if (sidebarCollapsed) {
+                wrapper.classList.add('sidebar-collapsed');
+            }
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    wrapper.classList.toggle('sidebar-collapsed');
+                    // Guardar preferencia
+                    const isCollapsed = wrapper.classList.contains('sidebar-collapsed');
+                    localStorage.setItem('sidebar_collapsed', isCollapsed);
                 });
             }
-        }
-        
-        // Inicializar scroll horizontal
-        document.addEventListener('DOMContentLoaded', handleHorizontalScroll);
+        });
 
         // Cargar configuración del tema
         async function loadThemeSettings() {
@@ -490,7 +243,7 @@
                 if (response.ok) {
                     const settings = await response.json();
                     applyThemeSettings(settings);
-                    
+
                     // Guardar configuración en localStorage para uso offline
                     localStorage.setItem('theme_settings', JSON.stringify(settings));
                 }
@@ -508,7 +261,7 @@
                 }
             }
         }
-        
+
         // Aplicar configuración del tema
         function applyThemeSettings(settings) {
             if (settings.primary_color) {
@@ -523,24 +276,24 @@
             if (settings.sidebar_color) {
                 document.documentElement.style.setProperty('--sidebar-color', settings.sidebar_color);
             }
-            
+
             // Actualizar título de la aplicación
             if (settings.app_title) {
                 const sidebarTitle = document.querySelector('.sidebar h4');
                 if (sidebarTitle) {
                     sidebarTitle.textContent = settings.app_title;
                 }
-                
+
                 // Actualizar título de la página
                 const pageTitle = document.querySelector('title');
                 if (pageTitle) {
                     const currentTitle = pageTitle.textContent;
-                    const baseTitle = currentTitle.includes(' - ') ? 
+                    const baseTitle = currentTitle.includes(' - ') ?
                         currentTitle.split(' - ')[1] : currentTitle;
                     pageTitle.textContent = `${settings.app_title} - ${baseTitle}`;
                 }
             }
-            
+
             // Actualizar subtítulo si existe
             if (settings.app_subtitle) {
                 const sidebarSubtitle = document.querySelector('.sidebar small');
@@ -548,7 +301,7 @@
                     sidebarSubtitle.textContent = settings.app_subtitle;
                 }
             }
-            
+
             // Forzar re-renderizado de elementos con gradientes
             const elementsToUpdate = document.querySelectorAll('.sidebar, .btn-primary, .stats-card, .login-header, .btn-login');
             elementsToUpdate.forEach(element => {
@@ -557,7 +310,7 @@
                 element.style.animation = null;
             });
         }
-        
+
         // Función global para obtener configuración de impresión
         function getPrintSettings() {
             return {
@@ -580,19 +333,19 @@
                 hour: '2-digit',
                 minute: '2-digit'
             });
-            
+
             let ticketContent = '';
-            
+
             // Encabezado
             ticketContent += printSettings.header + '\n';
             ticketContent += '='.repeat(32) + '\n';
-            
+
             // Información del ticket
             ticketContent += 'TICKET DE VENTA\n';
             ticketContent += `Fecha: ${dateStr}\n`;
             ticketContent += `Ticket #: ${saleData.ticket_number || saleData.sale_number || '001'}\n`;
             ticketContent += '='.repeat(32) + '\n';
-            
+
             // Productos - Manejar diferentes estructuras de datos
             let items = [];
             if (saleData.items && saleData.items.length > 0) {
@@ -600,15 +353,15 @@
             } else if (saleData.sale_items && saleData.sale_items.length > 0) {
                 items = saleData.sale_items;
             }
-            
+
             if (items.length > 0) {
                 items.forEach(item => {
                     // Obtener nombre del producto
                     const productName = item.name || item.product_name || 'Producto';
-                    
+
                     // Obtener cantidad
                     const quantity = parseFloat(item.quantity) || 1;
-                    
+
                     // Obtener precio - manejar diferentes formatos
                     let price = 0;
                     if (item.price !== undefined && item.price !== null) {
@@ -616,17 +369,17 @@
                     } else if (item.unit_price !== undefined && item.unit_price !== null) {
                         price = parseFloat(item.unit_price);
                     }
-                    
+
                     // Calcular total del item
                     const itemTotal = quantity * price;
-                    
+
                     ticketContent += `${productName}\n`;
                     ticketContent += `${quantity} x $${price.toFixed(2)} = $${itemTotal.toFixed(2)}\n`;
                 });
             }
-            
+
             ticketContent += '='.repeat(32) + '\n';
-            
+
             // Calcular total si no está disponible
             let total = 0;
             if (saleData.total !== undefined && saleData.total !== null) {
@@ -644,13 +397,13 @@
                     return sum + (quantity * price);
                 }, 0);
             }
-            
+
             ticketContent += `TOTAL: $${total.toFixed(2)}\n`;
             ticketContent += '='.repeat(32) + '\n';
-            
+
             // Pie de página
             ticketContent += printSettings.footer + '\n';
-            
+
             return ticketContent;
         }
 
@@ -660,7 +413,7 @@
             const ticketSize = printSettings.ticket_size || '80mm';
             const printCopies = printSettings.print_copies || 1;
             const ticketContent = generateTicketContent(saleData);
-            
+
             // Configuraciones de tamaño según el tipo de ticket
             const ticketConfigs = {
                 '58mm': {
@@ -688,9 +441,9 @@
                     printPadding: '2mm'
                 }
             };
-            
+
             const config = ticketConfigs[ticketSize] || ticketConfigs['80mm'];
-            
+
             // Crear ventana de impresión
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
@@ -774,7 +527,7 @@
             `);
             printWindow.document.close();
             printWindow.focus();
-            
+
             // Función para imprimir una copia
             function printCopy(copyNumber) {
                 return new Promise((resolve) => {
@@ -786,7 +539,7 @@
                     }, 500);
                 });
             }
-            
+
             // Imprimir múltiples copias si está configurado
             async function printMultipleCopies() {
                 for (let i = 0; i < printCopies; i++) {
@@ -798,7 +551,7 @@
                 }
                 printWindow.close();
             }
-            
+
             // Iniciar impresión
             printMultipleCopies();
         }
@@ -812,7 +565,7 @@
                     if (response.ok) {
                         const newSettings = await response.json();
                         const savedSettings = localStorage.getItem('theme_settings');
-                        
+
                         if (savedSettings) {
                             const currentSettings = JSON.parse(savedSettings);
                             // Comparar si hay cambios
@@ -835,7 +588,7 @@
 
         // Escuchar cambios en localStorage para sincronización entre pestañas
         function setupThemeSync() {
-            window.addEventListener('storage', function(e) {
+            window.addEventListener('storage', function (e) {
                 if (e.key === 'theme_settings') {
                     try {
                         const newSettings = JSON.parse(e.newValue);
@@ -846,30 +599,27 @@
                     }
                 }
             });
-            
+
             // Escuchar evento personalizado para cambios de tema
-            window.addEventListener('themeChanged', function(e) {
+            window.addEventListener('themeChanged', function (e) {
                 console.log('Cambios de tema detectados desde la misma página');
                 applyThemeSettings(e.detail);
             });
         }
 
         // Inicializar
-        $(document).ready(function() {
+        $(document).ready(function () {
             loadThemeSettings();
             checkForThemeUpdates();
             setupThemeSync();
-            checkAuthentication(); // Verificar autenticación al cargar la página
-            resetInactivityTimer(); // Iniciar el timer de inactividad
-            setupActivityDetection(); // Configurar detección de actividad
-            checkTokenExpiration(); // Verificar expiración del token
-            
-            // Configurar verificación periódica del token
-            setInterval(checkTokenExpiration, 60000); // Verificar cada minuto
+            if (typeof initAuthSystem === 'function') {
+                initAuthSystem();
+            }
         });
     </script>
     <!-- Sistema de Autenticación -->
     <script src="/static/js/auth.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
-</html> 
+
+</html>

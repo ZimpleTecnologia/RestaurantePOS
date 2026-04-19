@@ -1,0 +1,1305 @@
+{% extends "base.html" %}
+
+{% block title %}Pedidos a Cocina - KDS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* KDS Redesign v2.0 - 2026-01-22 */
+    /* ========== VARIABLES Y CONFIGURACIÓN BASE ========== */
+    :root {
+        --kds-pendiente: #ffc107;
+        --kds-pendiente-bg: #fff9e6;
+        --kds-en-preparacion: #0d6efd;
+        --kds-en-preparacion-bg: #e7f1ff;
+        --kds-listo: #28a745;
+        --kds-listo-bg: #e8f5e9;
+        --kds-urgente: #dc3545;
+        --kds-urgente-bg: #ffe6e6;
+        --kds-total: var(--primary-color);
+        --kds-shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --kds-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+        --kds-border-radius: 16px;
+        --kds-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Forzar estilos del body para esta página */
+    body.kds-page,
+    body {
+        background: linear-gradient(135deg, var(--bg-main) 0%, var(--bg-soft) 100%) !important;
+        min-height: 100vh !important;
+        padding-bottom: 2rem !important;
+    }
+    
+    /* Asegurar que el contenedor principal use nuestros estilos */
+    .container-fluid.kds-container {
+        padding: 2rem 1.5rem !important;
+    }
+
+    /* ========== HEADER DEL MÓDULO ========== */
+    .kds-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-darker) 100%) !important;
+        color: var(--white) !important;
+        padding: 2rem 2.5rem !important;
+        border-radius: var(--kds-border-radius) !important;
+        margin-bottom: 2rem !important;
+        box-shadow: var(--shadow-lg) !important;
+        position: relative !important;
+        overflow: hidden !important;
+        width: 100% !important;
+        display: block !important;
+    }
+
+    .kds-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        filter: blur(60px);
+    }
+
+    .kds-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .kds-header-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .kds-header-title h1 {
+        margin: 0;
+        font-weight: 800;
+        font-size: 2.25rem;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .kds-header-title .subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+        font-weight: 400;
+        margin-top: 0.25rem;
+    }
+
+    .kds-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .kds-refresh-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50px;
+        font-size: 0.875rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .kds-refresh-indicator .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background: #4ade80;
+        border-radius: 50%;
+        animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .btn-refresh {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: var(--white);
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: var(--kds-transition);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-refresh:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-refresh:active {
+        transform: translateY(0);
+    }
+
+    /* ========== PANEL DE MÉTRICAS ========== */
+    .kds-metrics {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+        gap: 1.25rem !important;
+        margin-bottom: 2rem !important;
+        width: 100% !important;
+    }
+
+    .metric-card {
+        background: var(--white);
+        border-radius: var(--kds-border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--kds-shadow-card);
+        transition: var(--kds-transition);
+        position: relative;
+        overflow: hidden;
+        border-top: 4px solid;
+    }
+
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+    }
+
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--kds-shadow-hover);
+    }
+
+    .metric-card.total { border-top-color: var(--kds-total); }
+    .metric-card.pendiente { border-top-color: var(--kds-pendiente); }
+    .metric-card.en-preparacion { border-top-color: var(--kds-en-preparacion); }
+    .metric-card.listo { border-top-color: var(--kds-listo); }
+    .metric-card.urgente { border-top-color: var(--kds-urgente); }
+
+    .metric-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+    }
+
+    .metric-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: var(--white);
+    }
+
+    .metric-card.total .metric-icon { background: var(--kds-total); }
+    .metric-card.pendiente .metric-icon { background: var(--kds-pendiente); }
+    .metric-card.en-preparacion .metric-icon { background: var(--kds-en-preparacion); }
+    .metric-card.listo .metric-icon { background: var(--kds-listo); }
+    .metric-card.urgente .metric-icon { background: var(--kds-urgente); }
+
+    .metric-number {
+        font-size: 2.5rem;
+        font-weight: 900;
+        line-height: 1;
+        margin: 0.5rem 0;
+        color: var(--text-dark);
+    }
+
+    .metric-card.total .metric-number { color: var(--kds-total); }
+    .metric-card.pendiente .metric-number { color: var(--kds-pendiente); }
+    .metric-card.en-preparacion .metric-number { color: var(--kds-en-preparacion); }
+    .metric-card.listo .metric-number { color: var(--kds-listo); }
+    .metric-card.urgente .metric-number { color: var(--kds-urgente); }
+
+    .metric-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+    }
+
+    /* ========== FILTROS Y CONTROLES ========== */
+    .kds-controls {
+        background: var(--white);
+        padding: 1.5rem;
+        border-radius: var(--kds-border-radius);
+        margin-bottom: 2rem;
+        box-shadow: var(--kds-shadow-card);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .kds-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .filter-chip {
+        padding: 0.625rem 1.25rem;
+        border-radius: 50px;
+        border: 2px solid #e5e7eb;
+        background: var(--white);
+        color: var(--text-dark);
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: var(--kds-transition);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-chip:hover {
+        border-color: var(--primary-color);
+        background: var(--bg-main);
+        transform: translateY(-2px);
+    }
+
+    .filter-chip.active {
+        background: var(--primary-color);
+        color: var(--white);
+        border-color: var(--primary-color);
+    }
+
+    .filter-chip.active.pendiente {
+        background: var(--kds-pendiente);
+        border-color: var(--kds-pendiente);
+    }
+
+    .filter-chip.active.en-preparacion {
+        background: var(--kds-en-preparacion);
+        border-color: var(--kds-en-preparacion);
+    }
+
+    .filter-chip.active.listo {
+        background: var(--kds-listo);
+        border-color: var(--kds-listo);
+    }
+
+    .filter-chip.active.urgente {
+        background: var(--kds-urgente);
+        border-color: var(--kds-urgente);
+    }
+
+    .kds-sort {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    /* ========== TARJETAS DE PEDIDOS ========== */
+    .kds-pedidos-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)) !important;
+        gap: 1.5rem !important;
+        width: 100% !important;
+    }
+
+    .pedido-card {
+        background: var(--white);
+        border-radius: var(--kds-border-radius);
+        padding: 0;
+        box-shadow: var(--kds-shadow-card);
+        transition: var(--kds-transition);
+        position: relative;
+        overflow: hidden;
+        border-left: 6px solid;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pedido-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    }
+
+    .pedido-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--kds-shadow-hover);
+    }
+
+    .pedido-card.pendiente {
+        border-left-color: var(--kds-pendiente);
+        background: linear-gradient(135deg, var(--kds-pendiente-bg) 0%, var(--white) 100%);
+    }
+
+    .pedido-card.en-preparacion {
+        border-left-color: var(--kds-en-preparacion);
+        background: linear-gradient(135deg, var(--kds-en-preparacion-bg) 0%, var(--white) 100%);
+    }
+
+    .pedido-card.listo {
+        border-left-color: var(--kds-listo);
+        background: linear-gradient(135deg, var(--kds-listo-bg) 0%, var(--white) 100%);
+    }
+
+    .pedido-card.urgente {
+        border-left-color: var(--kds-urgente);
+        border-left-width: 8px;
+        animation: urgent-pulse 2s infinite;
+    }
+
+    @keyframes urgent-pulse {
+        0%, 100% {
+            box-shadow: var(--kds-shadow-card);
+        }
+        50% {
+            box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.2), var(--kds-shadow-card);
+        }
+    }
+
+    /* Header de la tarjeta */
+    .pedido-card-header {
+        padding: 1.5rem;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .pedido-mesa-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .mesa-badge {
+        font-size: 2rem;
+        font-weight: 900;
+        padding: 0.875rem 1.5rem;
+        border-radius: 12px;
+        color: var(--white);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .pedido-card.pendiente .mesa-badge {
+        background: linear-gradient(135deg, var(--kds-pendiente), #ff9800);
+    }
+
+    .pedido-card.en-preparacion .mesa-badge {
+        background: linear-gradient(135deg, var(--kds-en-preparacion), #1976d2);
+    }
+
+    .pedido-card.listo .mesa-badge {
+        background: linear-gradient(135deg, var(--kds-listo), #2e7d32);
+    }
+
+    .pedido-card.urgente .mesa-badge {
+        background: linear-gradient(135deg, var(--kds-urgente), #c62828);
+        animation: urgent-badge 1.5s infinite;
+    }
+
+    @keyframes urgent-badge {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .pedido-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .meta-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-dark);
+    }
+
+    .meta-row i {
+        width: 18px;
+        color: #6b7280;
+    }
+
+    .tiempo-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 1rem;
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(10px);
+        color: var(--text-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tiempo-badge.urgente {
+        background: rgba(220, 53, 69, 0.15);
+        color: var(--kds-urgente);
+        animation: tiempo-urgente 1.5s infinite;
+    }
+
+    @keyframes tiempo-urgente {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    /* Cuerpo de la tarjeta */
+    .pedido-card-body {
+        padding: 1.5rem;
+        flex: 1;
+    }
+
+    .estado-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 1rem;
+    }
+
+    .pedido-card.pendiente .estado-badge {
+        background: var(--kds-pendiente);
+        color: #000;
+    }
+
+    .pedido-card.en-preparacion .estado-badge {
+        background: var(--kds-en-preparacion);
+        color: var(--white);
+    }
+
+    .pedido-card.listo .estado-badge {
+        background: var(--kds-listo);
+        color: var(--white);
+    }
+
+    .observaciones-box {
+        background: rgba(255, 255, 255, 0.6);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        border-left: 3px solid var(--info-color);
+    }
+
+    .observaciones-box strong {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+        font-size: 0.875rem;
+    }
+
+    .observaciones-box p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: #4b5563;
+        line-height: 1.5;
+    }
+
+    .detalles-section {
+        margin-top: 1rem;
+    }
+
+    .detalles-section-title {
+        font-weight: 700;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-dark);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .item-detalle {
+        background: rgba(255, 255, 255, 0.8);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+        border-left: 3px solid var(--primary-color);
+        transition: var(--kds-transition);
+    }
+
+    .item-detalle:hover {
+        background: rgba(255, 255, 255, 1);
+        transform: translateX(4px);
+    }
+
+    .item-nombre {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .item-descripcion {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+    }
+
+    .opciones-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .opcion-badge {
+        background: var(--primary-color);
+        color: var(--white);
+        padding: 0.375rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .opcion-badge strong {
+        font-weight: 700;
+        margin-right: 0.25rem;
+    }
+
+    .observaciones-item {
+        background: rgba(255, 255, 255, 0.6);
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        font-style: italic;
+        color: #4b5563;
+        margin-top: 0.5rem;
+        border-left: 2px solid var(--secondary-color);
+    }
+
+    /* Footer de la tarjeta - Botones de acción */
+    .pedido-card-footer {
+        padding: 1.5rem;
+        border-top: 2px solid rgba(0, 0, 0, 0.05);
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-estado {
+        width: 100%;
+        padding: 1rem 1.5rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 12px;
+        transition: var(--kds-transition);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        cursor: pointer;
+    }
+
+    .btn-estado:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-estado:active {
+        transform: translateY(0);
+    }
+
+    .btn-iniciar {
+        background: linear-gradient(135deg, var(--kds-en-preparacion), #1976d2);
+        color: var(--white);
+    }
+
+    .btn-finalizar {
+        background: linear-gradient(135deg, var(--kds-listo), #2e7d32);
+        color: var(--white);
+    }
+
+    .btn-listo {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        color: var(--white);
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    /* ========== ESTADO VACÍO ========== */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--white);
+        border-radius: var(--kds-border-radius);
+        box-shadow: var(--kds-shadow-card);
+    }
+
+    .empty-state-icon {
+        font-size: 5rem;
+        color: var(--secondary-color);
+        margin-bottom: 1.5rem;
+        opacity: 0.6;
+    }
+
+    .empty-state h4 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: #6b7280;
+        font-size: 1rem;
+    }
+
+    /* ========== NOTIFICACIÓN DE ACTUALIZACIÓN ========== */
+    .refresh-toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: var(--primary-color);
+        color: var(--white);
+        padding: 0.875rem 1.5rem;
+        border-radius: 50px;
+        box-shadow: var(--shadow-lg);
+        font-size: 0.875rem;
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        gap: 0.75rem;
+        animation: slide-up-toast 0.3s ease;
+    }
+
+    .refresh-toast.show {
+        display: flex;
+    }
+
+    @keyframes slide-up-toast {
+        from {
+            transform: translateY(100px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 1200px) {
+        .kds-pedidos-grid {
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        .kds-header {
+            padding: 1.5rem;
+        }
+
+        .kds-header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .kds-header-title h1 {
+            font-size: 1.75rem;
+        }
+
+        .kds-metrics {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .kds-pedidos-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .pedido-card-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .kds-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .kds-filters {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .filter-chip {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .kds-metrics {
+            grid-template-columns: 1fr;
+        }
+
+        .mesa-badge {
+            font-size: 1.5rem;
+            padding: 0.625rem 1rem;
+        }
+    }
+
+    /* ========== LOADING STATE ========== */
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 4rem 2rem;
+    }
+
+    .spinner-large {
+        width: 3.5rem;
+        height: 3.5rem;
+        border-width: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 kds-container" style="max-width: 100%;">
+    <!-- Header del Módulo -->
+    <div class="kds-header">
+        <div class="kds-header-content">
+            <div class="kds-header-title">
+                <div>
+                    <h1><i class="bi bi-fire me-2"></i>Pedidos a Cocina</h1>
+                    <div class="subtitle">Sistema de Visualización de Pedidos (KDS)</div>
+                </div>
+            </div>
+            <div class="kds-header-actions">
+                <div class="kds-refresh-indicator">
+                    <span class="pulse-dot"></span>
+                    <span>Actualización automática</span>
+                </div>
+                <button class="btn btn-refresh" onclick="cargarPedidos()" id="btnRefresh">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Actualizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Métricas -->
+    <div class="kds-metrics">
+        <div class="metric-card total">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <i class="bi bi-clipboard-data"></i>
+                </div>
+            </div>
+            <div class="metric-number" id="statTotal">0</div>
+            <div class="metric-label">Total Pedidos</div>
+        </div>
+        <div class="metric-card pendiente">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+            </div>
+            <div class="metric-number" id="statPendientes">0</div>
+            <div class="metric-label">Pendientes</div>
+        </div>
+        <div class="metric-card en-preparacion">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <i class="bi bi-gear-fill"></i>
+                </div>
+            </div>
+            <div class="metric-number" id="statEnPreparacion">0</div>
+            <div class="metric-label">En Preparación</div>
+        </div>
+        <div class="metric-card listo">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+            </div>
+            <div class="metric-number" id="statListos">0</div>
+            <div class="metric-label">Listos</div>
+        </div>
+        <div class="metric-card urgente">
+            <div class="metric-header">
+                <div class="metric-icon">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+            </div>
+            <div class="metric-number" id="statUrgentes">0</div>
+            <div class="metric-label">Urgentes</div>
+        </div>
+    </div>
+
+    <!-- Filtros y Controles -->
+    <div class="kds-controls">
+        <div class="kds-filters">
+            <div class="filter-chip active" data-estado="" onclick="aplicarFiltro('')">
+                <i class="bi bi-list-ul"></i>
+                <span>Todos</span>
+            </div>
+            <div class="filter-chip pendiente" data-estado="PENDIENTE" onclick="aplicarFiltro('PENDIENTE')">
+                <i class="bi bi-clock-history"></i>
+                <span>Pendientes</span>
+            </div>
+            <div class="filter-chip en-preparacion" data-estado="EN_PREPARACION" onclick="aplicarFiltro('EN_PREPARACION')">
+                <i class="bi bi-gear-fill"></i>
+                <span>En Preparación</span>
+            </div>
+            <div class="filter-chip listo" data-estado="LISTO" onclick="aplicarFiltro('LISTO')">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Listos</span>
+            </div>
+            <div class="filter-chip urgente" data-estado="URGENTE" onclick="aplicarFiltro('URGENTE')">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>Solo Urgentes</span>
+            </div>
+        </div>
+        <div class="kds-sort">
+            <i class="bi bi-sort-down"></i>
+            <span>Ordenados por tiempo (más antiguos primero)</span>
+        </div>
+    </div>
+
+    <!-- Grid de Pedidos -->
+    <div class="kds-pedidos-grid" id="pedidosContainer">
+        <div class="loading-container">
+            <div class="spinner-border text-primary spinner-large" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast de Actualización -->
+<div class="refresh-toast" id="refreshToast">
+    <i class="bi bi-check-circle-fill"></i>
+    <span>Pedidos actualizados</span>
+</div>
+
+<!-- Modal de Error -->
+<div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Error</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+                <p class="mt-3" id="errorMensaje"></p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let pedidosData = [];
+    let filtroEstado = '';
+    let intervalId = null;
+    let errorModal;
+    let isLoading = false;
+
+    function getAuthHeaders() {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Forzar recarga de estilos (evitar cache)
+        const styleSheets = document.querySelectorAll('style');
+        styleSheets.forEach(sheet => {
+            if (sheet.textContent.includes('KDS Redesign')) {
+                sheet.setAttribute('data-kds-version', '2.0');
+            }
+        });
+        
+        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+
+        cargarPedidos();
+        cargarEstadisticas();
+
+        // Auto-refresh cada 10 segundos
+        intervalId = setInterval(() => {
+            if (!isLoading) {
+                cargarPedidos(true);
+                cargarEstadisticas();
+            }
+        }, 10000);
+    });
+
+    window.addEventListener('beforeunload', function() {
+        if (intervalId) clearInterval(intervalId);
+    });
+
+    async function cargarPedidos(silent = false) {
+        if (isLoading) return;
+        
+        isLoading = true;
+        if (!silent) {
+            const btn = document.getElementById('btnRefresh');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Actualizando...';
+            }
+        }
+
+        try {
+            const url = filtroEstado && filtroEstado !== 'URGENTE'
+                ? `/api/v1/pedidos-cocina/pedidos?estado=${filtroEstado}`
+                : '/api/v1/pedidos-cocina/pedidos';
+
+            const response = await fetch(url, {
+                headers: getAuthHeaders()
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('Error al cargar pedidos');
+            }
+
+            let pedidos = await response.json();
+            
+            // Filtrar urgentes si es necesario
+            if (filtroEstado === 'URGENTE') {
+                pedidos = pedidos.filter(p => {
+                    if (!p.hora_envio) return false;
+                    const horaEnvio = new Date(p.hora_envio);
+                    const ahora = new Date();
+                    const minutos = Math.floor((ahora - horaEnvio) / 60000);
+                    return minutos > 15 && p.estado !== 'LISTO';
+                });
+            }
+            
+            pedidosData = pedidos;
+            renderizarPedidos(pedidosData);
+            
+            if (silent) {
+                mostrarRefreshToast();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            if (!silent) {
+                mostrarError('Error al cargar pedidos: ' + error.message);
+            }
+        } finally {
+            isLoading = false;
+            if (!silent) {
+                const btn = document.getElementById('btnRefresh');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Actualizar';
+                }
+            }
+        }
+    }
+
+    function mostrarRefreshToast() {
+        const toast = document.getElementById('refreshToast');
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2000);
+    }
+
+    async function cargarEstadisticas() {
+        try {
+            const response = await fetch('/api/v1/pedidos-cocina/estadisticas', {
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) return;
+
+            const stats = await response.json();
+            document.getElementById('statPendientes').textContent = stats.pendientes || 0;
+            document.getElementById('statEnPreparacion').textContent = stats.en_preparacion || 0;
+            document.getElementById('statListos').textContent = stats.listos || 0;
+            document.getElementById('statUrgentes').textContent = stats.urgentes || 0;
+            
+            // Calcular total
+            const total = (stats.pendientes || 0) + (stats.en_preparacion || 0) + (stats.listos || 0);
+            document.getElementById('statTotal').textContent = total;
+        } catch (error) {
+            console.error('Error cargando estadísticas:', error);
+        }
+    }
+
+    function renderizarPedidos(pedidos) {
+        const container = document.getElementById('pedidosContainer');
+        
+        if (pedidos.length === 0) {
+            container.innerHTML = `
+                <div class="col-12">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="bi bi-clipboard-x"></i>
+                        </div>
+                        <h4>No hay pedidos activos</h4>
+                        <p>Los pedidos aparecerán aquí cuando los meseros los envíen a cocina</p>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = '';
+
+        pedidos.forEach(pedido => {
+            const card = crearTarjetaPedido(pedido);
+            container.appendChild(card);
+        });
+    }
+
+    function crearTarjetaPedido(pedido) {
+        const estado = pedido.estado.toLowerCase().replace('_', '-');
+        const estadoTexto = pedido.estado.replace('_', ' ');
+
+        // Calcular tiempo transcurrido
+        let tiempoHtml = '';
+        let esUrgente = false;
+        let minutos = 0;
+        
+        // Usar hora_envio si existe, sino usar fecha/created_at
+        const fechaReferencia = pedido.hora_envio || pedido.fecha || pedido.created_at;
+        if (fechaReferencia) {
+            try {
+                const fechaRef = new Date(fechaReferencia);
+                const ahora = new Date();
+                
+                // Verificar que la fecha sea válida y no sea del futuro
+                if (!isNaN(fechaRef.getTime()) && !isNaN(ahora.getTime()) && fechaRef <= ahora) {
+                    const diffMs = ahora - fechaRef;
+                    minutos = Math.max(0, Math.floor(diffMs / 60000));
+                    
+                    // Limitar a un máximo razonable (evitar valores absurdos por fechas antiguas)
+                    if (minutos > 1440) { // Más de 24 horas, probablemente un error
+                        // Si el pedido está LISTO, no mostrar tiempo
+                        if (pedido.estado === 'LISTO') {
+                            tiempoHtml = '';
+                        } else {
+                            tiempoHtml = `
+                                <div class="tiempo-badge urgente">
+                                    <i class="bi bi-clock"></i>
+                                    <span>+24h</span>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        esUrgente = minutos > 15 && pedido.estado !== 'LISTO';
+                        
+                        tiempoHtml = `
+                            <div class="tiempo-badge ${esUrgente ? 'urgente' : ''}">
+                                <i class="bi bi-clock"></i>
+                                <span>${minutos} min</span>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (e) {
+                console.error('Error calculando tiempo:', e);
+            }
+        }
+
+        // Crear detalles
+        let detallesHtml = '';
+        pedido.detalles.forEach(detalle => {
+            let opcionesHtml = '';
+            if (detalle.opciones && detalle.opciones.length > 0) {
+                opcionesHtml = '<div class="opciones-container">';
+                detalle.opciones.forEach(op => {
+                    opcionesHtml += `
+                        <span class="opcion-badge">
+                            <strong>${op.categoria}:</strong> ${op.opcion_elegida}
+                        </span>
+                    `;
+                });
+                opcionesHtml += '</div>';
+            }
+
+            detallesHtml += `
+                <div class="item-detalle">
+                    <div class="item-nombre">${detalle.nombre_snapshot}</div>
+                    ${detalle.descripcion_snapshot ? `<div class="item-descripcion">${detalle.descripcion_snapshot}</div>` : ''}
+                    ${opcionesHtml}
+                    ${detalle.observaciones ? `<div class="observaciones-item"><i class="bi bi-info-circle me-1"></i>${detalle.observaciones}</div>` : ''}
+                </div>
+            `;
+        });
+
+        // Botones de acción
+        let botonesHtml = '';
+        if (pedido.estado === 'PENDIENTE') {
+            botonesHtml = `
+                <button class="btn btn-iniciar btn-estado" onclick="cambiarEstado(${pedido.id}, 'EN_PREPARACION')">
+                    <i class="bi bi-play-circle-fill"></i>
+                    <span>Iniciar Preparación</span>
+                </button>
+            `;
+        } else if (pedido.estado === 'EN_PREPARACION') {
+            botonesHtml = `
+                <button class="btn btn-finalizar btn-estado" onclick="cambiarEstado(${pedido.id}, 'LISTO')">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Marcar como Listo</span>
+                </button>
+            `;
+        } else {
+            botonesHtml = `
+                <button class="btn btn-listo btn-estado" disabled>
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Listo para Servir</span>
+                </button>
+            `;
+        }
+
+        // Crear card
+        const cardDiv = document.createElement('div');
+        
+        const cardClass = esUrgente && pedido.estado !== 'LISTO' ? `${estado} urgente` : estado;
+        
+        cardDiv.innerHTML = `
+            <div class="pedido-card ${cardClass}">
+                <div class="pedido-card-header">
+                    <div class="pedido-mesa-info">
+                        <span class="mesa-badge">Mesa ${pedido.mesa_numero || 'N/A'}</span>
+                        <div class="pedido-meta">
+                            <div class="meta-row">
+                                <i class="bi bi-person"></i>
+                                <span>${pedido.mesero_nombre || 'N/A'}</span>
+                            </div>
+                            <div class="meta-row">
+                                <i class="bi bi-calendar3"></i>
+                                <span>${new Date(pedido.fecha).toLocaleTimeString('es-CO', {hour: '2-digit', minute: '2-digit'})}</span>
+                            </div>
+                        </div>
+                    </div>
+                    ${tiempoHtml}
+                </div>
+                
+                <div class="pedido-card-body">
+                    <span class="estado-badge">${estadoTexto}</span>
+                    
+                    ${pedido.observaciones ? `
+                        <div class="observaciones-box">
+                            <strong><i class="bi bi-info-circle"></i>Observaciones del pedido:</strong>
+                            <p>${pedido.observaciones}</p>
+                        </div>
+                    ` : ''}
+
+                    <div class="detalles-section">
+                        <div class="detalles-section-title">
+                            <i class="bi bi-list-ul"></i>
+                            <span>Detalles del Pedido</span>
+                        </div>
+                        ${detallesHtml}
+                    </div>
+                </div>
+
+                <div class="pedido-card-footer">
+                    ${botonesHtml}
+                </div>
+            </div>
+        `;
+
+        return cardDiv;
+    }
+
+    async function cambiarEstado(pedidoId, nuevoEstado) {
+        if (isLoading) return;
+
+        try {
+            isLoading = true;
+            const response = await fetch(`/api/v1/pedidos-cocina/pedidos/${pedidoId}/estado`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    estado: nuevoEstado
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error al cambiar estado');
+            }
+
+            // Recargar pedidos y estadísticas
+            await cargarPedidos();
+            await cargarEstadisticas();
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError(error.message);
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    function aplicarFiltro(estado) {
+        filtroEstado = estado;
+        
+        // Actualizar chips activos
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.classList.remove('active');
+            if (chip.dataset.estado === estado) {
+                chip.classList.add('active');
+                if (estado) {
+                    chip.classList.add(estado.toLowerCase().replace('_', '-'));
+                }
+            }
+        });
+        
+        cargarPedidos();
+    }
+
+    function mostrarError(mensaje) {
+        document.getElementById('errorMensaje').textContent = mensaje;
+        errorModal.show();
+    }
+</script>
+{% endblock %}

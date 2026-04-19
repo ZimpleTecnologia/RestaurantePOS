@@ -183,6 +183,32 @@ class InventoryAlertService:
         return notifications
     
     @staticmethod
+    def check_stock_shortages(db: Session) -> List[Dict[str, Any]]:
+        """Verificar productos con stock negativo (Deuda de Stock)"""
+        products = db.query(Product).filter(
+            and_(
+                Product.track_stock == True,
+                Product.is_active == True,
+                Product.stock_quantity < 0
+            )
+        ).all()
+        
+        alerts = []
+        for product in products:
+            alert = {
+                "product_id": product.id,
+                "product_name": product.name,
+                "current_stock": product.stock_quantity,
+                "unit": product.unit,
+                "alert_type": "shortage",
+                "message": f"⚠️ DEUDA DE STOCK: {product.name} tiene un saldo de {product.stock_quantity} {product.unit} (Requiere reposición).",
+                "shortage_quantity": abs(product.stock_quantity)
+            }
+            alerts.append(alert)
+        
+        return alerts
+
+    @staticmethod
     def get_inventory_dashboard_data(db: Session) -> Dict[str, Any]:
         """Obtener datos para el dashboard de inventario"""
         # Productos con stock bajo
@@ -199,6 +225,14 @@ class InventoryAlertService:
             and_(
                 Product.track_stock == True,
                 Product.stock_quantity <= 0
+            )
+        ).count()
+
+        # DEUDA DE STOCK (Negativos)
+        shortage_count = db.query(Product).filter(
+            and_(
+                Product.track_stock == True,
+                Product.stock_quantity < 0
             )
         ).count()
         
@@ -232,6 +266,7 @@ class InventoryAlertService:
         return {
             "low_stock_count": low_stock_count,
             "out_of_stock_count": out_of_stock_count,
+            "shortage_count": shortage_count,
             "overstock_count": overstock_count,
             "reorder_count": reorder_count,
             "inventory_value": float(inventory_value),

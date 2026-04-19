@@ -31,12 +31,13 @@ class OrderService:
     def create_order(
         db: Session,
         waiter_id: int,
-        table_id: int = None,
-        customer_id: int = None,
+        table_id: Optional[int] = None,
+        customer_id: Optional[int] = None,
         order_type: OrderType = OrderType.DINE_IN,
-        customer_name: str = None,
-        customer_phone: str = None,
-        notes: str = None
+        status: OrderStatus = OrderStatus.DRAFT,
+        customer_name: Optional[str] = None,
+        customer_phone: Optional[str] = None,
+        notes: Optional[str] = None
     ) -> Order:
         """Crear un nuevo pedido"""
         order = Order(
@@ -45,6 +46,7 @@ class OrderService:
             waiter_id=waiter_id,
             customer_id=customer_id,
             order_type=order_type,
+            status=status,
             customer_name=customer_name,
             customer_phone=customer_phone,
             notes=notes
@@ -53,8 +55,8 @@ class OrderService:
         db.add(order)
         db.flush()  # Para obtener el ID
         
-        # Si es pedido en mesa, ocupar la mesa
-        if table_id and order_type == OrderType.DINE_IN:
+        # Si es pedido en mesa y no es borrador, ocupar la mesa
+        if table_id and order_type == OrderType.DINE_IN and status != OrderStatus.DRAFT:
             TableService.occupy_table(db, table_id)
         
         db.commit()
@@ -65,33 +67,71 @@ class OrderService:
     def add_item_to_order(
         db: Session,
         order_id: int,
-        product_id: int,
+        item_type: str = "product",
+        product_id: Optional[int] = None,
+        menu_id: Optional[int] = None,
+        plato_id: Optional[int] = None,
         quantity: int = 1,
-        unit_price: Decimal = None,
-        notes: str = None,
-        special_instructions: str = None
+        unit_price: Optional[Decimal] = None,
+        notes: Optional[str] = None,
+        special_instructions: Optional[str] = None,
+        opciones: Optional[List[Dict[str, Any]]] = None
     ) -> OrderItem:
-        """Agregar item a un pedido"""
-        # Obtener precio del producto si no se especifica
-        if unit_price is None:
-            product = db.query(Product).filter(Product.id == product_id).first()
-            if not product:
-                raise ValueError(f"Producto {product_id} no encontrado")
-            unit_price = product.price
+        """Agregar item a un pedido con soporte para menús y platos"""
+        from app.models.order import OrderItemOption
+        from app.models.restaurant_menu import MenuDia, PlatoRestaurante
         
         item = OrderItem(
             order_id=order_id,
+            item_type=item_type,
             product_id=product_id,
+            menu_id=menu_id,
+            plato_id=plato_id,
             quantity=quantity,
-            unit_price=unit_price,
             notes=notes,
             special_instructions=special_instructions
         )
         
+        # Obtener información según el tipo e item
+        if item_type == "product" and product_id:
+            product = db.query(Product).filter(Product.id == product_id).first()
+            if not product: raise ValueError(f"Producto {product_id} no encontrado")
+            item.unit_price = unit_price or product.precio_base
+            item.create_snapshot()
+            
+        elif item_type == "menu" and menu_id:
+            menu = db.query(MenuDia).filter(MenuDia.id == menu_id).first()
+            if not menu: raise ValueError(f"Menú {menu_id} no encontrado")
+            item.unit_price = unit_price or menu.precio
+            item.snapshot_name = menu.nombre
+            item.snapshot_description = menu.descripcion
+            item.snapshot_price = menu.precio
+            
+        elif item_type == "plato" and plato_id:
+            plato = db.query(PlatoRestaurante).filter(PlatoRestaurante.id == plato_id).first()
+            if not plato: raise ValueError(f"Plato {plato_id} no encontrado")
+            item.unit_price = unit_price or plato.precio
+            item.create_snapshot()
+            
+        if item.unit_price is None:
+            item.unit_price = Decimal('0.00')
+
         # Calcular precio total
         item.calculate_total()
-        
         db.add(item)
+        db.flush()
+        
+        # Agregar opciones si existen
+        if opciones:
+            for opt in opciones:
+                db_opt = OrderItemOption(
+                    order_item_id=item.id,
+                    categoria=opt.get('categoria'),
+                    opcion_elegida=opt.get('opcion_elegida'),
+                    opcion_plato_id=opt.get('opcion_plato_id')
+                )
+                db.add(db_opt)
+
         db.commit()
         db.refresh(item)
         

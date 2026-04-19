@@ -20,6 +20,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/login",
             "/api/v1/auth/login",
             "/api/v1/auth/login-json",
+            "/api/v1/auth/me",
+            "/api/v1/auth/register",
             "/api/v1/settings/",
             "/api/v1/settings/business-info",
             "/api/v1/settings/cash-register-config",

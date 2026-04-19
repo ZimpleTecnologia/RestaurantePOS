@@ -1,0 +1,1643 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Pedidos - Meseros{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/platonico-theme.css?v=2.0">
+<style>
+    /* Mis Pedidos Redesign v3.0 - Con Creación y Edición - 2026-01-22 */
+    /* ========== VARIABLES Y CONFIGURACIÓN BASE ========== */
+    :root {
+        --kds-pendiente: #ffc107;
+        --kds-pendiente-bg: #fff9e6;
+        --kds-en-preparacion: #0d6efd;
+        --kds-en-preparacion-bg: #e7f1ff;
+        --kds-listo: #28a745;
+        --kds-listo-bg: #e8f5e9;
+        --kds-borrador: #6c757d;
+        --kds-borrador-bg: #f8f9fa;
+        --kds-enviado: #17a2b8;
+        --kds-enviado-bg: #d1ecf1;
+        --kds-total: var(--primary-color);
+        --kds-shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --kds-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+        --kds-border-radius: 16px;
+        --kds-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+        background: linear-gradient(135deg, var(--bg-main) 0%, var(--bg-soft) 100%) !important;
+        min-height: 100vh !important;
+        padding-bottom: 2rem !important;
+    }
+
+    /* ========== HEADER DEL MÓDULO ========== */
+    .kds-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-darker) 100%) !important;
+        color: var(--white) !important;
+        padding: 2rem 2.5rem !important;
+        border-radius: var(--kds-border-radius) !important;
+        margin-bottom: 2rem !important;
+        box-shadow: var(--shadow-lg) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    .kds-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        filter: blur(60px);
+    }
+
+    .kds-header-content {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .kds-header-title h1 {
+        margin: 0;
+        font-weight: 800;
+        font-size: 2.25rem;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .kds-header-title .subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+        font-weight: 400;
+        margin-top: 0.25rem;
+    }
+
+    .kds-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .btn-nuevo-pedido {
+        background: rgba(255, 255, 255, 0.25);
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        color: var(--white);
+        padding: 0.875rem 1.75rem;
+        border-radius: 12px;
+        font-weight: 700;
+        transition: var(--kds-transition);
+        backdrop-filter: blur(10px);
+        font-size: 1rem;
+    }
+
+    .btn-nuevo-pedido:hover {
+        background: rgba(255, 255, 255, 0.35);
+        border-color: rgba(255, 255, 255, 0.6);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        color: var(--white);
+    }
+
+    .btn-refresh {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: var(--white);
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: var(--kds-transition);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-refresh:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ========== PANEL DE MÉTRICAS ========== */
+    .kds-metrics {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+        gap: 1.25rem !important;
+        margin-bottom: 2rem !important;
+    }
+
+    .metric-card {
+        background: var(--white);
+        border-radius: var(--kds-border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--kds-shadow-card);
+        transition: var(--kds-transition);
+        border-top: 4px solid;
+        text-align: center;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--kds-shadow-hover);
+    }
+
+    .metric-card.total { border-top-color: var(--kds-total); }
+    .metric-card.pendiente { border-top-color: var(--kds-pendiente); }
+    .metric-card.en-preparacion { border-top-color: var(--kds-en-preparacion); }
+    .metric-card.listo { border-top-color: var(--kds-listo); }
+    .metric-card.hoy { border-top-color: var(--kds-enviado); }
+
+    .metric-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: var(--white);
+        margin: 0 auto 0.75rem;
+    }
+
+    .metric-card.total .metric-icon { background: var(--kds-total); }
+    .metric-card.pendiente .metric-icon { background: var(--kds-pendiente); }
+    .metric-card.en-preparacion .metric-icon { background: var(--kds-en-preparacion); }
+    .metric-card.listo .metric-icon { background: var(--kds-listo); }
+    .metric-card.hoy .metric-icon { background: var(--kds-enviado); }
+
+    .metric-number {
+        font-size: 2.5rem;
+        font-weight: 900;
+        line-height: 1;
+        margin: 0.5rem 0;
+        color: var(--text-dark);
+    }
+
+    .metric-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+    }
+
+    /* ========== FILTROS Y CONTROLES ========== */
+    .kds-controls {
+        background: var(--white);
+        padding: 1.5rem;
+        border-radius: var(--kds-border-radius);
+        margin-bottom: 2rem;
+        box-shadow: var(--kds-shadow-card);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .kds-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .filter-chip {
+        padding: 0.625rem 1.25rem;
+        border-radius: 50px;
+        border: 2px solid #e5e7eb;
+        background: var(--white);
+        color: var(--text-dark);
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: var(--kds-transition);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-chip:hover {
+        border-color: var(--primary-color);
+        background: var(--bg-main);
+        transform: translateY(-2px);
+    }
+
+    .filter-chip.active {
+        background: var(--primary-color);
+        color: var(--white);
+        border-color: var(--primary-color);
+    }
+
+    /* ========== TARJETAS DE PEDIDOS ========== */
+    .kds-pedidos-grid {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)) !important;
+        gap: 1.5rem !important;
+    }
+
+    .pedido-card {
+        background: var(--white);
+        border-radius: var(--kds-border-radius);
+        padding: 0;
+        box-shadow: var(--kds-shadow-card);
+        transition: var(--kds-transition);
+        position: relative;
+        overflow: hidden;
+        border-left: 6px solid;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pedido-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--kds-shadow-hover);
+    }
+
+    .pedido-card.borrador { border-left-color: var(--kds-borrador); }
+    .pedido-card.enviado-a-cocina { border-left-color: var(--kds-enviado); }
+    .pedido-card.pendiente { border-left-color: var(--kds-pendiente); }
+    .pedido-card.en-preparacion { border-left-color: var(--kds-en-preparacion); }
+    .pedido-card.listo { border-left-color: var(--kds-listo); }
+
+    .pedido-card-header {
+        padding: 1.5rem;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .mesa-badge {
+        font-size: 2rem;
+        font-weight: 900;
+        padding: 0.875rem 1.5rem;
+        border-radius: 12px;
+        color: var(--white);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        min-width: 80px;
+        text-align: center;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-darker));
+    }
+
+    .estado-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .pedido-card.borrador .estado-badge { background: var(--kds-borrador); color: white; }
+    .pedido-card.enviado-a-cocina .estado-badge { background: var(--kds-enviado); color: white; }
+    .pedido-card.pendiente .estado-badge { background: var(--kds-pendiente); color: #000; }
+    .pedido-card.en-preparacion .estado-badge { background: var(--kds-en-preparacion); color: white; }
+    .pedido-card.listo .estado-badge { background: var(--kds-listo); color: white; }
+
+    .pedido-card-footer {
+        padding: 1.5rem;
+        border-top: 2px solid rgba(0, 0, 0, 0.05);
+        background: rgba(255, 255, 255, 0.5);
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-ver-detalles, .btn-editar-pedido {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        font-size: 1.0625rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 12px;
+        transition: var(--kds-transition);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        cursor: pointer;
+    }
+
+    .btn-ver-detalles {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-darker));
+        color: var(--white);
+    }
+
+    .btn-ver-detalles:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-editar-pedido {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: var(--white);
+    }
+
+    .btn-editar-pedido:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .badge-mesero {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: rgba(0, 0, 0, 0.1);
+        color: var(--text-dark);
+    }
+
+    /* ========== SISTEMA DE NOTIFICACIONES ========== */
+    .notification-badge {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .notification-count {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: var(--white);
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+        animation: pulse-notification 2s infinite;
+    }
+
+    @keyframes pulse-notification {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+        }
+        50% {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.6);
+        }
+    }
+
+    .notification-panel {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        width: 400px;
+        max-height: 600px;
+        background: var(--white);
+        border-radius: var(--kds-border-radius);
+        box-shadow: var(--shadow-xl);
+        z-index: 1050;
+        display: none;
+        overflow: hidden;
+        border: 2px solid var(--kds-listo);
+    }
+
+    .notification-panel.show {
+        display: block;
+        animation: slide-in-right 0.3s ease;
+    }
+
+    @keyframes slide-in-right {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .notification-panel-header {
+        background: linear-gradient(135deg, var(--kds-listo), #20c997);
+        color: var(--white);
+        padding: 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 700;
+    }
+
+    .notification-panel-body {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 1rem;
+    }
+
+    .notification-item {
+        background: linear-gradient(135deg, var(--kds-listo-bg), #f1f8f2);
+        border-left: 4px solid var(--kds-listo);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: var(--kds-transition);
+    }
+
+    .notification-item:hover {
+        transform: translateX(-4px);
+        box-shadow: var(--kds-shadow-card);
+    }
+
+    .notification-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .notification-item-title {
+        font-weight: 700;
+        color: var(--text-dark);
+        font-size: 1rem;
+    }
+
+    .notification-item-time {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+
+    .notification-item-body {
+        font-size: 0.875rem;
+        color: #4b5563;
+    }
+
+    .btn-notification {
+        position: relative;
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: var(--white);
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: var(--kds-transition);
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-notification:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+        color: var(--white);
+    }
+
+    .alert-pedidos-listos {
+        background: linear-gradient(135deg, var(--kds-listo-bg), #f1f8f2);
+        border: 2px solid var(--kds-listo);
+        border-radius: var(--kds-border-radius);
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: var(--kds-shadow-card);
+        animation: slide-down 0.5s ease;
+    }
+
+    @keyframes slide-down {
+        from {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .alert-pedidos-listos-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .alert-pedidos-listos-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--kds-listo);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-size: 1.5rem;
+        animation: bounce-icon 1s infinite;
+    }
+
+    @keyframes bounce-icon {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-5px);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .notification-panel {
+            width: calc(100% - 40px);
+            right: 20px;
+            left: 20px;
+        }
+    }
+
+    /* ========== MODAL CREAR/EDITAR PEDIDO ========== */
+    .modal-crear-pedido .modal-content {
+        border-radius: var(--kds-border-radius);
+        border: none;
+        box-shadow: var(--shadow-xl);
+    }
+
+    .mesa-card-select {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: var(--kds-transition);
+        text-align: center;
+    }
+
+    .mesa-card-select:hover {
+        border-color: var(--primary-color);
+        background: var(--bg-main);
+        transform: translateY(-2px);
+    }
+
+    .mesa-card-select.selected {
+        border-color: var(--primary-color);
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-darker));
+        color: var(--white);
+    }
+
+    .item-pedido-edit {
+        background: rgba(255, 255, 255, 0.8);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+        border-left: 3px solid var(--primary-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--white);
+        border-radius: var(--kds-border-radius);
+        box-shadow: var(--kds-shadow-card);
+        grid-column: 1 / -1;
+    }
+
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 4rem 2rem;
+        grid-column: 1 / -1;
+    }
+
+    @media (max-width: 768px) {
+        .kds-header {
+            padding: 1.5rem;
+        }
+
+        .kds-header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .kds-pedidos-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .pedido-card-footer {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header del Módulo -->
+    <div class="kds-header">
+        <div class="kds-header-content">
+            <div class="kds-header-title">
+                <h1><i class="bi bi-clipboard-check me-2"></i>Mis Pedidos</h1>
+                <div class="subtitle">Gestiona y visualiza todos los pedidos</div>
+            </div>
+            <div class="kds-header-actions">
+                <button class="btn btn-nuevo-pedido" onclick="mostrarModalCrearPedido()">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Nuevo Pedido
+                </button>
+                <button class="btn btn-notification notification-badge" onclick="toggleNotificationPanel()" id="btnNotification">
+                    <i class="bi bi-bell-fill"></i>
+                    <span class="notification-count" id="notificationCount" style="display: none;">0</span>
+                </button>
+                <button class="btn btn-refresh" onclick="cargarPedidos()" id="btnRefresh">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Actualizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Métricas -->
+    <div class="kds-metrics">
+        <div class="metric-card total">
+            <div class="metric-icon"><i class="bi bi-clipboard-data"></i></div>
+            <div class="metric-number" id="statTotal">0</div>
+            <div class="metric-label">Total Pedidos</div>
+        </div>
+        <div class="metric-card pendiente">
+            <div class="metric-icon"><i class="bi bi-clock-history"></i></div>
+            <div class="metric-number" id="statPendientes">0</div>
+            <div class="metric-label">Pendientes</div>
+        </div>
+        <div class="metric-card en-preparacion">
+            <div class="metric-icon"><i class="bi bi-gear-fill"></i></div>
+            <div class="metric-number" id="statEnPreparacion">0</div>
+            <div class="metric-label">En Preparación</div>
+        </div>
+        <div class="metric-card listo">
+            <div class="metric-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="metric-number" id="statListos">0</div>
+            <div class="metric-label">Listos</div>
+        </div>
+        <div class="metric-card hoy">
+            <div class="metric-icon"><i class="bi bi-calendar-day"></i></div>
+            <div class="metric-number" id="statHoy">0</div>
+            <div class="metric-label">Pedidos Hoy</div>
+        </div>
+    </div>
+
+    <!-- Alerta de Pedidos Listos -->
+    <div class="alert-pedidos-listos" id="alertPedidosListos" style="display: none;">
+        <div class="alert-pedidos-listos-content">
+            <div class="alert-pedidos-listos-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div>
+                <strong id="alertPedidosListosText">Tienes pedidos listos para servir</strong>
+                <p class="mb-0 small">Haz clic para ver los detalles</p>
+            </div>
+        </div>
+        <button class="btn btn-success" onclick="filtrarPedidosListos()">
+            <i class="bi bi-eye me-2"></i>Ver Pedidos Listos
+        </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="kds-controls">
+        <div class="kds-filters">
+            <div class="filter-chip active" data-estado="" onclick="aplicarFiltro('')">
+                <i class="bi bi-list-ul"></i><span>Todos</span>
+            </div>
+            <div class="filter-chip" data-estado="BORRADOR" onclick="aplicarFiltro('BORRADOR')">
+                <i class="bi bi-file-earmark"></i><span>Borrador</span>
+            </div>
+            <div class="filter-chip" data-estado="ENVIADO_A_COCINA" onclick="aplicarFiltro('ENVIADO_A_COCINA')">
+                <i class="bi bi-send"></i><span>Enviado</span>
+            </div>
+            <div class="filter-chip" data-estado="PENDIENTE" onclick="aplicarFiltro('PENDIENTE')">
+                <i class="bi bi-clock-history"></i><span>Pendientes</span>
+            </div>
+            <div class="filter-chip" data-estado="EN_PREPARACION" onclick="aplicarFiltro('EN_PREPARACION')">
+                <i class="bi bi-gear-fill"></i><span>En Preparación</span>
+            </div>
+            <div class="filter-chip" data-estado="LISTO" onclick="aplicarFiltro('LISTO')">
+                <i class="bi bi-check-circle-fill"></i><span>Listos</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Pedidos -->
+    <div class="kds-pedidos-grid" id="pedidosContainer">
+        <div class="loading-container">
+            <div class="spinner-border text-primary" role="status" style="width: 3.5rem; height: 3.5rem;">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar Pedido -->
+<div class="modal fade modal-crear-pedido" id="modalCrearPedido" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalCrearPedidoTitle">
+                    <i class="bi bi-plus-circle me-2"></i>Nuevo Pedido
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Selección de Mesa -->
+                <div class="mb-4">
+                    <h6 class="mb-3"><i class="bi bi-table me-2"></i>Seleccionar Mesa</h6>
+                    <div class="row" id="listaMesasModal">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Menú del Día y Platos Especiales -->
+                <div id="productosSectionModal" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="bi bi-calendar-day me-2"></i>Menú del Día</h6>
+                                </div>
+                                <div class="card-body" id="menuDelDiaContent">
+                                    <div class="text-center">
+                                        <div class="spinner-border" role="status"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="bi bi-star-fill me-2"></i>Platos Especiales</h6>
+                                </div>
+                                <div class="card-body" id="platosEspecialesContent">
+                                    <div class="text-center">
+                                        <div class="spinner-border" role="status"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items del Pedido -->
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Items del Pedido</h6>
+                        </div>
+                        <div class="card-body" id="pedidoItemsModal">
+                            <p class="text-muted text-center">No hay items en el pedido</p>
+                        </div>
+                        <div class="card-footer">
+                            <textarea class="form-control" id="pedidoObservacionesModal" rows="2" placeholder="Observaciones del pedido..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnEnviarCocina" onclick="enviarPedidoCocina()" style="display: none;">
+                    <i class="bi bi-send-fill me-2"></i>Enviar a Cocina
+                </button>
+                <button type="button" class="btn btn-primary" id="btnGuardarPedido" onclick="guardarPedido()" style="display: none;">
+                    <i class="bi bi-save me-2"></i>Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Opciones Menú -->
+<div class="modal fade" id="opcionesMenuModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Opciones del Menú</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="opcionesMenuContent"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="agregarMenuAPedido()">Agregar al Pedido</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Panel de Notificaciones -->
+<div class="notification-panel" id="notificationPanel">
+    <div class="notification-panel-header">
+        <div>
+            <i class="bi bi-bell-fill me-2"></i>
+            <span>Pedidos Listos</span>
+        </div>
+        <button class="btn btn-sm btn-light" onclick="toggleNotificationPanel()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+    <div class="notification-panel-body" id="notificationPanelBody">
+        <p class="text-muted text-center">No hay pedidos listos</p>
+    </div>
+</div>
+
+<!-- Modal Detalles -->
+<div class="modal fade" id="detallesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-info-circle me-2"></i>Detalles del Pedido</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detallesModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let pedidosData = [];
+    let filtroEstado = '';
+    let intervalId = null;
+    let notificationIntervalId = null;
+    let isLoading = false;
+    let currentUserId = null;
+    let pedidosListosAnteriores = new Set();
+    let pedidosListosActuales = [];
+    
+    // Variables para crear/editar pedido
+    let mesasData = [];
+    let menuDelDia = null;
+    let platosEspeciales = [];
+    let pedidoActual = null;
+    let mesaSeleccionada = null;
+    let menuSeleccionado = null;
+    let opcionesMenuSeleccionadas = {};
+    let modoEdicion = false;
+    let pedidoEditando = null;
+
+    function getAuthHeaders() {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+    }
+
+    async function obtenerUsuarioActual() {
+        try {
+            const response = await fetch('/api/v1/auth/me', {
+                headers: getAuthHeaders()
+            });
+            if (response.ok) {
+                const user = await response.json();
+                currentUserId = user.id;
+            }
+        } catch (error) {
+            console.error('Error obteniendo usuario:', error);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        obtenerUsuarioActual();
+        cargarPedidos();
+        cargarEstadisticas();
+        cargarMesas();
+        cargarMenuDelDia();
+        cargarPlatosEspeciales();
+        verificarPedidosListos();
+
+        intervalId = setInterval(() => {
+            if (!isLoading) {
+                cargarPedidos(true);
+                cargarEstadisticas();
+            }
+        }, 15000);
+
+        // Verificar pedidos listos cada 5 segundos
+        notificationIntervalId = setInterval(() => {
+            verificarPedidosListos();
+        }, 5000);
+    });
+
+    window.addEventListener('beforeunload', function() {
+        if (intervalId) clearInterval(intervalId);
+        if (notificationIntervalId) clearInterval(notificationIntervalId);
+    });
+
+    // ========== FUNCIONES DE CARGA ==========
+    async function cargarPedidos(silent = false) {
+        if (isLoading) return;
+        isLoading = true;
+        
+        if (!silent) {
+            const btn = document.getElementById('btnRefresh');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Actualizando...';
+            }
+        }
+
+        try {
+            const url = filtroEstado 
+                ? `/api/v1/pedidos-mesero/pedidos?estado=${filtroEstado}`
+                : '/api/v1/pedidos-mesero/pedidos';
+
+            const response = await fetch(url, { headers: getAuthHeaders() });
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!response.ok) throw new Error('Error al cargar pedidos');
+
+            pedidosData = await response.json();
+            renderizarPedidos(pedidosData);
+        } catch (error) {
+            console.error('Error:', error);
+            if (!silent) alert('Error al cargar pedidos: ' + error.message);
+        } finally {
+            isLoading = false;
+            if (!silent) {
+                const btn = document.getElementById('btnRefresh');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Actualizar';
+                }
+            }
+        }
+    }
+
+    async function cargarEstadisticas() {
+        try {
+            const response = await fetch('/api/v1/pedidos-mesero/estadisticas', {
+                headers: getAuthHeaders()
+            });
+            if (!response.ok) return;
+
+            const stats = await response.json();
+            document.getElementById('statTotal').textContent = stats.total || 0;
+            document.getElementById('statPendientes').textContent = stats.pendientes || 0;
+            document.getElementById('statEnPreparacion').textContent = stats.en_preparacion || 0;
+            document.getElementById('statListos').textContent = stats.listos || 0;
+            document.getElementById('statHoy').textContent = stats.pedidos_hoy || 0;
+        } catch (error) {
+            console.error('Error cargando estadísticas:', error);
+        }
+    }
+
+    async function cargarMesas() {
+        try {
+            const response = await fetch('/api/v1/pedidos-mesero/mesas', {
+                headers: getAuthHeaders()
+            });
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            const data = await response.json();
+            mesasData = data.mesas;
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    async function cargarMenuDelDia() {
+        try {
+            const response = await fetch('/api/v1/pedidos-mesero/menus-dia-activo', {
+                headers: getAuthHeaders()
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            menuDelDia = data.menu;
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    async function cargarPlatosEspeciales() {
+        try {
+            const response = await fetch('/api/v1/pedidos-mesero/platos-especiales', {
+                headers: getAuthHeaders()
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            platosEspeciales = data.platos;
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // ========== RENDERIZADO ==========
+    function renderizarPedidos(pedidos) {
+        const container = document.getElementById('pedidosContainer');
+        
+        if (pedidos.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-clipboard-x" style="font-size: 5rem; color: var(--secondary-color); margin-bottom: 1.5rem; opacity: 0.6;"></i>
+                    <h4>No hay pedidos</h4>
+                    <p>Tus pedidos aparecerán aquí cuando los crees</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = '';
+        pedidos.forEach(pedido => {
+            const card = crearTarjetaPedido(pedido);
+            container.appendChild(card);
+        });
+    }
+
+    function crearTarjetaPedido(pedido) {
+        const estado = pedido.estado.toLowerCase().replace('_', '-');
+        const estadoTexto = pedido.estado.replace('_', ' ');
+        const detallesCount = pedido.detalles ? pedido.detalles.length : 0;
+        const puedeEditar = pedido.estado === 'BORRADOR' && pedido.mesero_id === currentUserId;
+        const esMio = pedido.mesero_id === currentUserId;
+
+        const cardDiv = document.createElement('div');
+        cardDiv.innerHTML = `
+            <div class="pedido-card ${estado}">
+                ${esMio ? `<span class="badge-mesero"><i class="bi bi-person-check me-1"></i>Mi pedido</span>` : ''}
+                <div class="pedido-card-header">
+                    <div>
+                        <span class="mesa-badge">Mesa ${pedido.mesa_numero || 'N/A'}</span>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar3 me-1"></i>${new Date(pedido.fecha).toLocaleDateString('es-CO')}
+                                <i class="bi bi-clock ms-2 me-1"></i>${new Date(pedido.fecha).toLocaleTimeString('es-CO', {hour: '2-digit', minute: '2-digit'})}
+                            </small>
+                        </div>
+                    </div>
+                    <span class="estado-badge">${estadoTexto}</span>
+                </div>
+                <div class="p-3">
+                    <div class="mb-2">
+                        <i class="bi bi-list-ul me-2"></i><strong>${detallesCount} ${detallesCount === 1 ? 'item' : 'items'}</strong>
+                    </div>
+                    ${pedido.mesero_nombre ? `<div class="mb-2"><small class="text-muted"><i class="bi bi-person me-1"></i>${pedido.mesero_nombre}</small></div>` : ''}
+                    ${pedido.observaciones ? `<div class="alert alert-info py-2 mb-0"><small><i class="bi bi-info-circle me-1"></i>${pedido.observaciones}</small></div>` : ''}
+                </div>
+                <div class="pedido-card-footer">
+                    <button class="btn btn-ver-detalles" onclick="verDetalles(${pedido.id})">
+                        <i class="bi bi-eye-fill"></i><span>Ver</span>
+                    </button>
+                    ${puedeEditar ? `
+                        <button class="btn btn-editar-pedido" onclick="editarPedido(${pedido.id})">
+                            <i class="bi bi-pencil-fill"></i><span>Editar</span>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        return cardDiv;
+    }
+
+    // ========== MODAL CREAR/EDITAR ==========
+    function mostrarModalCrearPedido() {
+        modoEdicion = false;
+        pedidoEditando = null;
+        pedidoActual = null;
+        mesaSeleccionada = null;
+        document.getElementById('modalCrearPedidoTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Nuevo Pedido';
+        document.getElementById('productosSectionModal').style.display = 'none';
+        document.getElementById('btnEnviarCocina').style.display = 'none';
+        document.getElementById('btnGuardarPedido').style.display = 'none';
+        document.getElementById('pedidoItemsModal').innerHTML = '<p class="text-muted text-center">No hay items en el pedido</p>';
+        document.getElementById('pedidoObservacionesModal').value = '';
+        renderizarMesasModal();
+        new bootstrap.Modal(document.getElementById('modalCrearPedido')).show();
+    }
+
+    async function editarPedido(pedidoId) {
+        modoEdicion = true;
+        pedidoEditando = pedidoId;
+        try {
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoId}`, {
+                headers: getAuthHeaders()
+            });
+            if (!response.ok) throw new Error('Error al cargar pedido');
+            pedidoActual = await response.json();
+            mesaSeleccionada = mesasData.find(m => m.id === pedidoActual.mesa_id);
+            document.getElementById('modalCrearPedidoTitle').innerHTML = '<i class="bi bi-pencil me-2"></i>Editar Pedido';
+            document.getElementById('productosSectionModal').style.display = 'block';
+            document.getElementById('btnGuardarPedido').style.display = 'block';
+            renderizarMesasModal();
+            renderizarMenuDelDiaModal();
+            renderizarPlatosEspecialesModal();
+            mostrarPedidoActualModal();
+            new bootstrap.Modal(document.getElementById('modalCrearPedido')).show();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al cargar pedido: ' + error.message);
+        }
+    }
+
+    function renderizarMesasModal() {
+        const container = document.getElementById('listaMesasModal');
+        container.innerHTML = '';
+        mesasData.forEach(mesa => {
+            const selected = mesaSeleccionada && mesaSeleccionada.id === mesa.id ? 'selected' : '';
+            const card = document.createElement('div');
+            card.className = 'col-md-3 mb-3';
+            card.innerHTML = `
+                <div class="mesa-card-select ${selected}" onclick="seleccionarMesaModal(${mesa.id})">
+                    <h5 class="mb-1">Mesa ${mesa.numero}</h5>
+                    <p class="mb-0 small">${mesa.nombre}</p>
+                    ${mesa.capacidad ? `<p class="mb-0 small"><i class="bi bi-people"></i> ${mesa.capacidad}</p>` : ''}
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    async function seleccionarMesaModal(mesaId) {
+        const mesa = mesasData.find(m => m.id === mesaId);
+        if (!mesa) return;
+        mesaSeleccionada = mesa;
+        renderizarMesasModal();
+        
+        if (mesa.tiene_pedido_activo && mesa.pedido_id && !modoEdicion) {
+            await cargarPedidoModal(mesa.pedido_id);
+        } else if (!modoEdicion) {
+            await crearNuevoPedidoModal(mesaId);
+        }
+        
+        document.getElementById('productosSectionModal').style.display = 'block';
+        document.getElementById('btnEnviarCocina').style.display = 'block';
+        renderizarMenuDelDiaModal();
+        renderizarPlatosEspecialesModal();
+    }
+
+    async function crearNuevoPedidoModal(mesaId) {
+        try {
+            const response = await fetch('/api/v1/pedidos-mesero/pedidos', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ mesa_id: mesaId, detalles: [] })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error al crear pedido');
+            }
+            pedidoActual = await response.json();
+            mostrarPedidoActualModal();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al crear pedido: ' + error.message);
+        }
+    }
+
+    async function cargarPedidoModal(pedidoId) {
+        try {
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoId}`, {
+                headers: getAuthHeaders()
+            });
+            if (!response.ok) throw new Error('Error al cargar pedido');
+            pedidoActual = await response.json();
+            mostrarPedidoActualModal();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al cargar pedido: ' + error.message);
+        }
+    }
+
+    function renderizarMenuDelDiaModal() {
+        const container = document.getElementById('menuDelDiaContent');
+        if (!menuDelDia) {
+            container.innerHTML = '<p class="text-muted text-center">No hay menú del día activo</p>';
+            return;
+        }
+        container.innerHTML = `
+            <h6>${menuDelDia.nombre}</h6>
+            <p class="text-muted small">${menuDelDia.descripcion || ''}</p>
+            <p class="h5 text-primary">$${menuDelDia.precio.toLocaleString('es-CO')}</p>
+            <button class="btn btn-primary btn-sm w-100 mt-2" onclick="mostrarOpcionesMenu(${menuDelDia.id})">
+                <i class="bi bi-plus-circle me-2"></i>Agregar
+            </button>
+        `;
+    }
+
+    function renderizarPlatosEspecialesModal() {
+        const container = document.getElementById('platosEspecialesContent');
+        if (platosEspeciales.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No hay platos especiales disponibles</p>';
+            return;
+        }
+        container.innerHTML = platosEspeciales.map(plato => `
+            <div class="card mb-2">
+                <div class="card-body p-2">
+                    <h6 class="mb-1" style="font-size: 0.9rem;">${plato.nombre}</h6>
+                    <p class="text-muted small mb-1">${plato.descripcion || ''}</p>
+                    <p class="h6 text-success mb-2" style="font-size: 1rem;">$${plato.precio.toLocaleString('es-CO')}</p>
+                    <button class="btn btn-success btn-sm w-100" onclick="agregarPlatoAPedido(${plato.id})">
+                        <i class="bi bi-plus-circle me-1"></i>Agregar
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function mostrarPedidoActualModal() {
+        if (!pedidoActual) return;
+        const container = document.getElementById('pedidoItemsModal');
+        if (pedidoActual.observaciones) {
+            document.getElementById('pedidoObservacionesModal').value = pedidoActual.observaciones;
+        }
+        if (!pedidoActual.detalles || pedidoActual.detalles.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No hay items en el pedido</p>';
+            return;
+        }
+        container.innerHTML = pedidoActual.detalles.map(detalle => {
+            let opcionesHtml = '';
+            if (detalle.opciones && detalle.opciones.length > 0) {
+                opcionesHtml = '<div class="mt-1">';
+                detalle.opciones.forEach(op => {
+                    opcionesHtml += `<span class="badge bg-primary me-1">${op.categoria}: ${op.opcion_elegida}</span>`;
+                });
+                opcionesHtml += '</div>';
+            }
+            return `
+                <div class="item-pedido-edit">
+                    <div>
+                        <strong>${detalle.nombre_snapshot}</strong>
+                        ${detalle.descripcion_snapshot ? `<p class="text-muted small mb-0">${detalle.descripcion_snapshot}</p>` : ''}
+                        ${opcionesHtml}
+                        ${detalle.observaciones ? `<p class="text-muted small mt-1 mb-0"><em>${detalle.observaciones}</em></p>` : ''}
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarItem(${detalle.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function mostrarOpcionesMenu(menuId) {
+        menuSeleccionado = menuDelDia;
+        opcionesMenuSeleccionadas = {};
+        const container = document.getElementById('opcionesMenuContent');
+        let html = '<h6>Selecciona las opciones:</h6>';
+        menuDelDia.categorias.forEach(categoria => {
+            html += `
+                <div class="mb-3">
+                    <label class="form-label"><strong>${categoria.nombre}</strong></label>
+                    <select class="form-select" id="opcion_${categoria.id}" onchange="seleccionarOpcion('${categoria.nombre}', this.value, this.options[this.selectedIndex].text)">
+                        <option value="">Selecciona una opción</option>
+                        ${categoria.platos.map(plato => `<option value="${plato.id}">${plato.nombre}</option>`).join('')}
+                    </select>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+        new bootstrap.Modal(document.getElementById('opcionesMenuModal')).show();
+    }
+
+    function seleccionarOpcion(categoria, platoId, platoNombre) {
+        if (platoId) {
+            opcionesMenuSeleccionadas[categoria] = { id: parseInt(platoId), nombre: platoNombre };
+        } else {
+            delete opcionesMenuSeleccionadas[categoria];
+        }
+    }
+
+    async function agregarMenuAPedido() {
+        if (!pedidoActual) {
+            alert('No hay pedido activo');
+            return;
+        }
+        try {
+            const opciones = Object.keys(opcionesMenuSeleccionadas).map(categoria => ({
+                categoria: categoria,
+                opcion_elegida: opcionesMenuSeleccionadas[categoria].nombre,
+                opcion_plato_id: opcionesMenuSeleccionadas[categoria].id
+            }));
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoActual.id}/detalles`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    tipo_item: 'MENU',
+                    menu_id: menuDelDia.id,
+                    opciones_menu: opciones
+                })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error al agregar menú');
+            }
+            bootstrap.Modal.getInstance(document.getElementById('opcionesMenuModal')).hide();
+            await cargarPedidoModal(pedidoActual.id);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error: ' + error.message);
+        }
+    }
+
+    async function agregarPlatoAPedido(platoId) {
+        if (!pedidoActual) {
+            alert('No hay pedido activo');
+            return;
+        }
+        try {
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoActual.id}/detalles`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ tipo_item: 'PLATO', plato_id: platoId })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error al agregar plato');
+            }
+            await cargarPedidoModal(pedidoActual.id);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error: ' + error.message);
+        }
+    }
+
+    async function eliminarItem(detalleId) {
+        if (!confirm('¿Eliminar este item del pedido?')) return;
+        if (!pedidoActual) return;
+        try {
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoActual.id}/detalles/${detalleId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            if (!response.ok) throw new Error('Error al eliminar item');
+            await cargarPedidoModal(pedidoActual.id);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al eliminar item');
+        }
+    }
+
+    async function guardarPedido() {
+        if (!pedidoActual) return;
+        const observaciones = document.getElementById('pedidoObservacionesModal').value;
+        try {
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoActual.id}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ observaciones: observaciones })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error al guardar pedido');
+            }
+            bootstrap.Modal.getInstance(document.getElementById('modalCrearPedido')).hide();
+            cargarPedidos();
+            alert('Pedido guardado exitosamente');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error: ' + error.message);
+        }
+    }
+
+    async function enviarPedidoCocina() {
+        if (!pedidoActual) return;
+        if (pedidoActual.detalles.length === 0) {
+            alert('El pedido debe tener al menos un item');
+            return;
+        }
+        const observaciones = document.getElementById('pedidoObservacionesModal').value;
+        try {
+            if (observaciones !== pedidoActual.observaciones) {
+                await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoActual.id}`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ observaciones: observaciones })
+                });
+            }
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoActual.id}/enviar-cocina`, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error al enviar pedido');
+            }
+            bootstrap.Modal.getInstance(document.getElementById('modalCrearPedido')).hide();
+            cargarPedidos();
+            alert('Pedido enviado a cocina exitosamente');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error: ' + error.message);
+        }
+    }
+
+    // ========== FUNCIONES EXISTENTES ==========
+    async function verDetalles(pedidoId) {
+        const pedido = pedidosData.find(p => p.id === pedidoId);
+        if (!pedido) return;
+        const modalBody = document.getElementById('detallesModalBody');
+        let detallesHtml = '';
+        if (pedido.detalles && pedido.detalles.length > 0) {
+            pedido.detalles.forEach(detalle => {
+                let opcionesHtml = '';
+                if (detalle.opciones && detalle.opciones.length > 0) {
+                    opcionesHtml = '<div class="opciones-container">';
+                    detalle.opciones.forEach(op => {
+                        opcionesHtml += `<span class="opcion-badge"><strong>${op.categoria}:</strong> ${op.opcion_elegida}</span>`;
+                    });
+                    opcionesHtml += '</div>';
+                }
+                detallesHtml += `
+                    <div class="item-detalle">
+                        <div class="item-nombre">${detalle.nombre_snapshot}</div>
+                        ${detalle.descripcion_snapshot ? `<p class="text-muted mb-2">${detalle.descripcion_snapshot}</p>` : ''}
+                        ${opcionesHtml}
+                        ${detalle.observaciones ? `<p class="text-muted mt-2 mb-0"><em><i class="bi bi-info-circle me-1"></i>${detalle.observaciones}</em></p>` : ''}
+                    </div>
+                `;
+            });
+        }
+        modalBody.innerHTML = `
+            <div class="mb-3"><strong>Mesa:</strong> ${pedido.mesa_nombre || `Mesa ${pedido.mesa_numero}`}</div>
+            <div class="mb-3"><strong>Estado:</strong> <span class="estado-badge ${pedido.estado.toLowerCase().replace('_', '-')}">${pedido.estado.replace('_', ' ')}</span></div>
+            <div class="mb-3"><strong>Fecha:</strong> ${new Date(pedido.fecha).toLocaleString('es-CO')}</div>
+            ${pedido.mesero_nombre ? `<div class="mb-3"><strong>Mesero:</strong> ${pedido.mesero_nombre}</div>` : ''}
+            ${pedido.observaciones ? `<div class="alert alert-info mb-3"><strong>Observaciones:</strong><br>${pedido.observaciones}</div>` : ''}
+            <div class="mb-3"><strong>Detalles del Pedido:</strong>${detallesHtml || '<p class="text-muted">No hay detalles</p>'}</div>
+        `;
+        new bootstrap.Modal(document.getElementById('detallesModal')).show();
+    }
+
+    function aplicarFiltro(estado) {
+        filtroEstado = estado;
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.classList.remove('active');
+            if (chip.dataset.estado === estado) {
+                chip.classList.add('active');
+            }
+        });
+        cargarPedidos();
+    }
+
+    // ========== SISTEMA DE NOTIFICACIONES ==========
+    async function verificarPedidosListos() {
+        if (!currentUserId) return;
+        
+        try {
+            const response = await fetch('/api/v1/pedidos-mesero/pedidos?estado=LISTO', {
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) return;
+            
+            const todosLosPedidosListos = await response.json();
+            
+            // Filtrar solo los pedidos del mesero actual
+            pedidosListosActuales = todosLosPedidosListos.filter(p => p.mesero_id === currentUserId);
+            
+            // Detectar nuevos pedidos listos
+            const nuevosPedidosListos = pedidosListosActuales.filter(p => !pedidosListosAnteriores.has(p.id));
+            
+            if (nuevosPedidosListos.length > 0) {
+                // Reproducir sonido de notificación
+                reproducirSonidoNotificacion();
+                
+                // Mostrar notificación visual
+                mostrarNotificacionPedidosListos(nuevosPedidosListos);
+            }
+            
+            // Actualizar el conjunto de pedidos listos conocidos
+            pedidosListosAnteriores = new Set(pedidosListosActuales.map(p => p.id));
+            
+            // Actualizar UI de notificaciones
+            actualizarUINotificaciones();
+            
+        } catch (error) {
+            console.error('Error verificando pedidos listos:', error);
+        }
+    }
+
+    function reproducirSonidoNotificacion() {
+        // Crear un sonido de notificación simple usando Web Audio API
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        } catch (error) {
+            console.log('No se pudo reproducir sonido de notificación:', error);
+        }
+    }
+
+    function mostrarNotificacionPedidosListos(nuevosPedidos) {
+        const alertDiv = document.getElementById('alertPedidosListos');
+        const alertText = document.getElementById('alertPedidosListosText');
+        
+        if (nuevosPedidos.length === 1) {
+            alertText.textContent = `¡Pedido de Mesa ${nuevosPedidos[0].mesa_numero} está listo!`;
+        } else {
+            alertText.textContent = `¡Tienes ${nuevosPedidos.length} pedidos listos para servir!`;
+        }
+        
+        alertDiv.style.display = 'flex';
+        
+        // Auto-ocultar después de 10 segundos
+        setTimeout(() => {
+            alertDiv.style.display = 'none';
+        }, 10000);
+    }
+
+    function actualizarUINotificaciones() {
+        const count = pedidosListosActuales.length;
+        const countBadge = document.getElementById('notificationCount');
+        const btnNotification = document.getElementById('btnNotification');
+        
+        if (count > 0) {
+            countBadge.textContent = count > 99 ? '99+' : count;
+            countBadge.style.display = 'flex';
+            btnNotification.style.background = 'rgba(40, 167, 69, 0.3)';
+            btnNotification.style.borderColor = 'rgba(40, 167, 69, 0.5)';
+        } else {
+            countBadge.style.display = 'none';
+            btnNotification.style.background = 'rgba(255, 255, 255, 0.2)';
+            btnNotification.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+        }
+        
+        // Actualizar panel de notificaciones
+        actualizarPanelNotificaciones();
+    }
+
+    function actualizarPanelNotificaciones() {
+        const panelBody = document.getElementById('notificationPanelBody');
+        
+        if (pedidosListosActuales.length === 0) {
+            panelBody.innerHTML = '<p class="text-muted text-center">No hay pedidos listos</p>';
+            return;
+        }
+        
+        panelBody.innerHTML = pedidosListosActuales.map(pedido => {
+            const tiempoListo = pedido.hora_finalizacion 
+                ? new Date(pedido.hora_finalizacion).toLocaleTimeString('es-CO', {hour: '2-digit', minute: '2-digit'})
+                : 'Recién';
+            
+            return `
+                <div class="notification-item" onclick="verDetalles(${pedido.id}); toggleNotificationPanel();">
+                    <div class="notification-item-header">
+                        <div class="notification-item-title">
+                            <i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Mesa ${pedido.mesa_numero || 'N/A'}
+                        </div>
+                        <div class="notification-item-time">${tiempoListo}</div>
+                    </div>
+                    <div class="notification-item-body">
+                        ${pedido.detalles ? `${pedido.detalles.length} ${pedido.detalles.length === 1 ? 'item' : 'items'}` : 'Sin items'}
+                        ${pedido.observaciones ? `<br><small class="text-muted"><i class="bi bi-info-circle me-1"></i>${pedido.observaciones}</small>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function toggleNotificationPanel() {
+        const panel = document.getElementById('notificationPanel');
+        panel.classList.toggle('show');
+        
+        if (panel.classList.contains('show')) {
+            actualizarPanelNotificaciones();
+        }
+    }
+
+    function filtrarPedidosListos() {
+        aplicarFiltro('LISTO');
+        document.getElementById('alertPedidosListos').style.display = 'none';
+        
+        // Scroll a la sección de pedidos
+        document.getElementById('pedidosContainer').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+{% endblock %}
