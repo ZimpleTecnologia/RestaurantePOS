@@ -14,8 +14,6 @@ class UserRole(str, enum.Enum):
     MESERO = "MESERO"
     COCINA = "COCINA"
     CAJA = "CAJA"
-    ALMACEN = "ALMACEN"
-    SUPERVISOR = "SUPERVISOR"
 
 
 class User(Base):
@@ -26,6 +24,7 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(100), unique=True, nullable=False)
     full_name = Column(String(100), nullable=False)
+    telefono = Column(String(20), nullable=True)  # Campo añadido
     hashed_password = Column(String(255), nullable=False)
     role = Column(Enum(UserRole), default=UserRole.MESERO, nullable=False)
     is_active = Column(Boolean, default=True)
@@ -34,9 +33,26 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     last_login = Column(DateTime(timezone=True), nullable=True)
     
-    # Relaciones
+    # Relaciones existentes
     sales = relationship("Sale", back_populates="user")
     inventory_movements = relationship("InventoryMovement", back_populates="user")
     
+    # Nueva relación muchos-a-muchos con permisos
+    permisos = relationship(
+        "Permiso",
+        secondary="usuario_permiso",
+        back_populates="usuarios",
+        lazy="selectin"  # Carga automática de permisos
+    )
+    
     def __repr__(self):
-        return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>" 
+        return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"
+    
+    def tiene_permiso(self, codigo_permiso: str) -> bool:
+        """
+        Verifica si el usuario tiene un permiso específico
+        Los ADMIN tienen todos los permisos por defecto
+        """
+        if self.role == UserRole.ADMIN:
+            return True
+        return any(p.codigo == codigo_permiso and p.estado for p in self.permisos) 

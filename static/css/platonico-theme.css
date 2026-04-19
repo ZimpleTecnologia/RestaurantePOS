@@ -1,0 +1,145 @@
+/**
+ * Platónico - Sistema de Diseño
+ * Colores basados en la identidad visual del restaurante
+ * 
+ * Paleta de colores:
+ * - Primary: #7A1E2C (rojo vino)
+ * - Secondary: #A67C52 (cobre cálido)
+ * - Background: #F2E8D5 (crema claro)
+ * - Text: #5C3A21 (marrón oscuro)
+ * - Accent: #D9BBAE
+ */
+
+:root {
+    /* ========== PRIMARY - Rojo Vino ========== */
+    --color-primary-50: #F9EBEB;
+    --color-primary-100: #F3D7D7;
+    --color-primary-200: #E7AFB0;
+    --color-primary-300: #DB8788;
+    --color-primary-400: #CF5F61;
+    --color-primary-500: #7A1E2C;
+    --color-primary-600: #6B1825;
+    --color-primary-700: #5A1420;
+    --color-primary-800: #4A101B;
+    --color-primary-900: #3A0C15;
+
+    /* ========== SECONDARY - Marrón Claro ========== */
+    --color-secondary-50: #F9F4EE;
+    --color-secondary-100: #F3E9DD;
+    --color-secondary-200: #E7D3BB;
+    --color-secondary-300: #DBBD99;
+    --color-secondary-400: #CFA777;
+    --color-secondary-500: #A67C52;
+    --color-secondary-600: #956F4A;
+    --color-secondary-700: #846241;
+    --color-secondary-800: #735539;
+    --color-secondary-900: #5C3A21;
+
+    /* ========== ACCENT - Marrón Suave/Beige ========== */
+    --color-accent-50: #FDFBFA;
+    --color-accent-100: #FBF7F5;
+    --color-accent-200: #F7EFEB;
+    --color-accent-300: #F3E7E1;
+    --color-accent-400: #ECD7CD;
+    --color-accent-500: #D9BBAE;
+    --color-accent-600: #C2A89C;
+    --color-accent-700: #AB958B;
+    --color-accent-800: #938178;
+    --color-accent-900: #2B2B2B; /* Negro/Gris oscuro para máximo contraste */
+
+    /* ========== BACKGROUND ========== */
+    --bg-main: #F2E8D5;
+    --bg-soft: #E8DCC4;
+    --bg-white: #FFFFFF;
+    --bg-dark: #2B2B2B;
+
+    /* ========== TEXT ========== */
+    --text-primary: #5C3A21;
+    --text-secondary: #735539;
+    --text-muted: #846241;
+    --text-dark: #2B2B2B;
+    --text-white: #FFFFFF;
+
+    /* ========== SEMANTIC ========== */
+    --success: #5D8A4A;
+    --warning: #D4A84B;
+    --danger: #B84A4A;
+    --info: #4A7BB8;
+
+    /* ========== ALIAS ========== */
+    --primary: #7A1E2C;
+    --secondary: #A67C52;
+    --accent: #D9BBAE;
+    --dark: #2B2B2B;
+}
+
+/* Tailwind Color Extensions */
+.bg-primary-50 { background-color: var(--color-primary-50); }
+.bg-primary-100 { background-color: var(--color-primary-100); }
+.bg-primary-200 { background-color: var(--color-primary-200); }
+.bg-primary-300 { background-color: var(--color-primary-300); }
+.bg-primary-400 { background-color: var(--color-primary-400); }
+.bg-primary-500 { background-color: var(--color-primary-500); }
+.bg-primary-600 { background-color: var(--color-primary-600); }
+.bg-primary-700 { background-color: var(--color-primary-700); }
+.bg-primary-800 { background-color: var(--color-primary-800); }
+.bg-primary-900 { background-color: var(--color-primary-900); }
+
+.text-primary-50 { color: var(--color-primary-50); }
+.text-primary-100 { color: var(--color-primary-100); }
+.text-primary-200 { color: var(--color-primary-200); }
+.text-primary-300 { color: var(--color-primary-300); }
+.text-primary-400 { color: var(--color-primary-400); }
+.text-primary-500 { color: var(--color-primary-500); }
+.text-primary-600 { color: var(--color-primary-600); }
+.text-primary-700 { color: var(--color-primary-700); }
+.text-primary-800 { color: var(--color-primary-800); }
+.text-primary-900 { color: var(--color-primary-900); }
+
+.bg-secondary-50 { background-color: var(--color-secondary-50); }
+.bg-secondary-100 { background-color: var(--color-secondary-100); }
+.bg-secondary-200 { background-color: var(--color-secondary-200); }
+.bg-secondary-300 { background-color: var(--color-secondary-300); }
+.bg-secondary-400 { background-color: var(--color-secondary-400); }
+.bg-secondary-500 { background-color: var(--color-secondary-500); }
+.bg-secondary-600 { background-color: var(--color-secondary-600); }
+.bg-secondary-700 { background-color: var(--color-secondary-700); }
+
+.text-secondary-500 { color: var(--color-secondary-500); }
+.text-secondary-600 { color: var(--color-secondary-600); }
+.text-secondary-700 { color: var(--color-secondary-700); }
+
+.bg-accent-50 { background-color: var(--color-accent-50); }
+.bg-accent-100 { background-color: var(--color-accent-100); }
+.bg-accent-500 { background-color: var(--color-accent-500); }
+.text-accent-500 { color: var(--color-accent-500); }
+.text-accent-600 { color: var(--color-accent-600); }
+
+/* Gradients */
+.from-primary-500 { --tw-gradient-from: var(--color-primary-500); }
+.to-primary-600 { --tw-gradient-to: var(--color-primary-600); }
+.from-secondary-500 { --tw-gradient-from: var(--color-secondary-500); }
+.to-secondary-600 { --tw-gradient-to: var(--color-secondary-600); }
+
+/* Border colors */
+.border-primary-500 { border-color: var(--color-primary-500); }
+.border-primary-600 { border-color: var(--color-primary-600); }
+.border-secondary-400 { border-color: var(--color-secondary-400); }
+.border-secondary-500 { border-color: var(--color-secondary-500); }
+
+/* Hover states */
+.hover\:bg-primary-600:hover { background-color: var(--color-primary-600); }
+.hover\:bg-primary-700:hover { background-color: var(--color-primary-700); }
+.hover\:bg-secondary-500:hover { background-color: var(--color-secondary-500); }
+.hover\:text-primary-600:hover { color: var(--color-primary-600); }
+.hover\:text-primary-700:hover { color: var(--color-primary-700); }
+.hover\:text-secondary-600:hover { color: var(--color-secondary-600); }
+.hover\:border-primary-500:hover { border-color: var(--color-primary-500); }
+.hover\:border-secondary-500:hover { border-color: var(--color-secondary-500); }
+
+/* Ring */
+.ring-primary-500 { --tw-ring-color: var(--color-primary-500); }
+.ring-secondary-500 { --tw-ring-color: var(--color-secondary-500); }
+
+/* Shadows */
+.shadow-primary { box-shadow: 0 4px 6px -1px rgba(123, 30, 43, 0.2); }

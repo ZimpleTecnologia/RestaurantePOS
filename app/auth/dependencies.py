@@ -65,12 +65,13 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
+# Nota: Esta función se mantiene por compatibilidad pero ahora solo verifica ADMIN
 def require_supervisor_or_admin(current_user: User = Depends(get_current_user)) -> User:
-    """Requerir rol de supervisor o administrador"""
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERVISOR]:
+    """Requerir rol de administrador (deprecated: usar require_admin)"""
+    if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Se requieren permisos de supervisor o administrador"
+            detail="Se requieren permisos de administrador"
         )
     return current_user
 

@@ -1,584 +1,321 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Plantónico POS</title>
-    
+    <title>Login - Platónico POS</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" sizes="32x32" href="/static/images/platonico_logo.jpg">
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Google Fonts - Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Dancing+Script&display=swap"
+        rel="stylesheet">
+
     <style>
         :root {
-            --background-color: #FDF6EC;
-            --card-color: #FFFFFF;
-            --primary-brown: #4E342E;
-            --accent-yellow: #FFB300;
-            --text-gray: #555;
-            --text-dark: #333;
-            --shadow-light: rgba(0, 0, 0, 0.1);
-            --shadow-medium: rgba(0, 0, 0, 0.15);
+            --bg-beige: #F2E8D5;
+            --primary-wine: #7A1E2C;
+            --secondary-brown: #5C3A21;
+            --text-dark: #2B2B2B;
+            --border-metal: #8A8F94;
+            --accent-gold: #C9A66B;
+            --accent-copper: #B87333;
         }
-        
+
         * {
-            font-family: 'Poppins', sans-serif;
-        }
-        
-        body {
-            background-color: var(--background-color);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            padding: 20px;
-        }
-        
-        .login-container {
-            background: var(--card-color);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px var(--shadow-light);
-            overflow: hidden;
-            width: 100%;
-            max-width: 450px;
-            margin: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        /* Logo Plantónico */
-        .logo-container {
-            text-align: center;
-            padding: 50px 30px;
-            background: linear-gradient(135deg, var(--background-color) 0%, #F5F0E8 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            width: 100%;
-        }
-        
-        .logo-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            position: relative;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
-        
-        .logo-image {
-            width: 100%;
-            max-width: 400px;
-            height: auto;
-            object-fit: contain;
-            filter: drop-shadow(0 4px 8px var(--shadow-light));
-            transition: transform 0.3s ease;
-            display: block;
-            margin: 0 auto;
-            position: relative;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        
-        .logo-image:hover {
-            transform: translateX(-50%) scale(1.02);
-        }
-        
-        .login-header {
-            background: var(--card-color);
-            color: var(--text-dark);
-            padding: 30px;
-            text-align: center;
-            border-bottom: 1px solid #F0F0F0;
-        }
-        
-        .login-header h2 {
-            margin: 0;
-            font-weight: 600;
-            font-size: 1.5rem;
-            color: var(--primary-brown);
-        }
-        
-        /* Logo PLATÓNICO */
-        .platonic-logo {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .logo-container {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .logo-starburst {
-            width: 120px;
-            height: 120px;
-            background: linear-gradient(45deg, #ffd700, #ffed4e);
-            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-        }
-        
-        .logo-plate {
-            width: 80px;
-            height: 80px;
-            background: #8B4513;
-            border-radius: 50%;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .logo-food {
-            width: 60px;
-            height: 60px;
-            background: #CD853F;
-            border-radius: 50%;
-            position: relative;
+
+        body,
+        html {
+            height: 100%;
+            font-family: 'Montserrat', sans-serif;
+            background-color: #F2E8D5;
+            /* Un tono un poco más oscuro para el fondo general */
+            background-image: url('https://www.transparenttextures.com/patterns/linen.png');
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        
-        .logo-egg {
-            width: 25px;
-            height: 25px;
-            background: #FFD700;
-            border-radius: 50%;
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
+
+        /* Contenedor Flotante con dimensiones de Mockup (1100x850px) */
+        .login-main-container {
+            width: 1100px;
+            height: 850px;
+            background-color: var(--bg-beige);
+            border-radius: 25px;
+            box-shadow: 0 35px 70px -15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            overflow: hidden;
+            animation: fadeIn 0.8s ease-out;
         }
-        
-        .logo-egg::after {
+
+        /* Lado Izquierdo: Imagen Gastronómica Proporcional */
+        .visual-side {
+            flex: 1;
+            width: 50%;
+            background: url('/static/images/platonico_login_bbq.png') no-repeat;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .visual-side::after {
             content: '';
             position: absolute;
-            top: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 15px;
-            height: 15px;
-            background: white;
-            border-radius: 50%;
-        }
-        
-        .logo-garnish {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: #32CD32;
-            border-radius: 50%;
-        }
-        
-        .logo-garnish:nth-child(1) { top: 15px; left: 20px; }
-        .logo-garnish:nth-child(2) { top: 20px; right: 15px; }
-        .logo-garnish:nth-child(3) { bottom: 15px; left: 15px; }
-        .logo-garnish:nth-child(4) { bottom: 20px; right: 20px; }
-        
-        .logo-text {
-            margin-top: 15px;
-            text-align: center;
-        }
-        
-        .logo-title {
-            font-family: 'Georgia', serif;
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #8B4513;
-            margin: 0;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
-        
-        .logo-subtitle {
-            font-family: 'Georgia', serif;
-            font-size: 0.9rem;
-            color: #8B4513;
-            margin: 5px 0 0 0;
-            font-style: italic;
-        }
-        
-        .logo-banners {
-            position: absolute;
-            top: 50%;
-            left: 0;
+            top: 0;
             right: 0;
-            transform: translateY(-50%);
-            display: flex;
-            justify-content: space-between;
-            pointer-events: none;
+            bottom: 0;
+            width: 40px;
+            background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.08));
         }
-        
-        .logo-banner {
-            width: 30px;
-            height: 15px;
-            background: #8B4513;
-            border-radius: 3px;
+
+        /* Lado Derecho: Formulario Centrado */
+        .form-side {
+            flex: 1;
+            width: 50%;
+            background-color: var(--bg-beige);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #FFD700;
-            font-weight: bold;
-            font-size: 0.8rem;
+            padding: 30px; /* Reducido un poco para dar más aire al formulario */
         }
-        
-        .logo-utensils {
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-        }
-        
-        .logo-spoon, .logo-fork {
-            width: 20px;
-            height: 3px;
-            background: #8B4513;
-            border-radius: 2px;
-        }
-        
-        .logo-fork::after {
-            content: '';
-            position: absolute;
-            right: -2px;
-            top: -1px;
-            width: 2px;
-            height: 5px;
-            background: #8B4513;
-            border-radius: 1px;
-        }
-        
-        .login-header p {
-            margin: 10px 0 0 0;
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-        
-        .login-body {
-            padding: 40px 30px;
-        }
-        
-        .form-floating {
-            margin-bottom: 20px;
-        }
-        
-        .form-floating input {
-            border-radius: 12px;
-            border: 2px solid #E8E8E8;
-            padding: 16px 20px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: var(--card-color);
-            color: var(--text-dark);
-        }
-        
-        .form-floating input:focus {
-            border-color: var(--primary-brown);
-            box-shadow: 0 0 0 0.2rem rgba(78, 52, 46, 0.15);
-            background: var(--card-color);
-        }
-        
-        .form-floating input::placeholder {
-            color: var(--text-gray);
-        }
-        
-        .form-floating label {
-            color: var(--text-gray);
-            font-weight: 500;
-            padding: 16px 20px;
-        }
-        
-        .btn-login {
-            background: var(--primary-brown);
-            border: none;
-            border-radius: 12px;
-            padding: 16px;
-            font-weight: 600;
+
+        .login-box {
             width: 100%;
-            margin-top: 20px;
+            max-width: 440px; /* Aumentado ~30% */
+            text-align: center;
+        }
+
+        .logo-container {
+            margin-bottom: 35px;
+        }
+
+        .platonic-logo {
+            max-width: 250px; /* Aumentado de 180px a 250px (~40%) para impacto visual */
+            height: auto;
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+            text-align: left;
+        }
+
+        .form-label {
+            font-size: 1rem; /* Aumentado de 0.75rem */
+            font-weight: 700;
+            color: var(--border-metal);
+            margin-bottom: 10px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .form-control {
+            background-color: rgba(255, 255, 255, 0.6);
+            border: 2px solid var(--border-metal);
+            border-radius: 12px;
+            padding: 16px 22px; /* Aumentado de 14/18 */
+            font-size: 1.25rem; /* Aumentado de 1rem */
+            color: var(--text-dark);
             transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background-color: #fff;
+            border-color: var(--accent-copper);
+            box-shadow: 0 0 0 5px rgba(184, 115, 51, 0.1);
+            outline: none;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--border-metal);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-login {
+            background-color: var(--primary-wine);
             color: white;
-            font-size: 16px;
-        }
-        
-        .btn-login:hover {
-            background: var(--accent-yellow);
-            color: var(--primary-brown);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 179, 0, 0.3);
-        }
-        
-        .alert {
-            border-radius: 10px;
             border: none;
+            border-radius: 50px;
+            padding: 20px; /* Aumentado de 16px */
+            width: 100%;
+            font-weight: 700;
+            font-size: 1.3rem; /* Aumentado de 1rem */
+            letter-spacing: 3px;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(122, 30, 44, 0.2);
         }
-        
-        .loading {
-            display: none;
+
+        .btn-login:hover {
+            background-color: #5A1621;
+            transform: translateY(-1px);
+            box-shadow: 0 15px 25px rgba(122, 30, 44, 0.3);
+            color: white;
         }
-        
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
-        }
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .login-container {
-                margin: 10px;
-                max-width: 100%;
-            }
-            
-            .logo-container {
-                padding: 40px 20px;
-                width: 100%;
-            }
-            
-            .logo-wrapper {
-                width: 100%;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin: 0;
-                padding: 0;
-            }
-            
-            .logo-image {
-                max-width: 100%;
-                max-height: 200px;
-                left: 50%;
-                transform: translateX(-50%);
-                margin: 0;
-            }
-            
-            .login-body {
-                padding: 30px 20px;
-            }
-            
-            .form-floating input {
-                padding: 14px 16px;
-                font-size: 16px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .logo-container {
-                padding: 30px 15px;
-                width: 100%;
-            }
-            
-            .logo-wrapper {
-                width: 100%;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                margin: 0;
-                padding: 0;
-            }
-            
-            .logo-image {
-                max-width: 100%;
-                max-height: 150px;
-                left: 50%;
-                transform: translateX(-50%);
-                margin: 0;
-            }
-        }
-        
-        /* Animaciones */
-        @keyframes fadeInUp {
+
+        @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
-        .login-container {
-            animation: fadeInUp 0.6s ease-out;
+
+        .alert {
+            border-radius: 12px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .copyright {
+            margin-top: 40px;
+            font-size: 0.75rem;
+            color: var(--border-metal);
+            opacity: 0.6;
+        }
+
+        /* Mobile Layout */
+        @media (max-width: 850px) {
+            .login-main-container {
+                flex-direction: column;
+                height: auto;
+                max-width: 450px;
+            }
+
+            .visual-side {
+                display: none;
+            }
+
+            .form-side {
+                padding: 40px 20px;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="login-container">
-        <!-- Logo Plantónico -->
-        <div class="logo-container">
-            <div class="logo-wrapper">
-                <img src="/static/images/platonico_logo.png" alt="Plantónico Logo" class="logo-image">
-            </div>
-        </div>
-        
-        <div class="login-body">
-            <div id="alert-container"></div>
-            
-            <form id="loginForm">
-                <div class="form-floating">
-                    <input type="text" class="form-control" id="username" name="username" placeholder="Usuario" required>
-                    <label for="username"><i class="bi bi-person"></i> Usuario</label>
+
+    <div class="login-main-container">
+        <!-- Visual (Izquierda): Solo Comida -->
+        <div class="visual-side"></div>
+
+        <!-- Form (Derecha): Centrado y Limpio -->
+        <div class="form-side">
+            <div class="login-box">
+                <div class="logo-container">
+                    <img src="/static/images/platonico_logo.jpg" alt="Logo Platónico" class="platonic-logo">
                 </div>
-                
-                <div class="form-floating">
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Contraseña" required>
-                    <label for="password"><i class="bi bi-lock"></i> Contraseña</label>
+
+                <div id="alert-container"></div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">Usuario</label>
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Tu usuario"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Contraseña</label>
+                        <div class="password-wrapper">
+                            <input type="password" class="form-control" id="password" name="password"
+                                placeholder="Tu contraseña" required>
+                            <i class="bi bi-eye-slash password-toggle" id="togglePassword"></i>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-login" id="loginBtn">
+                        <span class="btn-text">LOGIN</span>
+                        <div class="spinner-border spinner-border-sm d-none" id="loadingSpinner" role="status"></div>
+                    </button>
+
+                    <!-- Enlaces adicionales eliminados según solicitud -->
+                </form>
+
+                <div class="copyright">
+                    © 2024 Platónico POS
                 </div>
-                
-                <button type="submit" class="btn btn-primary btn-login" id="loginBtn">
-                    <span class="btn-text">
-                        <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
-                    </span>
-                    <span class="loading">
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        Iniciando...
-                    </span>
-                </button>
-            </form>
-            
-            <div class="text-center mt-4">
-                <small class="text-muted">
-                    <i class="bi bi-info-circle"></i> 
-                    Acceso restringido por roles
-                </small>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        const togglePassword = document.querySelector('#togglePassword');
+        const passwordInput = document.querySelector('#password');
+        togglePassword.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.classList.toggle('bi-eye');
+            this.classList.toggle('bi-eye-slash');
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const loginBtn = document.getElementById('loginBtn');
             const btnText = loginBtn.querySelector('.btn-text');
-            const loading = loginBtn.querySelector('.loading');
-            
-            // Mostrar loading
-            btnText.style.display = 'none';
-            loading.style.display = 'inline-block';
+            const spinner = document.getElementById('loadingSpinner');
+
+            btnText.classList.add('d-none');
+            spinner.classList.remove('d-none');
             loginBtn.disabled = true;
-            
+
             try {
                 const response = await fetch('/api/v1/auth/login-json', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
                 });
-                
                 const data = await response.json();
-                
                 if (response.ok) {
-                    // Guardar token en localStorage y cookies
                     localStorage.setItem('auth_token', data.access_token);
-                    localStorage.setItem('access_token', data.access_token);
-                    
-                    // También guardar en cookies para el middleware
                     document.cookie = `auth_token=${data.access_token}; path=/; max-age=${30 * 60}; SameSite=Strict`;
-                    
-                    // Obtener información del usuario
-                    const userResponse = await fetch('/api/v1/auth/me', {
-                        headers: {
-                            'Authorization': `Bearer ${data.access_token}`
-                        }
-                    });
-                    
-                    if (userResponse.ok) {
-                        const userInfo = await userResponse.json();
-                        localStorage.setItem('user_info', JSON.stringify(userInfo));
-                        
-                        // Redirigir según el rol
-                        redirectByRole(userInfo.role);
-                    } else {
-                        throw new Error('Error obteniendo información del usuario');
-                    }
+                    window.location.href = '/';
                 } else {
-                    throw new Error(data.detail || 'Error de autenticación');
+                    showAlert('danger', data.detail || 'Credenciales inválidas');
                 }
             } catch (error) {
-                showAlert('error', error.message || 'Error de conexión');
+                showAlert('danger', 'Error de conexión');
             } finally {
-                // Ocultar loading
-                btnText.style.display = 'inline-block';
-                loading.style.display = 'none';
+                btnText.classList.remove('d-none');
+                spinner.classList.add('d-none');
                 loginBtn.disabled = false;
             }
         });
-        
-        function redirectByRole(role) {
-            switch (role) {
-                case 'MESERO':
-                    window.location.href = '/waiters/orders';
-                    break;
-                case 'COCINA':
-                    window.location.href = '/kitchen';
-                    break;
-                case 'CAJA':
-                    window.location.href = '/caja-ventas';
-                    break;
-                case 'ALMACEN':
-                    window.location.href = '/inventory';
-                    break;
-                case 'ADMIN':
-                case 'SUPERVISOR':
-                default:
-                    window.location.href = '/';
-                    break;
-            }
-        }
-        
+
         function showAlert(type, message) {
-            const alertContainer = document.getElementById('alert-container');
-            const alertClass = type === 'error' ? 'alert-danger' : 'alert-success';
-            
-            alertContainer.innerHTML = `
-                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                    <i class="bi bi-${type === 'error' ? 'exclamation-triangle' : 'check-circle'}"></i>
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
+            document.getElementById('alert-container').innerHTML = `
+                <div class="alert alert-${type} fade show">${message}</div>
             `;
         }
-        
-        // Verificar si ya hay una sesión activa
-        window.addEventListener('load', function() {
-            const token = localStorage.getItem('auth_token');
-            const userInfo = localStorage.getItem('user_info');
-            
-            if (token && userInfo) {
-                try {
-                    const user = JSON.parse(userInfo);
-                    redirectByRole(user.role);
-                } catch (error) {
-                    // Token inválido, limpiar localStorage
-                    localStorage.removeItem('auth_token');
-                    localStorage.removeItem('user_info');
-                }
-            }
-        });
     </script>
 </body>
-</html> 
+
+</html>

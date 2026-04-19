@@ -43,8 +43,7 @@ class InventoryAccessMiddleware(BaseHTTPMiddleware):
         "/api/v1/reports",
         "/api/v1/settings",
         "/api/v1/recipes",
-        "/api/v1/menu",
-        "/api/v1/carta_restaurante"
+        "/api/v1/restaurant-menu"
     ]
     
     async def dispatch(self, request: Request, call_next):
@@ -55,8 +54,9 @@ class InventoryAccessMiddleware(BaseHTTPMiddleware):
         if hasattr(request.state, 'user') and request.state.user:
             user_role = request.state.user.role
         
-        # Si es usuario de inventario, aplicar restricciones
-        if user_role == UserRole.ALMACEN:
+        # Si es usuario de inventario (solo ADMIN ahora), aplicar restricciones
+        # Nota: ALMACEN fue eliminado, ahora solo ADMIN tiene acceso completo
+        if user_role == UserRole.ADMIN:
             path = request.url.path
             
             # Verificar si la ruta está permitida

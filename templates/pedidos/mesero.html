@@ -1,0 +1,629 @@
+{% extends "base.html" %}
+
+{% block title %}Toma de Pedidos - Meseros{% endblock %}
+
+{% block extra_head %}
+<style>
+    .mesa-card {
+        border-left: 4px solid var(--primary-color);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .mesa-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .mesa-card.libre {
+        border-left-color: #28a745;
+    }
+    .mesa-card.ocupada {
+        border-left-color: #ffc107;
+    }
+    .mesa-card.con-pedido {
+        border-left-color: #dc3545;
+    }
+    .pedido-actual {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .item-pedido {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 4px solid var(--primary-color);
+    }
+    .opcion-menu {
+        background: #f8f9fa;
+        padding: 8px 12px;
+        border-radius: 5px;
+        margin: 5px;
+        display: inline-block;
+    }
+    .btn-grande {
+        padding: 15px 30px;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="bi bi-cart-plus me-2"></i>Toma de Pedidos</h2>
+            <p class="text-muted">Selecciona una mesa y crea el pedido</p>
+        </div>
+    </div>
+
+    <!-- Pedido Actual (si existe) -->
+    <div id="pedidoActualSection" style="display: none;">
+        <div class="pedido-actual">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h4 class="mb-0">Pedido Actual</h4>
+                    <p class="mb-0">Mesa: <span id="pedidoMesaNombre"></span></p>
+                </div>
+                <button class="btn btn-light btn-grande" onclick="enviarPedidoCocina()">
+                    <i class="bi bi-send-fill me-2"></i>Enviar a Cocina
+                </button>
+            </div>
+            <div id="pedidoItems"></div>
+            <div class="mt-3">
+                <textarea class="form-control" id="pedidoObservaciones" rows="2" placeholder="Observaciones del pedido..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Selección de Mesa -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4><i class="bi bi-table me-2"></i>Seleccionar Mesa</h4>
+            <div class="row" id="listaMesas">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Selección de Productos (solo si hay mesa seleccionada) -->
+    <div id="productosSection" style="display: none;">
+        <div class="row">
+            <!-- Menú del Día -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-calendar-day me-2"></i>Menú del Día</h5>
+                    </div>
+                    <div class="card-body" id="menuDelDiaContent">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platos Especiales -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-star-fill me-2"></i>Platos Especiales</h5>
+                    </div>
+                    <div class="card-body" id="platosEspecialesContent">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Opciones del Menú -->
+<div class="modal fade" id="opcionesMenuModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Opciones del Menú</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="opcionesMenuContent">
+                <!-- Se llenará dinámicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="agregarMenuAPedido()">Agregar al Pedido</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito -->
+<div class="modal fade" id="exitoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-check-circle-fill me-2"></i>Éxito</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                <p class="mt-3 mb-0" id="exitoMensaje"></p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Error -->
+<div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Error</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="bi bi-x-circle-fill text-danger" style="font-size: 4rem;"></i>
+                </div>
+                <div id="errorMensaje" class="text-center"></div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let mesasData = [];
+    let menuDelDia = null;
+    let platosEspeciales = [];
+    let pedidoActual = null;
+    let mesaSeleccionada = null;
+    let menuSeleccionado = null;
+    let opcionesMenuSeleccionadas = {};
+
+    let exitoModal, errorModal, opcionesMenuModal;
+
+    function getAuthHeaders() {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        exitoModal = new bootstrap.Modal(document.getElementById('exitoModal'));
+        errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        opcionesMenuModal = new bootstrap.Modal(document.getElementById('opcionesMenuModal'));
+
+        cargarMesas();
+        cargarMenuDelDia();
+        cargarPlatosEspeciales();
+    });
+
+    async function cargarMesas() {
+        try {
+            const response = await fetch('/api/v1/pedidos-mesero/mesas', {
+                headers: getAuthHeaders()
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const data = await response.json();
+            mesasData = data.mesas;
+            renderizarMesas(data.mesas);
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al cargar mesas');
+        }
+    }
+
+    function renderizarMesas(mesas) {
+        const container = document.getElementById('listaMesas');
+        container.innerHTML = '';
+
+        mesas.forEach(mesa => {
+            const estadoClass = mesa.estado_mesa === 'libre' ? 'libre' : 
+                              mesa.estado_mesa === 'ocupada' ? 'ocupada' : 'con-pedido';
+            const estadoBadge = mesa.estado_mesa === 'libre' ? 'Libre' : 
+                              mesa.estado_mesa === 'ocupada' ? 'Ocupada' : 'Con Pedido';
+
+            const card = document.createElement('div');
+            card.className = `col-md-3 mb-3`;
+            card.innerHTML = `
+                <div class="card mesa-card ${estadoClass}" onclick="seleccionarMesa(${mesa.id})">
+                    <div class="card-body text-center">
+                        <h3 class="mb-2">Mesa ${mesa.numero}</h3>
+                        <p class="mb-1"><strong>${mesa.nombre}</strong></p>
+                        <span class="badge bg-${estadoClass === 'libre' ? 'success' : estadoClass === 'ocupada' ? 'warning' : 'danger'}">${estadoBadge}</span>
+                        ${mesa.capacidad ? `<p class="mt-2 mb-0 text-muted"><i class="bi bi-people"></i> ${mesa.capacidad} personas</p>` : ''}
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    async function seleccionarMesa(mesaId) {
+        const mesa = mesasData.find(m => m.id === mesaId);
+        if (!mesa) return;
+
+        mesaSeleccionada = mesa;
+
+        // Si hay pedido activo, cargarlo
+        if (mesa.tiene_pedido_activo && mesa.pedido_id) {
+            await cargarPedido(mesa.pedido_id);
+        } else {
+            // Crear nuevo pedido
+            await crearNuevoPedido(mesaId);
+        }
+
+        document.getElementById('productosSection').style.display = 'block';
+    }
+
+    async function crearNuevoPedido(mesaId) {
+        try {
+            const response = await fetch('/api/v1/pedidos-mesero/pedidos', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    mesa_id: mesaId,
+                    detalles: []
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error al crear pedido');
+            }
+
+            pedidoActual = await response.json();
+            mostrarPedidoActual();
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError(error.message);
+        }
+    }
+
+    async function cargarPedido(pedidoId) {
+        try {
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoId}`, {
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) throw new Error('Error al cargar pedido');
+
+            pedidoActual = await response.json();
+            mostrarPedidoActual();
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al cargar pedido');
+        }
+    }
+
+    async function cargarMenuDelDia() {
+        try {
+            const response = await fetch('/api/v1/pedidos-mesero/menus-dia-activo', {
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+            menuDelDia = data.menu;
+            renderizarMenuDelDia();
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    function renderizarMenuDelDia() {
+        const container = document.getElementById('menuDelDiaContent');
+        
+        if (!menuDelDia) {
+            container.innerHTML = '<p class="text-muted text-center">No hay menú del día activo</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <h5>${menuDelDia.nombre}</h5>
+            <p class="text-muted">${menuDelDia.descripcion || ''}</p>
+            <p class="h4 text-primary">$${menuDelDia.precio.toLocaleString('es-CO')}</p>
+            <button class="btn btn-primary w-100 mt-3" onclick="mostrarOpcionesMenu(${menuDelDia.id})">
+                <i class="bi bi-plus-circle me-2"></i>Agregar al Pedido
+            </button>
+        `;
+    }
+
+    async function mostrarOpcionesMenu(menuId) {
+        menuSeleccionado = menuDelDia;
+        opcionesMenuSeleccionadas = {};
+
+        const container = document.getElementById('opcionesMenuContent');
+        
+        let html = '<h6>Selecciona las opciones:</h6>';
+        
+        menuDelDia.categorias.forEach(categoria => {
+            html += `
+                <div class="mb-3">
+                    <label class="form-label"><strong>${categoria.nombre}</strong></label>
+                    <select class="form-select" id="opcion_${categoria.id}" onchange="seleccionarOpcion('${categoria.nombre}', this.value, this.options[this.selectedIndex].text)">
+                        <option value="">Selecciona una opción</option>
+                        ${categoria.platos.map(plato => `
+                            <option value="${plato.id}">${plato.nombre}</option>
+                        `).join('')}
+                    </select>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        opcionesMenuModal.show();
+    }
+
+    function seleccionarOpcion(categoria, platoId, platoNombre) {
+        if (platoId) {
+            opcionesMenuSeleccionadas[categoria] = {
+                id: parseInt(platoId),
+                nombre: platoNombre
+            };
+        } else {
+            delete opcionesMenuSeleccionadas[categoria];
+        }
+    }
+
+    async function agregarMenuAPedido() {
+        if (!pedidoActual) {
+            mostrarError('No hay pedido activo');
+            return;
+        }
+
+        try {
+            const opciones = Object.keys(opcionesMenuSeleccionadas).map(categoria => ({
+                categoria: categoria,
+                opcion_elegida: opcionesMenuSeleccionadas[categoria].nombre,
+                opcion_plato_id: opcionesMenuSeleccionadas[categoria].id
+            }));
+
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoActual.id}/detalles`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    tipo_item: 'MENU',
+                    menu_id: menuDelDia.id,
+                    opciones_menu: opciones
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error al agregar menú');
+            }
+
+            opcionesMenuModal.hide();
+            await cargarPedido(pedidoActual.id);
+            mostrarExito('Menú agregado al pedido');
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError(error.message);
+        }
+    }
+
+    async function cargarPlatosEspeciales() {
+        try {
+            const response = await fetch('/api/v1/pedidos-mesero/platos-especiales', {
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+            platosEspeciales = data.platos;
+            renderizarPlatosEspeciales();
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    function renderizarPlatosEspeciales() {
+        const container = document.getElementById('platosEspecialesContent');
+        
+        if (platosEspeciales.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">No hay platos especiales disponibles</p>';
+            return;
+        }
+
+        container.innerHTML = platosEspeciales.map(plato => `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6>${plato.nombre}</h6>
+                    <p class="text-muted small">${plato.descripcion || ''}</p>
+                    <p class="h5 text-success mb-2">$${plato.precio.toLocaleString('es-CO')}</p>
+                    <button class="btn btn-success btn-sm w-100" onclick="agregarPlatoAPedido(${plato.id})">
+                        <i class="bi bi-plus-circle me-2"></i>Agregar
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function agregarPlatoAPedido(platoId) {
+        if (!pedidoActual) {
+            mostrarError('No hay pedido activo');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoActual.id}/detalles`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    tipo_item: 'PLATO',
+                    plato_id: platoId
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error al agregar plato');
+            }
+
+            await cargarPedido(pedidoActual.id);
+            mostrarExito('Plato agregado al pedido');
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError(error.message);
+        }
+    }
+
+    function mostrarPedidoActual() {
+        if (!pedidoActual) return;
+
+        document.getElementById('pedidoActualSection').style.display = 'block';
+        document.getElementById('pedidoMesaNombre').textContent = pedidoActual.mesa_nombre || `Mesa ${pedidoActual.mesa_numero}`;
+        
+        if (pedidoActual.observaciones) {
+            document.getElementById('pedidoObservaciones').value = pedidoActual.observaciones;
+        }
+
+        const itemsContainer = document.getElementById('pedidoItems');
+        itemsContainer.innerHTML = '';
+
+        pedidoActual.detalles.forEach((detalle, index) => {
+            const item = document.createElement('div');
+            item.className = 'item-pedido';
+            
+            let opcionesHtml = '';
+            if (detalle.opciones && detalle.opciones.length > 0) {
+                opcionesHtml = '<div class="mt-2">';
+                detalle.opciones.forEach(op => {
+                    opcionesHtml += `<span class="opcion-menu">${op.categoria}: ${op.opcion_elegida}</span>`;
+                });
+                opcionesHtml += '</div>';
+            }
+
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">${detalle.nombre_snapshot}</h6>
+                        ${detalle.descripcion_snapshot ? `<p class="text-muted small mb-1">${detalle.descripcion_snapshot}</p>` : ''}
+                        ${opcionesHtml}
+                        ${detalle.observaciones ? `<p class="text-muted small mt-2"><em>${detalle.observaciones}</em></p>` : ''}
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarItem(${detalle.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            itemsContainer.appendChild(item);
+        });
+    }
+
+    async function eliminarItem(detalleId) {
+        if (!confirm('¿Eliminar este item del pedido?')) return;
+
+        try {
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoActual.id}/detalles/${detalleId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) throw new Error('Error al eliminar item');
+
+            await cargarPedido(pedidoActual.id);
+            mostrarExito('Item eliminado');
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError('Error al eliminar item');
+        }
+    }
+
+    async function enviarPedidoCocina() {
+        if (!pedidoActual) return;
+
+        if (pedidoActual.detalles.length === 0) {
+            mostrarError('El pedido debe tener al menos un item');
+            return;
+        }
+
+        // Actualizar observaciones
+        const observaciones = document.getElementById('pedidoObservaciones').value;
+        
+        try {
+            // Actualizar pedido con observaciones
+            if (observaciones !== pedidoActual.observaciones) {
+                await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoActual.id}`, {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        observaciones: observaciones
+                    })
+                });
+            }
+
+            // Enviar a cocina
+            const response = await fetch(`/api/v1/pedidos-mesero/pedidos/${pedidoActual.id}/enviar-cocina`, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Error al enviar pedido');
+            }
+
+            mostrarExito('Pedido enviado a cocina exitosamente');
+            
+            // Recargar mesas y limpiar pedido actual
+            setTimeout(() => {
+                pedidoActual = null;
+                mesaSeleccionada = null;
+                document.getElementById('pedidoActualSection').style.display = 'none';
+                document.getElementById('productosSection').style.display = 'none';
+                document.getElementById('pedidoObservaciones').value = '';
+                cargarMesas();
+            }, 2000);
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarError(error.message);
+        }
+    }
+
+    function mostrarExito(mensaje) {
+        document.getElementById('exitoMensaje').textContent = mensaje;
+        exitoModal.show();
+    }
+
+    function mostrarError(mensaje) {
+        document.getElementById('errorMensaje').textContent = mensaje;
+        errorModal.show();
+    }
+</script>
+{% endblock %}
+

@@ -71,7 +71,7 @@ def get_tables_for_waiters(
     current_user: User = Depends(get_current_active_user)
 ):
     """Obtener estado de todas las mesas para meseros"""
-    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo meseros pueden acceder a esta información"
@@ -111,7 +111,7 @@ def get_products_for_waiters(
     current_user: User = Depends(get_current_active_user)
 ):
     """Obtener productos disponibles para meseros con filtros"""
-    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo meseros pueden acceder a esta información"
@@ -153,7 +153,7 @@ def get_product_categories(
     current_user: User = Depends(get_current_active_user)
 ):
     """Obtener categorías de productos disponibles"""
-    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo meseros pueden acceder a esta información"
@@ -177,7 +177,7 @@ def create_quick_order(
     current_user: User = Depends(get_current_active_user)
 ):
     """Crear pedido rápido para meseros"""
-    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo meseros pueden crear pedidos"
@@ -273,7 +273,7 @@ def get_active_orders_for_waiters(
     current_user: User = Depends(get_current_active_user)
 ):
     """Obtener pedidos activos para el mesero actual"""
-    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo meseros pueden acceder a esta información"
@@ -316,7 +316,7 @@ def mark_order_as_served(
     current_user: User = Depends(get_current_active_user)
 ):
     """Marcar pedido como servido"""
-    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo meseros pueden marcar pedidos como servidos"
@@ -360,7 +360,7 @@ def cancel_order(
     current_user: User = Depends(get_current_active_user)
 ):
     """Cancelar pedido"""
-    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo meseros pueden cancelar pedidos"
@@ -410,7 +410,7 @@ def get_order_details_for_waiters(
     current_user: User = Depends(get_current_active_user)
 ):
     """Obtener detalles completos de un pedido"""
-    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN, UserRole.SUPERVISOR]:
+    if current_user.role not in [UserRole.MESERO, UserRole.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo meseros pueden ver detalles de pedidos"

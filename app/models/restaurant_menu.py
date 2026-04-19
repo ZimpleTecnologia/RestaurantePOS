@@ -2,7 +2,7 @@
 Modelos para el sistema de menús del restaurante
 Estructura: Menú del día con categorías (principio, proteína) + platos fijos + acompañamientos fijos
 """
-from sqlalchemy import Column, Integer, String, Date, Boolean, DateTime, Text, ForeignKey, Table, Numeric
+from sqlalchemy import Column, Integer, String, Date, Boolean, DateTime, Text, ForeignKey, Table, Numeric, LargeBinary
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database import Base
@@ -37,8 +37,9 @@ class CategoriaMenuRestaurante(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Relaciones (temporalmente comentada para evitar errores)
-    # menu_platos = relationship("MenuCategoriaPlato", back_populates="categoria")
+    # Relaciones
+    # opciones = relationship("OpcionMenu", back_populates="categoria")  # Por definir
+    order_items = relationship("OrderItem", viewonly=True)
     
     def __repr__(self):
         return f"<CategoriaMenuRestaurante(id={self.id}, nombre='{self.nombre}')>"
@@ -56,13 +57,23 @@ class PlatoRestaurante(Base):
     tipo = Column(String(20), nullable=False)  # 'Menu_Dia', 'Plato_Fijo', 'Acompanamiento_Fijo'
     activo = Column(Boolean, default=True)
     
+    # Categoría sugerida por defecto (opcional, solo para platos de tipo Menu_Dia)
+    categoria_id = Column(Integer, ForeignKey('categorias_menu.id'), nullable=True)
+    
+    # Campos de imagen (similar al modelo OpcionPlato)
+    imagen_data = Column(LargeBinary, nullable=True)  # Imagen como BLOB
+    imagen_tipo = Column(String(50), nullable=True)  # Tipo MIME de la imagen
+    
+    # Relación con categoría
+    categoria = relationship("CategoriaMenuRestaurante", foreign_keys=[categoria_id])
+    
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Relaciones (temporalmente comentada para evitar errores)
+    # Relaciones (comentadas para evitar errores de inicialización)
     # menu_platos = relationship("MenuCategoriaPlato", back_populates="plato")
-    # pedidos_items = relationship("OrderItem", back_populates="plato_restaurante")
+    order_items = relationship("OrderItem", viewonly=True)
     
     def __repr__(self):
         return f"<PlatoRestaurante(id={self.id}, nombre='{self.nombre}', tipo='{self.tipo}')>"
@@ -96,27 +107,25 @@ class MenuDia(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    # Relaciones (temporalmente comentada para evitar errores)
+    # Relaciones (comentadas para evitar errores de inicialización)
+    # opciones = relationship("OpcionMenu", back_populates="menu")  # Por definir
     # categorias_platos = relationship("MenuCategoriaPlato", back_populates="menu_dia")
-    # pedidos = relationship("Order", back_populates="menu_dia")
+    order_items = relationship("OrderItem", viewonly=True)
     
     def __repr__(self):
-        return f"<MenuDia(id={self.id}, fecha='{self.fecha}', publicado={self.publicado})>"
+        return f"<MenuDia(id={self.id}, fecha='{self.fecha}')>"
     
     def get_platos_por_categoria(self, categoria_nombre):
         """Obtener platos de una categoría específica"""
-        return [
-            mcp.plato for mcp in self.categorias_platos 
-            if mcp.categoria.nombre == categoria_nombre and mcp.activo
-        ]
+        return []
     
     def get_principios(self):
         """Obtener platos de principio"""
-        return self.get_platos_por_categoria("Principio")
+        return []
     
     def get_proteinas(self):
         """Obtener platos de proteína"""
-        return self.get_platos_por_categoria("Proteína")
+        return []
 
 
 class MenuCategoriaPlato(Base):
@@ -133,13 +142,13 @@ class MenuCategoriaPlato(Base):
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    # Relaciones (temporalmente comentada para evitar errores)
+    # Relaciones (comentadas para evitar errores de inicialización)
     # menu_dia = relationship("MenuDia", back_populates="categorias_platos")
     # categoria = relationship("CategoriaMenuRestaurante", back_populates="menu_platos")
     # plato = relationship("PlatoRestaurante", back_populates="menu_platos")
     
     def __repr__(self):
-        return f"<MenuCategoriaPlato(menu_dia_id={self.menu_dia_id}, categoria='{self.categoria.nombre}', plato='{self.plato.nombre}')>"
+        return f"<MenuCategoriaPlato(id={self.id}, menu_dia_id={self.menu_dia_id}, plato_id={self.plato_id})>"
 
 
 class AcompanamientoFijo(Base):

@@ -5,22 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema POS{% endblock %}</title>
     
+    <!-- Favicon - Logo Platónico -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/platonico_logo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/platonico_logo.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/platonico_logo.png">
+    <link rel="shortcut icon" href="/static/images/platonico_logo.png">
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Platónico Theme -->
+    <link rel="stylesheet" href="/static/css/platonico-theme.css">
     <!-- Custom CSS -->
     <style>
-        :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --accent-color: #28a745;
-            --sidebar-color: #667eea;
-        }
         
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(135deg, var(--sidebar-color) 0%, var(--secondary-color) 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-lighter) 100%);
         }
         .sidebar .nav-link {
             color: rgba(255,255,255,0.8);
@@ -33,7 +35,7 @@
             background-color: rgba(255,255,255,0.1);
         }
         .main-content {
-            background-color: #f8f9fa;
+            background-color: var(--bg-main);
             min-height: 100vh;
         }
         .card {
@@ -191,16 +193,6 @@
                 { href: '/reports', icon: 'bi-graph-up', text: 'Reportes' },
                 { href: '/settings', icon: 'bi-gear', text: 'Configuración' }
             ],
-            'SUPERVISOR': [
-                { href: '/', icon: 'bi-house-door', text: 'Dashboard' },
-                { href: '/products', icon: 'bi-box', text: 'Productos' },
-                { href: '/kitchen', icon: 'bi-fire', text: 'Cocina' },
-                { href: '/waiters', icon: 'bi-person-badge', text: 'Meseros' },
-                { href: '/inventory', icon: 'bi-archive', text: 'Inventario' },
-                { href: '/caja-ventas', icon: 'bi-cash-coin', text: 'Caja y Ventas' },
-                { href: '/reports', icon: 'bi-graph-up', text: 'Reportes' },
-                { href: '/settings', icon: 'bi-gear', text: 'Configuración' }
-            ],
             'MESERO': [
                 { href: '/waiters', icon: 'bi-person-badge', text: 'Meseros' }
             ],
@@ -210,10 +202,6 @@
             'CAJA': [
                 { href: '/caja-ventas', icon: 'bi-cash-coin', text: 'Caja y Ventas' }
             ],
-            'ALMACEN': [
-                { href: '/inventory', icon: 'bi-archive', text: 'Inventario' },
-                { href: '/products', icon: 'bi-box', text: 'Productos' }
-            ]
         };
 
         // Función para cargar el menú según el rol
@@ -274,11 +262,9 @@
         function getRoleDisplayName(role) {
             const roleNames = {
                 'ADMIN': 'Administrador',
-                'SUPERVISOR': 'Supervisor',
                 'MESERO': 'Mesero',
                 'COCINA': 'Cocina',
-                'CAJA': 'Caja',
-                'ALMACEN': 'Almacén'
+                'CAJA': 'Caja'
             };
             return roleNames[role] || role;
         }

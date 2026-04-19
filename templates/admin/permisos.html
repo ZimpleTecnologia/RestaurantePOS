@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Permisos - Admin{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/platonico-theme.css?v=2.0">
+{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <div><h2><i class="bi bi-key me-2"></i>Gestión de Permisos</h2></div>
+                <button class="btn btn-primary" onclick="mostrarModalNuevo()"><i class="bi bi-plus-circle me-2"></i>Nuevo Permiso</button>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-4"><input type="text" class="form-control" id="buscarPermiso" placeholder="Buscar..." oninput="filtrarPermisos()"></div>
+        <div class="col-md-3"><select class="form-select" id="filtroModulo" onchange="filtrarPermisos()"><option value="">Todos los módulos</option></select></div>
+    </div>
+    <div class="accordion" id="permisosAccordion"></div>
+</div>
+
+<div class="modal fade" id="permisoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="permisoModalLabel">Nuevo Permiso</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form id="permisoForm">
+                    <input type="hidden" id="permisoId">
+                    <div class="mb-3"><label>Código *</label><input type="text" class="form-control" id="codigo" required></div>
+                    <div class="mb-3"><label>Nombre *</label><input type="text" class="form-control" id="nombre" required></div>
+                    <div class="mb-3"><label>Módulo *</label><input type="text" class="form-control" id="modulo" required></div>
+                    <div class="mb-3"><label>Descripción</label><textarea class="form-control" id="descripcion" rows="3"></textarea></div>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="estado" checked><label class="form-check-label">Permiso activo</label></div>
+                </form>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" onclick="guardarPermiso()">Guardar</button></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let permisosData = [];
+let permisoModal;
+
+// Obtener token de autenticación
+function getAuthHeaders() {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+    return {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    };
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar autenticación
+    const token = localStorage.getItem('access_token') || localStorage.getItem('auth_token');
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+    
+    permisoModal = new bootstrap.Modal(document.getElementById('permisoModal'));
+    cargarPermisos();
+    cargarModulos();
+});
+
+async function cargarPermisos() {
+    const response = await fetch('/api/v1/permisos/', {
+        headers: getAuthHeaders()
+    });
+    if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+    }
+    const data = await response.json();
+    permisosData = data.permisos;
+    renderizarPermisos(data.permisos);
+}
+
+async function cargarModulos() {
+    const response = await fetch('/api/v1/permisos/modulos/', {
+        headers: getAuthHeaders()
+    });
+    if (response.status === 401) {
+        window.location.href = '/login';
+        return;
+    }
+    const data = await response.json();
+    const select = document.getElementById('filtroModulo');
+    select.innerHTML += data.modulos.map(m => `<option value="${m.modulo}">${m.modulo.toUpperCase()} (${m.total_permisos})</option>`).join('');
+}
+
+function renderizarPermisos(permisos) {
+    const permisosPorModulo = permisos.reduce((acc, p) => {
+        if (!acc[p.modulo]) acc[p.modulo] = [];
+        acc[p.modulo].push(p);
+        return acc;
+    }, {});
+    
+    const accordion = document.getElementById('permisosAccordion');
+    accordion.innerHTML = Object.entries(permisosPorModulo).map(([modulo, items], index) => `
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}">
+                    <strong>${modulo.toUpperCase()}</strong> <span class="badge bg-primary ms-2">${items.length}</span>
+                </button>
+            </h2>
+            <div id="collapse${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" data-bs-parent="#permisosAccordion">
+                <div class="accordion-body">
+                    <table class="table table-sm">
+                        <thead><tr><th>Código</th><th>Nombre</th><th>Estado</th><th>Acciones</th></tr></thead>
+                        <tbody>
+                            ${items.map(p => `
+                                <tr>
+                                    <td><code>${p.codigo}</code></td>
+                                    <td>${p.nombre}<br><small class="text-muted">${p.descripcion || ''}</small></td>
+                                    <td><span class="badge bg-${p.estado ? 'success' : 'secondary'}">${p.estado ? 'Activo' : 'Inactivo'}</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick='editarPermiso(${JSON.stringify(p)})'><i class="bi bi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarPermiso(${p.id}, '${p.nombre}')"><i class="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filtrarPermisos() {
+    const busqueda = document.getElementById('buscarPermiso').value.toLowerCase();
+    const modulo = document.getElementById('filtroModulo').value;
+    let filtrados = permisosData;
+    if (busqueda) filtrados = filtrados.filter(p => p.nombre.toLowerCase().includes(busqueda) || p.codigo.toLowerCase().includes(busqueda));
+    if (modulo) filtrados = filtrados.filter(p => p.modulo === modulo);
+    renderizarPermisos(filtrados);
+}
+
+function mostrarModalNuevo() {
+    document.getElementById('permisoModalLabel').textContent = 'Nuevo Permiso';
+    document.getElementById('permisoForm').reset();
+    document.getElementById('permisoId').value = '';
+    permisoModal.show();
+}
+
+function editarPermiso(permiso) {
+    document.getElementById('permisoModalLabel').textContent = 'Editar Permiso';
+    document.getElementById('permisoId').value = permiso.id;
+    document.getElementById('codigo').value = permiso.codigo;
+    document.getElementById('nombre').value = permiso.nombre;
+    document.getElementById('modulo').value = permiso.modulo;
+    document.getElementById('descripcion').value = permiso.descripcion || '';
+    document.getElementById('estado').checked = permiso.estado;
+    permisoModal.show();
+}
+
+async function guardarPermiso() {
+    const id = document.getElementById('permisoId').value;
+    const data = {
+        codigo: document.getElementById('codigo').value,
+        nombre: document.getElementById('nombre').value,
+        modulo: document.getElementById('modulo').value,
+        descripcion: document.getElementById('descripcion').value,
+        estado: document.getElementById('estado').checked
+    };
+    
+    try {
+        const url = id ? `/api/v1/permisos/${id}` : '/api/v1/permisos/';
+        const response = await fetch(url, {
+            method: id ? 'PUT' : 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error((await response.json()).detail);
+        alert(id ? 'Permiso actualizado' : 'Permiso creado');
+        permisoModal.hide();
+        cargarPermisos();
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function eliminarPermiso(id, nombre) {
+    if (!confirm(`¿Eliminar permiso "${nombre}"?`)) return;
+    try {
+        const response = await fetch(`/api/v1/permisos/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) throw new Error('Error');
+        alert('Permiso eliminado');
+        cargarPermisos();
+    } catch (error) {
+        alert(error.message);
+    }
+}
+</script>
+{% endblock %}
+

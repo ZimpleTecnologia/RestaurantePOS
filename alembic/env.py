@@ -9,7 +9,11 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from app.database import Base
-from app.models import user, product, inventory, order, sale, recipe, cash_register, customer, location, notifications, settings, supplier
+from app.models import (
+    user, product, inventory, order, sale, recipe, cash_register,
+    customer, location, notifications, settings, supplier,
+    restaurant_menu, pedido_cocina, mesa, permiso
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 from datetime import date
 from decimal import Decimal
+from enum import Enum
 
 
 # Esquemas para CategoriaMenu
@@ -55,6 +56,7 @@ class PlatoRestauranteBase(BaseModel):
     precio: Decimal = Field(..., ge=0)
     tipo: str = Field(..., pattern=r'^(Menu_Dia|Plato_Fijo|Acompanamiento_Fijo)$')
     activo: bool = True
+    categoria_id: Optional[int] = None  # Categoría sugerida por defecto
 
 
 class PlatoRestauranteCreate(PlatoRestauranteBase):
@@ -67,12 +69,16 @@ class PlatoRestauranteUpdate(BaseModel):
     precio: Optional[Decimal] = Field(None, ge=0)
     tipo: Optional[str] = Field(None, pattern=r'^(Menu_Dia|Plato_Fijo|Acompanamiento_Fijo)$')
     activo: Optional[bool] = None
+    categoria_id: Optional[int] = None
 
 
 class PlatoRestauranteResponse(PlatoRestauranteBase):
     id: int
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    tiene_imagen: Optional[bool] = False
+    imagen_data: Optional[bool] = False  # Solo indica si tiene imagen, no los datos
+    categoria: Optional[Dict] = None  # Información de la categoría si existe
     
     class Config:
         from_attributes = True
@@ -80,6 +86,13 @@ class PlatoRestauranteResponse(PlatoRestauranteBase):
     @classmethod
     def from_orm(cls, obj):
         """Método personalizado para convertir desde ORM"""
+        categoria_info = None
+        if obj.categoria:
+            categoria_info = {
+                "id": obj.categoria.id,
+                "nombre": obj.categoria.nombre
+            }
+        
         return cls(
             id=obj.id,
             nombre=obj.nombre,
@@ -87,8 +100,12 @@ class PlatoRestauranteResponse(PlatoRestauranteBase):
             precio=obj.precio,
             tipo=obj.tipo,
             activo=obj.activo if obj.activo is not None else True,
+            categoria_id=obj.categoria_id,
             created_at=str(obj.created_at) if obj.created_at else None,
-            updated_at=str(obj.updated_at) if obj.updated_at else None
+            updated_at=str(obj.updated_at) if obj.updated_at else None,
+            tiene_imagen=obj.imagen_data is not None,
+            imagen_data=obj.imagen_data is not None,
+            categoria=categoria_info
         )
 
 
@@ -134,31 +151,41 @@ class AcompanamientoFijoResponse(AcompanamientoFijoBase):
 
 
 # Esquemas para MenuDia
+class MenuDiaEstado(str, Enum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    DRAFT = "DRAFT"
+
+
 class MenuDiaBase(BaseModel):
     fecha: date
     nombre: str = Field(..., min_length=1, max_length=100)
     descripcion: Optional[str] = None
-    activo: bool = True
-    publicado: bool = False
+    precio: Decimal = Field(default=0, ge=0)
+    estado: MenuDiaEstado = MenuDiaEstado.DRAFT
 
 
 class MenuDiaCreate(MenuDiaBase):
-    categorias_platos: List[Dict[str, List[int]]] = Field(
-        ..., 
-        description="Dict con categorías y sus platos: {'Principio': [1,2], 'Proteína': [3,4]}"
+    categorias_platos: Dict[str, List[int]] = Field(
+        default_factory=dict,
+        description="Diccionario con categorías y sus platos: {'Principio': [1,2], 'Proteína': [3,4]}"
     )
 
 
 class MenuDiaUpdate(BaseModel):
     nombre: Optional[str] = Field(None, min_length=1, max_length=100)
+    precio: Optional[Decimal] = Field(None, ge=0)
     descripcion: Optional[str] = None
-    activo: Optional[bool] = None
-    publicado: Optional[bool] = None
+    estado: Optional[MenuDiaEstado] = None
     categorias_platos: Optional[Dict[str, List[int]]] = None
 
 
 class MenuDiaResponse(MenuDiaBase):
     id: int
+    categorias_platos: Dict[str, List['PlatoRestauranteResponse']] = Field(default_factory=dict)
+    total_platos: int = 0
+    activo: bool = False
+    publicado: bool = False
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     
@@ -168,14 +195,28 @@ class MenuDiaResponse(MenuDiaBase):
     @classmethod
     def from_orm(cls, obj):
         """Método personalizado para convertir desde ORM"""
+        legacy_map = {
+            "activo": MenuDiaEstado.ACTIVE,
+            "inactivo": MenuDiaEstado.INACTIVE,
+            "borrador": MenuDiaEstado.DRAFT
+        }
+        raw_estado = obj.estado if obj.estado else MenuDiaEstado.DRAFT.value
+        estado_enum = legacy_map.get(str(raw_estado).lower())
+        if not estado_enum:
+            try:
+                estado_enum = MenuDiaEstado(str(raw_estado).upper())
+            except ValueError:
+                estado_enum = MenuDiaEstado.DRAFT
+
         return cls(
-            id=obj.id,  # Usar id del modelo
-            fecha=str(obj.fecha),
+            id=obj.id,
+            fecha=obj.fecha,
             nombre=obj.nombre,
             precio=obj.precio,
             descripcion=obj.descripcion,
-            activo=obj.estado == 'ACTIVE' if obj.estado else True,  # Mapear ACTIVE a activo
-            publicado=obj.estado == 'ACTIVE' if obj.estado else False,  # Mapear ACTIVE a publicado
+            estado=estado_enum,
+            activo=estado_enum == MenuDiaEstado.ACTIVE,
+            publicado=estado_enum == MenuDiaEstado.ACTIVE,
             created_at=str(obj.created_at) if obj.created_at else None,
             updated_at=str(obj.updated_at) if obj.updated_at else None
         )
@@ -206,7 +247,7 @@ class MenuCategoriaPlatoResponse(MenuCategoriaPlatoBase):
 # Esquemas especiales para la vista de meseros
 class MenuDelDiaCompleto(BaseModel):
     """Menú del día completo para meseros"""
-    menu: MenuDiaResponse
+    menu: Optional[MenuDiaResponse] = None
     categorias: Dict[str, List[PlatoRestauranteResponse]] = Field(
         default_factory=dict,
         description="Platos organizados por categoría"
@@ -219,6 +260,7 @@ class MenuDelDiaCompleto(BaseModel):
         default_factory=list,
         description="Platos fijos independientes del menú"
     )
+    mensaje: Optional[str] = None
 
 
 class PedidoMenuDia(BaseModel):

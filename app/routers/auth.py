@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models.user import User
 from app.auth.security import verify_password, create_access_token, get_password_hash
 from app.schemas.user import UserCreate, UserResponse, Token, UserLogin
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, get_current_active_user
 from app.config import settings
 
 router = APIRouter(prefix="/auth", tags=["autenticación"])
@@ -112,3 +112,48 @@ def login_json(user_data: UserLogin, db: Session = Depends(get_db)):
 def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Obtener información del usuario actual"""
     return current_user 
+
+
+@router.get("/modulos-visibles")
+def get_modulos_visibles(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Obtiene la lista de módulos de navegación visibles para el usuario actual
+    basándose en sus permisos.
+    """
+    from app.models.user import UserRole
+    
+    # Refrescar el usuario para asegurar que los permisos estén cargados
+    db.refresh(current_user, ["permisos"])
+    
+    # Mapeo de módulos de navegación a códigos de permisos base
+    modulos_navegacion = [
+        {"nombre": "Administración", "url": "/admin/administracion", "icono": "bi-shield-lock", "codigos_permisos": ["mesas", "usuarios", "permisos"], "codigo_modulo": "administracion"},
+        {"nombre": "Cocina", "url": "/kitchen", "icono": "bi-fire", "codigos_permisos": ["cocina"], "codigo_modulo": "operaciones"},
+        {"nombre": "Pedidos a Cocina", "url": "/pedidos/cocina", "icono": "bi-clipboard-check", "codigos_permisos": ["cocina"], "codigo_modulo": "operaciones"},
+        {"nombre": "Gestión Menús", "url": "/admin/menus", "icono": "bi-gear", "codigos_permisos": ["meseros"], "codigo_modulo": "operaciones"},
+        {"nombre": "Inventario", "url": "/inventory", "icono": "bi-archive", "codigos_permisos": ["inventario"], "codigo_modulo": "almacen"},
+        {"nombre": "Meseros", "url": "/meseros/menus", "icono": "bi-person-badge", "codigos_permisos": ["meseros"], "codigo_modulo": "operaciones"},
+        {"nombre": "Mis Pedidos", "url": "/pedidos/mesero/estado", "icono": "bi-clipboard-data", "codigos_permisos": ["meseros"], "codigo_modulo": "operaciones"},
+        {"nombre": "Pedidos Menú", "url": "/kitchen/menu-orders", "icono": "bi-list-check", "codigos_permisos": ["cocina"], "codigo_modulo": "operaciones"},
+        {"nombre": "Recetas", "url": "/recipes", "icono": "bi-book", "codigos_permisos": ["meseros"], "codigo_modulo": "operaciones"},
+        {"nombre": "Caja y Ventas", "url": "/caja-ventas", "icono": "bi-cash-coin", "codigos_permisos": ["ventas", "caja"], "codigo_modulo": "financiero"},
+        {"nombre": "Reportes", "url": "/reports", "icono": "bi-graph-up", "codigos_permisos": ["reportes"], "codigo_modulo": "reportes"},
+        {"nombre": "Configuración", "url": "/settings", "icono": "bi-gear", "codigos_permisos": ["mesas", "usuarios"], "codigo_modulo": "administracion"}
+    ]
+    
+    # Obtener códigos de permisos del usuario
+    # Incluso los ADMIN deben tener permisos asignados para ver módulos
+    permisos_usuario = {p.codigo for p in current_user.permisos if p.estado}
+    
+    # Filtrar módulos según permisos
+    modulos_visibles = []
+    for modulo in modulos_navegacion:
+        # Verificar si el usuario tiene al menos uno de los permisos requeridos
+        tiene_acceso = any(codigo in permisos_usuario for codigo in modulo["codigos_permisos"])
+        if tiene_acceso:
+            modulos_visibles.append(modulo)
+    
+    return {"modulos": modulos_visibles} 

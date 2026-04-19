@@ -1,269 +1,136 @@
 {% extends "base.html" %}
 
-{% block title %}Plantónico - Sistema POS{% endblock %}
-{% block page_title %}Plantónico POS{% endblock %}
+{% block title %}Platónico - Sistema POS{% endblock %}
+{% block page_title %}Platónico POS{% endblock %}
 
 {% block content %}
-<!-- Mensaje de Bienvenida -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body text-center py-4">
-                <h1 class="display-6 mb-3" style="color: var(--primary-brown);">
-                    <i class="bi bi-house-door me-3" style="color: var(--golden-yellow);"></i>
-                    Bienvenido a Plantónico
-                </h1>
-                <p class="lead mb-0" style="color: var(--medium-gray);">
-                    Amor al primer bocado.
-                </p>
-                <div class="mt-3">
-                    <span class="badge fs-6 px-3 py-2" id="currentDate" style="background-color: var(--primary-brown); color: var(--white);"></span>
-                </div>
-            </div>
-        </div>
+<div class="p-4 md:p-8">
+
+    <!-- Hero Section / Welcome -->
+    <div class="mb-10 animate-fade-in">
+        <h1 class="text-4xl font-serif text-[#5C3A21] mb-2">Resumen Operativo</h1>
+        <p class="text-[#A67C52] italic font-medium">"Amor al primer bocado" — Monitoreo en tiempo real.</p>
     </div>
-</div>
 
-<!-- Estadísticas Principales -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold">
-                    <i class="bi bi-graph-up me-2"></i>Estadísticas del Día
-                </h6>
-                <div>
-                    <button class="btn btn-outline-primary btn-sm" onclick="refreshStats()">
-                        <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
-                    </button>
-                </div>
+    <!-- Bento Grid (KPIs) -->
+    <div class="bento-grid mb-12">
+        <!-- Venta Total (Foco Principal) -->
+        <div class="bento-item primary col-span-2 row-span-2 flex flex-col justify-between">
+            <div>
+                <span class="stat-label">Ingresos Hoy</span>
+                <div class="stat-value text-5xl" id="totalRevenue">$0</div>
             </div>
-            <div class="card-body">
-                <!-- Estadísticas Principales -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="card stats-card">
-                            <div class="card-body text-center">
-                                <h3 class="card-title" id="totalSales">0</h3>
-                                <p class="card-text">Ventas Hoy</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card stats-card">
-                            <div class="card-body text-center">
-                                <h3 class="card-title" id="totalRevenue">$0</h3>
-                                <p class="card-text">Ingresos Hoy</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card stats-card">
-                            <div class="card-body text-center">
-                                <h3 class="card-title" id="pendingOrders">0</h3>
-                                <p class="card-text">Pedidos Pendientes</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card stats-card">
-                            <div class="card-body text-center">
-                                <h3 class="card-title" id="lowStock">0</h3>
-                                <p class="card-text">Stock Bajo</p>
-                            </div>
-                        </div>
-                    </div>
+            <div class="mt-8 flex items-center gap-2">
+                <div class="w-full bg-white/20 h-1 rounded-full overflow-hidden">
+                    <div class="bg-white h-full" style="width: 65%"></div>
                 </div>
-
-                <!-- Módulos MVP -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="m-0 font-weight-bold">
-                                    <i class="bi bi-grid-3x3-gap me-2"></i>Módulos Principales (MVP)
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <!-- Inventario -->
-                                    <div class="col-md-4 col-lg-3 mb-3">
-                                        <a href="/inventory" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-archive text-warning" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Inventario</h6>
-                                                    <p class="card-text text-muted small">Control de stock y movimientos</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    
-                                    <!-- Gestión de Menús -->
-                                    <div class="col-md-4 col-lg-3 mb-3">
-                                        <a href="/admin/menus" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-calendar-day text-info" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Gestión Menús</h6>
-                                                    <p class="card-text text-muted small">Administrar menús del día</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    
-                                    <!-- Pedidos a Cocina -->
-                                    <div class="col-md-4 col-lg-3 mb-3">
-                                        <a href="/kitchen" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-fire text-danger" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Pedidos a Cocina</h6>
-                                                    <p class="card-text text-muted small">Gestión de pedidos y preparación</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    
-                                    <!-- Caja / Ventas -->
-                                    <div class="col-md-4 col-lg-3 mb-3">
-                                        <a href="/caja-ventas" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-cash-coin text-success" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Caja / Ventas</h6>
-                                                    <p class="card-text text-muted small">Procesamiento de pagos y cierre</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Módulos de Acceso Rápido -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="m-0 font-weight-bold">
-                                    <i class="bi bi-lightning me-2"></i>Acceso Rápido
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <!-- Vista de Meseros -->
-                                    <div class="col-md-6 col-lg-4 mb-3">
-                                        <a href="/meseros/menus" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-calendar-check text-success" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Menú del Día</h6>
-                                                    <p class="card-text text-muted small">Vista para meseros</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    
-                                    <!-- Gestión Menús -->
-                                    <div class="col-md-6 col-lg-4 mb-3">
-                                        <a href="/admin/menus" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-gear text-primary" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Gestión Menús</h6>
-                                                    <p class="card-text text-muted small">Panel de administración</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    
-                                    <!-- Reportes -->
-                                    <div class="col-md-6 col-lg-4 mb-3">
-                                        <a href="/reports" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-graph-up text-info" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Reportes</h6>
-                                                    <p class="card-text text-muted small">Análisis y estadísticas</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <div class="col-md-4 col-lg-3 mb-3">
-                                        <a href="/settings" class="text-decoration-none">
-                                            <div class="card h-100 border-0 shadow-sm hover-card">
-                                                <div class="card-body text-center">
-                                                    <i class="bi bi-gear text-secondary" style="font-size: 2.5rem;"></i>
-                                                    <h6 class="card-title mt-3">Configuración</h6>
-                                                    <p class="card-text text-muted small">Ajustes del sistema</p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Acciones Rápidas -->
-                <div class="row mt-4">
-                    <div class="col-md-8">
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="m-0 font-weight-bold">
-                                    <i class="bi bi-lightning"></i> Acciones Rápidas
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <a href="/caja-ventas" class="btn btn-primary w-100 mb-2">
-                                            <i class="bi bi-cash-coin"></i> Abrir Caja
-                                        </a>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <a href="/waiters" class="btn btn-success w-100 mb-2">
-                                            <i class="bi bi-person-badge"></i> Tomar Pedido
-                                        </a>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <a href="/kitchen" class="btn btn-warning w-100 mb-2">
-                                            <i class="bi bi-fire"></i> Ver Cocina
-                                        </a>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <a href="/inventory" class="btn btn-info w-100 mb-2">
-                                            <i class="bi bi-archive"></i> Revisar Inventario
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-header">
-                                <h6 class="m-0 font-weight-bold">
-                                    <i class="bi bi-bell"></i> Notificaciones
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div id="notifications">
-                                    <div class="text-center text-muted">
-                                        <i class="bi bi-bell fa-2x"></i>
-                                        <p>No hay notificaciones</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <span class="text-[0.6rem] font-bold">65% META</span>
             </div>
         </div>
+
+        <!-- Pedidos Pendientes -->
+        <div class="bento-item accent">
+            <span class="stat-label text-[#7A1E2C]">Pedidos Activos</span>
+            <div class="stat-value" id="pendingOrders">0</div>
+            <div class="mt-2 text-[0.65rem] font-bold text-[#7A1E2C] uppercase tracking-wider">Cocinando ahora</div>
+        </div>
+
+        <!-- Ventas Hoy -->
+        <div class="bento-item">
+            <span class="stat-label">Ventas</span>
+            <div class="stat-value" id="totalSales">0</div>
+            <div class="mt-2 text-[0.65rem] font-bold text-gray-400 uppercase tracking-wider">Transacciones</div>
+        </div>
+
+        <!-- Stock Bajo (Alerta) -->
+        <div class="bento-item bg-[#F9EBEB] border-none">
+            <span class="stat-label text-red-700">Stock Crítico</span>
+            <div class="stat-value text-red-700" id="lowStock">0</div>
+            <i class="bi bi-exclamation-triangle-fill text-red-200 text-4xl absolute bottom-4 right-4 opacity-50"></i>
+        </div>
+
+        <!-- Botón de Acción rápida -->
+        <a href="/caja-ventas"
+            class="bento-item bg-[#5C3A21] text-white border-none flex-row items-center gap-4 hover:bg-[#3E2716]">
+            <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-2xl">
+                <i class="bi bi-plus-lg"></i>
+            </div>
+            <div>
+                <p class="font-bold mb-0">Nueva Venta</p>
+                <p class="text-[0.6rem] opacity-60 m-0">INICIAR POS</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- Módulos de Gestión -->
+    <div class="flex items-center justify-between mb-8 px-2">
+        <h3 class="text-2xl font-serif text-[#5C3A21]">Gestión del Restaurante</h3>
+        <button class="text-xs font-bold text-[#A67C52] uppercase tracking-[0.2em] hover:text-[#7A1E2C]"
+            onclick="refreshStats()">
+            <i class="bi bi-arrow-clockwise me-1"></i> Sincronizar Datos
+        </button>
+    </div>
+
+    <div class="module-grid">
+        <!-- Administración -->
+        <a href="/admin/administracion" class="module-card">
+            <div class="module-icon-box">
+                <i class="bi bi-shield-lock text-3xl"></i>
+            </div>
+            <h4>Administración</h4>
+            <p>Control total de mesas, perfiles de usuario y permisos de seguridad del sistema.</p>
+            <div class="module-action">Configurar <i class="bi bi-arrow-right"></i></div>
+        </a>
+
+        <!-- Caja / Ventas -->
+        <a href="/caja-ventas" class="module-card">
+            <div class="module-icon-box">
+                <i class="bi bi-cash-coin text-3xl"></i>
+            </div>
+            <h4>Caja y Ventas</h4>
+            <p>Punto de venta unificado. Procesamiento de pagos, facturación y cierre de caja diario.</p>
+            <div class="module-action">Abrir POS <i class="bi bi-arrow-right"></i></div>
+        </a>
+
+        <!-- Gestión Menús -->
+        <a href="/admin/menus" class="module-card">
+            <div class="module-icon-box">
+                <i class="bi bi-calendar-day text-3xl"></i>
+            </div>
+            <h4>Gestión de Menús</h4>
+            <p>Diseño y rotación de menús del día. Actualización de precios y disponibilidad en tiempo real.</p>
+            <div class="module-action">Administrar <i class="bi bi-arrow-right"></i></div>
+        </a>
+
+        <!-- Inventario -->
+        <a href="/inventory" class="module-card">
+            <div class="module-icon-box">
+                <i class="bi bi-archive text-3xl"></i>
+            </div>
+            <h4>Inventario</h4>
+            <p>Control riguroso de insumos, auditoría de stock y alertas de reabastecimiento crítico.</p>
+            <div class="module-action">Ver Stock <i class="bi bi-arrow-right"></i></div>
+        </a>
+
+        <!-- Pedidos a Cocina -->
+        <a href="/kitchen" class="module-card">
+            <div class="module-icon-box">
+                <i class="bi bi-fire text-3xl"></i>
+            </div>
+            <h4>Cocina & KDS</h4>
+            <p>Monitor de preparación de pedidos. Optimización de tiempos y flujo de servicio.</p>
+            <div class="module-action">Ver Pedidos <i class="bi bi-arrow-right"></i></div>
+        </a>
+
+        <!-- Reportes -->
+        <a href="/reports" class="module-card">
+            <div class="module-icon-box">
+                <i class="bi bi-graph-up text-3xl"></i>
+            </div>
+            <h4>Reportes & Analytics</h4>
+            <p>Análisis de rentabilidad, platos más vendidos y desempeño operativo detallado.</p>
+            <div class="module-action">Analizar <i class="bi bi-arrow-right"></i></div>
+        </a>
     </div>
 </div>
 {% endblock %}
@@ -271,131 +138,86 @@
 {% block extra_js %}
 <script>
     // Inicializar dashboard
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Cargar datos del dashboard
         loadDashboardData();
-        setCurrentDate();
     });
-
-    // Función para cerrar sesión
-    function logout() {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_info');
-        localStorage.removeItem('token_type');
-        window.location.href = '/login';
-    }
 
     // Función para cargar datos del dashboard
     async function loadDashboardData() {
         const token = localStorage.getItem('auth_token');
-        
+
         // Si no hay token, no cargar datos
         if (!token) {
             console.log('No hay token de autenticación');
+            loadSampleData();
             return;
         }
-        
+
         try {
-            // Cargar estadísticas básicas
-            const response = await fetch('/api/v1/sales/stats', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            // Cargar resumen de reportes
+            const reportsResponse = await fetch('/api/v1/reports/daily-summary', {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-            
-            if (response.ok) {
-                const stats = await response.json();
-                document.getElementById('totalSales').textContent = stats.today_sales || 0;
-                document.getElementById('totalRevenue').textContent = `$${stats.today_revenue || 0}`;
-                document.getElementById('pendingOrders').textContent = stats.pending_orders || 0;
-                document.getElementById('lowStock').textContent = stats.low_stock_items || 0;
-            } else if (response.status === 401) {
-                // Token inválido, limpiar y redirigir
+
+            // Cargar resumen de inventario
+            const inventoryResponse = await fetch('/api/v1/inventory/summary', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (reportsResponse.ok) {
+                const data = await reportsResponse.json();
+                const summary = data.summary || {};
+                
+                if(document.getElementById('totalSales')) 
+                    document.getElementById('totalSales').textContent = summary.total_sales || 0;
+                
+                if(document.getElementById('totalRevenue')) 
+                    document.getElementById('totalRevenue').textContent = `$${(summary.total_revenue || 0).toLocaleString()}`;
+                
+                if(document.getElementById('pendingOrders')) 
+                    document.getElementById('pendingOrders').textContent = summary.total_orders || 0;
+            }
+
+            if (inventoryResponse.ok) {
+                const inventory = await inventoryResponse.json();
+                if(document.getElementById('lowStock')) 
+                    document.getElementById('lowStock').textContent = inventory.low_stock_count || 0;
+            }
+
+            if (reportsResponse.status === 401 || inventoryResponse.status === 401) {
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('user_info');
-                localStorage.removeItem('token_type');
                 window.location.href = '/login';
             }
         } catch (error) {
             console.error('Error cargando estadísticas:', error);
-            // Cargar datos de ejemplo si hay error
             loadSampleData();
         }
     }
-    
+
     // Función para cargar datos de ejemplo
     function loadSampleData() {
-        document.getElementById('totalSales').textContent = '12';
-        document.getElementById('totalRevenue').textContent = '$1,250';
-        document.getElementById('pendingOrders').textContent = '3';
-        document.getElementById('lowStock').textContent = '5';
-    }
-
-    // Función para establecer la fecha actual
-    function setCurrentDate() {
-        const now = new Date();
-        const options = { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        };
-        document.getElementById('currentDate').textContent = now.toLocaleDateString('es-ES', options);
-    }
-
-    // Función para marcar enlace activo
-    function setActiveNav() {
-        const currentPath = window.location.pathname;
-        const navLinks = document.querySelectorAll('.nav-link');
-        
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href') === currentPath) {
-                link.classList.add('active');
-            }
-        });
+        if (document.getElementById('totalSales')) document.getElementById('totalSales').textContent = '24';
+        if (document.getElementById('totalRevenue')) document.getElementById('totalRevenue').textContent = '$3,480';
+        if (document.getElementById('pendingOrders')) document.getElementById('pendingOrders').textContent = '5';
+        if (document.getElementById('lowStock')) document.getElementById('lowStock').textContent = '2';
     }
 
     // Función para refrescar estadísticas
     function refreshStats() {
-        const btn = event.target;
-        const originalText = btn.innerHTML;
-        
-        btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Actualizando...';
+        const btn = event.currentTarget;
+        const originalContent = btn.innerHTML;
+
+        btn.innerHTML = '<i class="bi bi-arrow-clockwise animate-spin me-1"></i>Sincronizando...';
         btn.disabled = true;
-        
+
         // Simular carga
-        setTimeout(() => {
-            loadDashboardData();
-            btn.innerHTML = originalText;
+        setTimeout(async () => {
+            await loadDashboardData();
+            btn.innerHTML = originalContent;
             btn.disabled = false;
-            
-            // Mostrar notificación
-            showNotification('Estadísticas actualizadas', 'success');
-        }, 1000);
+        }, 800);
     }
-
-    // Mostrar notificación
-    function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-        notification.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Auto-remove after 3 seconds
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 3000);
-    }
-
-    // Actualizar fecha cada minuto
-    setInterval(setCurrentDate, 60000);
 </script>
-{% endblock %} 
+{% endblock %}

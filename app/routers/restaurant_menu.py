@@ -2,9 +2,11 @@
 Router para el sistema de menús del restaurante
 Gestión de menús del día con categorías, platos fijos y acompañamientos
 """
-from typing import List, Optional, Dict
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+from typing import List, Optional, Dict, Union
+from collections import defaultdict
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
+from fastapi.responses import Response
+from sqlalchemy.orm import Session, joinedload
 from datetime import date, datetime
 
 from app.database import get_db
@@ -16,10 +18,61 @@ from app.schemas.restaurant_menu import (
     PlatoRestauranteCreate, PlatoRestauranteUpdate, PlatoRestauranteResponse, PlatoRestauranteListResponse,
     MenuDiaCreate, MenuDiaUpdate, MenuDiaResponse, MenuDiaListResponse,
     AcompanamientoFijoCreate, AcompanamientoFijoUpdate, AcompanamientoFijoResponse, AcompanamientoFijoListResponse,
-    MenuDelDiaCompleto, PedidoMenuDia
+    MenuDelDiaCompleto, PedidoMenuDia, MenuDiaEstado
 )
 
 router = APIRouter(prefix="/restaurant-menu", tags=["menú restaurante"])
+
+
+LEGACY_ESTADO_MAP = {
+    "activo": MenuDiaEstado.ACTIVE,
+    "inactivo": MenuDiaEstado.INACTIVE,
+    "borrador": MenuDiaEstado.DRAFT
+}
+
+
+def _normalize_estado(value: Optional[Union[str, MenuDiaEstado]]) -> MenuDiaEstado:
+    """Convertir cualquier representación de estado al enum estándar."""
+    if isinstance(value, MenuDiaEstado):
+        return value
+    if value is None:
+        return MenuDiaEstado.DRAFT
+    value_str = str(value).strip()
+    legacy = LEGACY_ESTADO_MAP.get(value_str.lower())
+    if legacy:
+        return legacy
+    try:
+        return MenuDiaEstado(value_str.upper())
+    except ValueError:
+        return MenuDiaEstado.DRAFT
+
+
+def _build_menu_categories(db: Session, menu_id: int) -> Dict[str, List[PlatoRestauranteResponse]]:
+    """Obtener los platos organizados por categoría para un menú."""
+    rows = (
+        db.query(CategoriaMenuRestaurante, PlatoRestaurante)
+        .join(MenuCategoriaPlato, MenuCategoriaPlato.categoria_id == CategoriaMenuRestaurante.id)
+        .join(PlatoRestaurante, MenuCategoriaPlato.plato_id == PlatoRestaurante.id)
+        .filter(
+            MenuCategoriaPlato.menu_dia_id == menu_id,
+            MenuCategoriaPlato.activo == True  # noqa: E712
+        )
+        .order_by(CategoriaMenuRestaurante.orden, PlatoRestaurante.nombre)
+        .all()
+    )
+    categorias: Dict[str, List[PlatoRestauranteResponse]] = defaultdict(list)
+    for categoria, plato in rows:
+        categorias[categoria.nombre].append(PlatoRestauranteResponse.from_orm(plato))
+    return dict(categorias)
+
+
+def _serialize_menu(db: Session, menu: MenuDia) -> MenuDiaResponse:
+    """Construir la respuesta completa de un menú con sus platos."""
+    menu_response = MenuDiaResponse.from_orm(menu)
+    categorias = _build_menu_categories(db, menu.id)
+    menu_response.categorias_platos = categorias
+    menu_response.total_platos = sum(len(platos) for platos in categorias.values())
+    return menu_response
 
 
 # ============================================================================
@@ -54,20 +107,31 @@ def get_categorias(
 @router.post("/categorias/", response_model=CategoriaMenuResponse)
 def create_categoria(categoria: CategoriaMenuCreate, db: Session = Depends(get_db)):
     """Crear nueva categoría de menú"""
-    # Verificar que no exista una categoría con el mismo nombre
-    existing = db.query(CategoriaMenuRestaurante).filter(CategoriaMenuRestaurante.nombre == categoria.nombre).first()
-    if existing:
+    try:
+        # Verificar que no exista una categoría con el mismo nombre
+        existing = db.query(CategoriaMenuRestaurante).filter(
+            CategoriaMenuRestaurante.nombre == categoria.nombre
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Ya existe una categoría con el nombre '{categoria.nombre}'"
+            )
+        
+        db_categoria = CategoriaMenuRestaurante(**categoria.dict())
+        db.add(db_categoria)
+        db.commit()
+        db.refresh(db_categoria)
+    
+        return CategoriaMenuResponse.from_orm(db_categoria)
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
         raise HTTPException(
-            status_code=400,
-            detail=f"Ya existe una categoría con el nombre '{categoria.nombre}'"
+            status_code=500,
+            detail=f"Error al crear la categoría: {str(e)}"
         )
-    
-    db_categoria = CategoriaMenuRestaurante(**categoria.dict())
-    db.add(db_categoria)
-    db.commit()
-    db.refresh(db_categoria)
-    
-    return db_categoria
 
 
 @router.put("/categorias/{categoria_id}", response_model=CategoriaMenuResponse)
@@ -130,7 +194,7 @@ def get_platos(
     db: Session = Depends(get_db)
 ):
     """Obtener lista de platos del restaurante"""
-    query = db.query(PlatoRestaurante)
+    query = db.query(PlatoRestaurante).options(joinedload(PlatoRestaurante.categoria))
     
     if tipo:
         query = query.filter(PlatoRestaurante.tipo == tipo)
@@ -154,7 +218,8 @@ def create_plato(plato: PlatoRestauranteCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_plato)
     
-    return db_plato
+    # Usar el método from_orm para convertir correctamente los datetime a strings
+    return PlatoRestauranteResponse.from_orm(db_plato)
 
 
 @router.put("/platos/{plato_id}", response_model=PlatoRestauranteResponse)
@@ -175,21 +240,116 @@ def update_plato(
     db.commit()
     db.refresh(db_plato)
     
-    return db_plato
+    # Usar el método from_orm para convertir correctamente los datetime a strings
+    return PlatoRestauranteResponse.from_orm(db_plato)
 
 
 @router.delete("/platos/{plato_id}")
 def delete_plato(plato_id: int, db: Session = Depends(get_db)):
-    """Desactivar plato del restaurante"""
+    """Eliminar o desactivar plato del restaurante"""
     db_plato = db.query(PlatoRestaurante).filter(PlatoRestaurante.id == plato_id).first()
     if not db_plato:
         raise HTTPException(status_code=404, detail="Plato no encontrado")
     
-    db_plato.activo = False
-    db_plato.updated_at = datetime.utcnow()
-    db.commit()
+    # Verificar si el plato está siendo usado en algún menú
+    menu_count = db.query(MenuCategoriaPlato).filter(MenuCategoriaPlato.plato_id == plato_id).count()
     
-    return {"message": "Plato desactivado exitosamente"}
+    if menu_count > 0:
+        # Si está en uso, solo desactivar
+        if not db_plato.activo:
+            return {
+                "success": True,
+                "action": "already_inactive",
+                "message": f"El plato ya estaba desactivado. Está siendo usado en {menu_count} menú(s).",
+                "menu_count": menu_count,
+                "opcion": {
+                    "id": db_plato.id,
+                    "nombre": db_plato.nombre
+                }
+            }
+        
+        db_plato.activo = False
+        db_plato.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return {
+            "success": True,
+            "action": "deactivated",
+            "message": f"Plato desactivado exitosamente. Está siendo usado en {menu_count} menú(s).",
+            "menu_count": menu_count,
+            "opcion": {
+                "id": db_plato.id,
+                "nombre": db_plato.nombre
+            }
+        }
+    else:
+        # Si no está en uso, eliminar completamente
+        # Guardar información antes de eliminar
+        plato_info = {
+            "id": db_plato.id,
+            "nombre": db_plato.nombre
+        }
+        
+        db.delete(db_plato)
+        db.commit()
+        
+        return {
+            "success": True,
+            "action": "deleted",
+            "message": "Plato eliminado exitosamente",
+            "opcion": plato_info
+        }
+
+
+@router.get("/platos/{plato_id}/imagen")
+def get_plato_image(plato_id: int, db: Session = Depends(get_db)):
+    """Obtener imagen de un plato (desde BD)"""
+    db_plato = db.query(PlatoRestaurante).filter(PlatoRestaurante.id == plato_id).first()
+    
+    if not db_plato:
+        raise HTTPException(status_code=404, detail="Plato no encontrado")
+    
+    if not db_plato.imagen_data:
+        raise HTTPException(status_code=404, detail="Imagen no encontrada")
+    
+    # Devolver imagen desde la base de datos
+    return Response(
+        content=db_plato.imagen_data, 
+        media_type=db_plato.imagen_tipo or 'image/jpeg'
+    )
+
+
+@router.put("/platos/{plato_id}/imagen")
+def update_plato_image(
+    plato_id: int,
+    imagen: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Actualizar imagen de un plato"""
+    db_plato = db.query(PlatoRestaurante).filter(PlatoRestaurante.id == plato_id).first()
+    if not db_plato:
+        raise HTTPException(status_code=404, detail="Plato no encontrado")
+    
+    try:
+        # Leer contenido de la imagen
+        imagen_data = imagen.file.read()
+        imagen_tipo = imagen.content_type
+        
+        # Actualizar la imagen
+        db_plato.imagen_data = imagen_data
+        db_plato.imagen_tipo = imagen_tipo
+        db_plato.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(db_plato)
+        
+        return {
+            "success": True,
+            "message": "Imagen actualizada exitosamente",
+            "plato": PlatoRestauranteResponse.from_orm(db_plato)
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al actualizar imagen: {str(e)}")
 
 
 # ============================================================================
@@ -222,10 +382,10 @@ def get_menus(
     total = query.count()
     menus_orm = query.order_by(MenuDia.fecha.desc()).offset(skip).limit(limit).all()
     
-    # Convertir usando el método personalizado
-    menus = [MenuDiaResponse.from_orm(menu) for menu in menus_orm]
+    # Serializar menús con sus categorías
+    menus_response = [_serialize_menu(db, menu) for menu in menus_orm]
     
-    return MenuDiaListResponse(menus=menus, total=total)
+    return MenuDiaListResponse(menus=menus_response, total=total)
 
 
 @router.get("/menus/hoy", response_model=MenuDelDiaCompleto)
@@ -240,18 +400,17 @@ def get_menu_hoy(db: Session = Depends(get_db)):
     ).first()
     
     if not menu:
-        # Si no hay menú, devolver estructura vacía en lugar de error 404
-        return {
-            "menu": None,
-            "categorias": {},
-            "acompanamientos_fijos": [],
-            "platos_fijos": [],
-            "mensaje": "No hay menú publicado para hoy"
-        }
+        # Si no hay menú, devolver estructura vacía
+        return MenuDelDiaCompleto(
+            menu=None,
+            categorias={},
+            acompanamientos_fijos=[],
+            platos_fijos=[],
+            mensaje="No hay menú publicado para hoy"
+        )
     
-    # Obtener platos organizados por categoría (simplificado)
-    categorias_platos = {}
-    # Por ahora, devolver categorías vacías hasta que se implemente la tabla de relaciones
+    menu_response = _serialize_menu(db, menu)
+    categorias_platos = menu_response.categorias_platos
     
     # Obtener acompañamientos fijos
     acompanamientos = db.query(AcompanamientoFijo).filter(AcompanamientoFijo.activo == True).order_by(AcompanamientoFijo.orden).all()
@@ -263,65 +422,347 @@ def get_menu_hoy(db: Session = Depends(get_db)):
     ).order_by(PlatoRestaurante.nombre).all()
     
     return MenuDelDiaCompleto(
-        menu=MenuDiaResponse.from_orm(menu),
+        menu=menu_response,
         categorias=categorias_platos,
         acompanamientos_fijos=[AcompanamientoFijoResponse.from_orm(a) for a in acompanamientos],
-        platos_fijos=[PlatoRestauranteResponse.from_orm(p) for p in platos_fijos]
+        platos_fijos=[PlatoRestauranteResponse.from_orm(p) for p in platos_fijos],
+        mensaje=None
     )
 
 
 @router.post("/menus/", response_model=MenuDiaResponse)
 def create_menu(menu: MenuDiaCreate, db: Session = Depends(get_db)):
     """Crear nuevo menú del día"""
-    # Verificar que no exista menú para la misma fecha
-    existing = db.query(MenuDia).filter(MenuDia.fecha == menu.fecha).first()
-    if existing:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Ya existe un menú para la fecha {menu.fecha}"
-        )
-    
-    # Crear el menú
-    menu_data = menu.dict(exclude={'categorias_platos'})
-    db_menu = MenuDia(**menu_data)
-    db.add(db_menu)
-    db.commit()
-    db.refresh(db_menu)
-    
-    # Agregar platos por categoría
-    for categoria_nombre, platos_ids in menu.categorias_platos.items():
-        # Buscar la categoría
-        categoria = db.query(CategoriaMenuRestaurante).filter(CategoriaMenuRestaurante.nombre == categoria_nombre).first()
-        if not categoria:
+    try:
+        # Verificar que no exista menú para la misma fecha
+        existing = db.query(MenuDia).filter(MenuDia.fecha == menu.fecha).first()
+        if existing:
             raise HTTPException(
                 status_code=400,
-                detail=f"Categoría '{categoria_nombre}' no encontrada"
+                detail={
+                    "message": f"Ya existe un menú para la fecha {menu.fecha}",
+                    "menu_id": existing.id,
+                    "menu_nombre": existing.nombre,
+                    "fecha": str(existing.fecha),
+                    "suggestion": "Usa PUT /api/v1/restaurant-menu/menus/{menu_id} para actualizar el menú existente"
+                }
             )
         
-        # Agregar platos a la categoría
-        for plato_id in platos_ids:
-            # Verificar que el plato existe y es de tipo Menu_Dia
-            plato = db.query(PlatoRestaurante).filter(
-                PlatoRestaurante.id == plato_id,
-                PlatoRestaurante.tipo == 'Menu_Dia',
-                PlatoRestaurante.activo == True
-            ).first()
-            if not plato:
+        # Crear el menú
+        menu_data = menu.dict(exclude={'categorias_platos'})
+        estado_enum = _normalize_estado(menu_data.pop('estado', MenuDiaEstado.DRAFT))
+        db_menu = MenuDia(**menu_data, estado=estado_enum.value)
+        db.add(db_menu)
+        db.flush()  # Flush para obtener el ID sin hacer commit aún
+        
+        # Verificar que el menú se creó correctamente y tiene un ID
+        if not db_menu.id:
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail="Error al crear el menú: no se pudo obtener el ID"
+            )
+        
+        # Agregar platos por categoría
+        for categoria_nombre, platos_ids in menu.categorias_platos.items():
+            # Manejar platos fijos de forma especial
+            if categoria_nombre == '_platos_fijos':
+                # Guardar platos fijos seleccionados en menu_categoria_platos con categoría especial
+                # Buscar o crear categoría especial para platos fijos
+                categoria_fijos = db.query(CategoriaMenuRestaurante).filter(
+                    CategoriaMenuRestaurante.nombre == '_platos_fijos'
+                ).first()
+                
+                if not categoria_fijos:
+                    # Crear categoría especial para platos fijos si no existe
+                    categoria_fijos = CategoriaMenuRestaurante(
+                        nombre='_platos_fijos',
+                        descripcion='Platos fijos seleccionados para el menú',
+                        orden=0,
+                        is_active=True
+                    )
+                    db.add(categoria_fijos)
+                    db.flush()
+                
+                # Agregar platos fijos a la categoría especial
+                for plato_id in platos_ids:
+                    # Verificar que el plato existe y es de tipo Plato_Fijo
+                    plato = db.query(PlatoRestaurante).filter(
+                        PlatoRestaurante.id == plato_id,
+                        PlatoRestaurante.tipo == 'Plato_Fijo',
+                        PlatoRestaurante.activo == True
+                    ).first()
+                    if plato:
+                        mcp = MenuCategoriaPlato(
+                            menu_dia_id=db_menu.id,
+                            categoria_id=categoria_fijos.id,
+                            plato_id=plato_id
+                        )
+                        db.add(mcp)
+                continue
+            
+            # Buscar la categoría
+            categoria = db.query(CategoriaMenuRestaurante).filter(CategoriaMenuRestaurante.nombre == categoria_nombre).first()
+            if not categoria:
+                db.rollback()
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Plato con ID {plato_id} no encontrado o no es válido para menú del día"
+                    detail=f"Categoría '{categoria_nombre}' no encontrada"
                 )
             
-            # Crear relación
-            mcp = MenuCategoriaPlato(
-                menu_dia_id=db_menu.id,
-                categoria_id=categoria.id,
-                plato_id=plato_id
+            # Agregar platos a la categoría
+            for plato_id in platos_ids:
+                # Verificar que el plato existe y es de tipo Menu_Dia
+                plato = db.query(PlatoRestaurante).filter(
+                    PlatoRestaurante.id == plato_id,
+                    PlatoRestaurante.tipo == 'Menu_Dia',
+                    PlatoRestaurante.activo == True
+                ).first()
+                if not plato:
+                    db.rollback()
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Plato con ID {plato_id} no encontrado o no es válido para menú del día"
+                    )
+                
+                # Crear relación
+                mcp = MenuCategoriaPlato(
+                    menu_dia_id=db_menu.id,
+                    categoria_id=categoria.id,
+                    plato_id=plato_id
+                )
+                db.add(mcp)
+        
+        # Hacer commit de todo en una sola transacción
+        db.commit()
+        db.refresh(db_menu)
+        return _serialize_menu(db, db_menu)
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al crear el menú: {str(e)}"
+        )
+
+
+@router.put("/menus/{menu_id}", response_model=MenuDiaResponse)
+def update_menu(menu_id: int, menu: MenuDiaUpdate, db: Session = Depends(get_db)):
+    """Actualizar menú del día existente"""
+    try:
+        # Buscar el menú existente
+        db_menu = db.query(MenuDia).filter(MenuDia.id == menu_id).first()
+        if not db_menu:
+            # Verificar si existe algún menú con ese ID (por si hay problema de caché)
+            all_menus = db.query(MenuDia).all()
+            menu_ids = [m.id for m in all_menus]
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Menú con ID {menu_id} no encontrado. Menús existentes: {menu_ids}"
             )
-            db.add(mcp)
-    
-    db.commit()
-    return db_menu
+        
+        print(f"✅ Menú encontrado: ID={db_menu.id}, Nombre={db_menu.nombre}, Fecha={db_menu.fecha}")
+        
+        # Actualizar campos básicos del menú (sin categorías_platos)
+        update_data = menu.dict(exclude_unset=True, exclude={'categorias_platos'})
+        if 'estado' in update_data:
+            estado_enum = _normalize_estado(update_data.pop('estado'))
+            update_data['estado'] = estado_enum.value
+        
+        for field, value in update_data.items():
+            setattr(db_menu, field, value)
+        
+        db_menu.updated_at = datetime.utcnow()
+        
+        # Guardar primero los cambios básicos del menú
+        db.commit()
+        db.refresh(db_menu)
+        
+        print(f"✅ Menú actualizado en BD: ID={db_menu.id}")
+        
+        # Si se proporcionan categorías_platos, actualizar los platos en una nueva transacción
+        if menu.categorias_platos is not None:
+            # Primero validar todas las categorías y platos antes de hacer cambios
+            categorias_validas = {}
+            platos_fijos_ids = []
+            
+            for categoria_nombre, platos_ids in menu.categorias_platos.items():
+                # Manejar platos fijos de forma especial
+                if categoria_nombre == '_platos_fijos':
+                    platos_fijos_ids = platos_ids
+                    continue
+                    
+                # Buscar la categoría
+                categoria = db.query(CategoriaMenuRestaurante).filter(CategoriaMenuRestaurante.nombre == categoria_nombre).first()
+                if not categoria:
+                    db.rollback()
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Categoría '{categoria_nombre}' no encontrada"
+                    )
+                
+                # Validar todos los platos
+                platos_validos = []
+                for plato_id in platos_ids:
+                    # Verificar que el plato existe y es de tipo Menu_Dia
+                    plato = db.query(PlatoRestaurante).filter(
+                        PlatoRestaurante.id == plato_id,
+                        PlatoRestaurante.tipo == 'Menu_Dia',
+                        PlatoRestaurante.activo == True
+                    ).first()
+                    if not plato:
+                        db.rollback()
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Plato con ID {plato_id} no encontrado o no es válido para menú del día"
+                        )
+                    platos_validos.append(plato_id)
+                
+                categorias_validas[categoria.id] = platos_validos
+            
+            # Hacer flush para guardar los cambios al menú primero
+            db.flush()
+            
+            # Verificar que el menú realmente existe en la base de datos usando una consulta fresca
+            from sqlalchemy import text
+            menu_check_query = db.execute(
+                text("SELECT id, nombre, fecha FROM menus_dia WHERE id = :menu_id"),
+                {"menu_id": menu_id}
+            ).fetchone()
+            
+            if not menu_check_query:
+                db.rollback()
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"El menú con ID {menu_id} no existe en la base de datos (verificado con consulta directa)"
+                )
+            
+            print(f"✅ Menú verificado en BD: ID={menu_check_query[0]}, Nombre={menu_check_query[1]}")
+            
+            # Eliminar relaciones existentes
+            deleted_count = db.execute(
+                text("DELETE FROM menu_categoria_platos WHERE menu_dia_id = :menu_id"),
+                {"menu_id": menu_id}
+            ).rowcount
+            print(f"🗑️ Eliminadas {deleted_count} relaciones existentes para el menú {menu_id}")
+            
+            # Guardar platos fijos seleccionados si se proporcionaron
+            if platos_fijos_ids:
+                # Buscar o crear categoría especial para platos fijos
+                categoria_fijos = db.query(CategoriaMenuRestaurante).filter(
+                    CategoriaMenuRestaurante.nombre == '_platos_fijos'
+                ).first()
+                
+                if not categoria_fijos:
+                    # Crear categoría especial para platos fijos si no existe
+                    categoria_fijos = CategoriaMenuRestaurante(
+                        nombre='_platos_fijos',
+                        descripcion='Platos fijos seleccionados para el menú',
+                        orden=0,
+                        is_active=True
+                    )
+                    db.add(categoria_fijos)
+                    db.flush()
+                
+                # Agregar platos fijos a la categoría especial
+                for plato_id in platos_fijos_ids:
+                    # Verificar que el plato existe y es de tipo Plato_Fijo
+                    plato = db.query(PlatoRestaurante).filter(
+                        PlatoRestaurante.id == plato_id,
+                        PlatoRestaurante.tipo == 'Plato_Fijo',
+                        PlatoRestaurante.activo == True
+                    ).first()
+                    if plato:
+                        mcp = MenuCategoriaPlato(
+                            menu_dia_id=menu_id,
+                            categoria_id=categoria_fijos.id,
+                            plato_id=plato_id
+                        )
+                        db.add(mcp)
+                print(f"✅ Guardados {len(platos_fijos_ids)} platos fijos para el menú {menu_id}")
+            
+            # Verificar nuevamente que el menú sigue existiendo después de eliminar relaciones
+            menu_check_after = db.execute(
+                text("SELECT id FROM menus_dia WHERE id = :menu_id"),
+                {"menu_id": menu_id}
+            ).fetchone()
+            
+            if not menu_check_after:
+                db.rollback()
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"El menú con ID {menu_id} desapareció después de eliminar relaciones"
+                )
+            
+            # Agregar nuevas relaciones
+            for categoria_id, platos_ids in categorias_validas.items():
+                for plato_id in platos_ids:
+                    # Verificar que el menú existe justo antes de crear cada relación
+                    menu_exists = db.execute(
+                        text("SELECT id FROM menus_dia WHERE id = :menu_id"),
+                        {"menu_id": menu_id}
+                    ).fetchone()
+                    
+                    if not menu_exists:
+                        db.rollback()
+                        raise HTTPException(
+                            status_code=500,
+                            detail=f"El menú con ID {menu_id} no existe al intentar crear relación (categoría={categoria_id}, plato={plato_id})"
+                        )
+                    
+                    # Crear nueva relación
+                    nuevo_mcp = MenuCategoriaPlato(
+                        menu_dia_id=menu_id,
+                        categoria_id=categoria_id,
+                        plato_id=plato_id,
+                        activo=True
+                    )
+                    db.add(nuevo_mcp)
+            
+            # Hacer commit de las relaciones
+            try:
+                db.commit()
+                print(f"✅ Relaciones actualizadas para el menú {menu_id}")
+            except Exception as commit_error:
+                db.rollback()
+                error_str = str(commit_error)
+                # Verificar si el menú aún existe
+                menu_check = db.execute(
+                    text("SELECT id FROM menus_dia WHERE id = :menu_id"),
+                    {"menu_id": menu_id}
+                ).fetchone()
+                
+                if not menu_check:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"El menú con ID {menu_id} no existe en la base de datos. Error: {error_str}"
+                    )
+                
+                # Si el error menciona foreign key violation, dar información más específica
+                if "ForeignKeyViolation" in error_str or "foreign key constraint" in error_str.lower():
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Error de foreign key: El menú con ID {menu_id} debería existir, pero hay un problema con la relación. Verifica la estructura de la base de datos. Error completo: {error_str}"
+                    )
+                
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Error al guardar relaciones: {error_str}"
+                )
+        
+        # Refrescar el menú para obtener todos los cambios (incluyendo relaciones)
+        db.refresh(db_menu)
+        return _serialize_menu(db, db_menu)
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al actualizar el menú: {str(e)}"
+        )
 
 
 @router.put("/menus/{menu_id}/publicar")
@@ -331,7 +772,7 @@ def publicar_menu(menu_id: int, db: Session = Depends(get_db)):
     if not menu:
         raise HTTPException(status_code=404, detail="Menú no encontrado")
     
-    menu.publicado = True
+    menu.estado = MenuDiaEstado.ACTIVE.value
     menu.updated_at = datetime.utcnow()
     db.commit()
     
@@ -345,11 +786,58 @@ def despublicar_menu(menu_id: int, db: Session = Depends(get_db)):
     if not menu:
         raise HTTPException(status_code=404, detail="Menú no encontrado")
     
-    menu.publicado = False
+    menu.estado = MenuDiaEstado.INACTIVE.value
     menu.updated_at = datetime.utcnow()
     db.commit()
     
     return {"message": "Menú despublicado exitosamente"}
+
+
+@router.delete("/menus/{menu_id}")
+def delete_menu(menu_id: int, db: Session = Depends(get_db)):
+    """Eliminar menú del día (solo si está desactivado)"""
+    try:
+        # Buscar el menú
+        menu = db.query(MenuDia).filter(MenuDia.id == menu_id).first()
+        if not menu:
+            raise HTTPException(status_code=404, detail="Menú no encontrado")
+        
+        # Guardar información del menú antes de eliminarlo
+        menu_nombre = menu.nombre
+        menu_estado = menu.estado
+        
+        # Verificar que el menú NO esté activo
+        if menu_estado == MenuDiaEstado.ACTIVE.value:
+            raise HTTPException(
+                status_code=400,
+                detail="No se puede eliminar un menú activo. Primero debes pausarlo o desactivarlo."
+            )
+        
+        # Eliminar todas las relaciones en menu_categoria_platos
+        from sqlalchemy import text
+        deleted_relations = db.execute(
+            text("DELETE FROM menu_categoria_platos WHERE menu_dia_id = :menu_id"),
+            {"menu_id": menu_id}
+        ).rowcount
+        
+        # Eliminar el menú
+        db.delete(menu)
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": f"Menú eliminado exitosamente. Se eliminaron {deleted_relations} relación(es) de platos.",
+            "menu_id": menu_id,
+            "menu_nombre": menu_nombre
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al eliminar el menú: {str(e)}"
+        )
 
 
 # ============================================================================

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Platónico - Sistema de Punto de Venta{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="/static/images/platonico_logo.jpg">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#F9EBEB',
+                            100: '#F3D7D7',
+                            200: '#E7AFB0',
+                            300: '#DB8788',
+                            400: '#CF5F61',
+                            500: '#7A1E2C',
+                            600: '#6B1825',
+                            700: '#5A1420',
+                            800: '#4A101B',
+                            900: '#3A0C15',
+                        },
+                        secondary: {
+                            50: '#F9F4EE',
+                            100: '#F3E9DD',
+                            200: '#E7D3BB',
+                            300: '#DBBD99',
+                            400: '#CFA777',
+                            500: '#A67C52',
+                            600: '#956F4A',
+                            700: '#846241',
+                            800: '#735539',
+                            900: '#5C3A21',
+                        },
+                        accent: {
+                            50: '#FDFBFA',
+                            100: '#FBF7F5',
+                            200: '#F7EFEB',
+                            300: '#F3E7E1',
+                            400: '#ECD7CD',
+                            500: '#D9BBAE',
+                            600: '#C2A89C',
+                            700: '#AB958B',
+                        },
+                        neutral: {
+                            800: '#2B2B2B',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px 0 rgb(92 58 33 / 0.1), 0 1px 2px -1px rgb(92 58 33 / 0.1)',
+                        'card-hover': '0 10px 15px -3px rgb(92 58 33 / 0.1), 0 4px 6px -4px rgb(92 58 33 / 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Iconos - Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/platonico-theme.css">
+    <link rel="stylesheet" href="/static/css/components/ui-components.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #F2E8D5;
+            color: #5C3A21;
+        }
+        
+        /* Navigation Links - Estilos Platónico */
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #735539;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        
+        .nav-link:hover {
+            color: #7A1E2C;
+            background-color: rgba(166, 124, 82, 0.1);
+            text-decoration: none;
+        }
+        
+        .nav-link.active {
+            color: #7A1E2C;
+            background-color: rgba(166, 124, 82, 0.15);
+            font-weight: 600;
+        }
+        
+        .nav-link i {
+            font-size: 1.25rem;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="antialiased">
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 h-16 bg-white border-b border-[#A67C52]/20 z-30 shadow-sm">
+        <div class="flex items-center justify-between h-full px-6">
+            <!-- Logo y Título -->
+            <div class="flex items-center gap-3">
+                <div class="flex-shrink-0">
+                    <img src="/static/images/platonico_logo.jpg" alt="Platónico" class="h-10 w-auto rounded-lg">
+                </div>
+                <div class="hidden sm:block">
+                    <h1 class="text-lg font-bold text-[#7A1E2C]">Platónico</h1>
+                    <p class="text-xs text-[#846241]">Sistema de Punto de Venta</p>
+                </div>
+            </div>
+            
+            <!-- Navegación Central -->
+            <nav class="hidden md:flex items-center gap-1">
+                <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                    <i class="ph ph-house"></i>
+                    <span>Inicio</span>
+                </a>
+                {% if user_role == 'admin' %}
+                <a href="/admin" class="nav-link {% if '/admin' in request.path %}active{% endif %}">
+                    <i class="ph ph-gear"></i>
+                    <span>Admin</span>
+                </a>
+                {% endif %}
+                <a href="/caja-ventas" class="nav-link {% if '/caja' in request.path %}active{% endif %}">
+                    <i class="ph ph-cash-register"></i>
+                    <span>Caja</span>
+                </a>
+                <a href="/waiters" class="nav-link {% if '/waiters' in request.path %}active{% endif %}">
+                    <i class="ph ph-user"></i>
+                    <span>Meseros</span>
+                </a>
+                <a href="/kitchen" class="nav-link {% if '/kitchen' in request.path %}active{% endif %}">
+                    <i class="ph ph-cooking-pot"></i>
+                    <span>Cocina</span>
+                </a>
+                <a href="/inventory" class="nav-link {% if '/inventory' in request.path %}active{% endif %}">
+                    <i class="ph ph-package"></i>
+                    <span>Inventario</span>
+                </a>
+            </nav>
+            
+            <!-- Usuario y Acciones -->
+            <div class="flex items-center gap-3">
+                <!-- Notificaciones -->
+                <button class="p-2 text-[#735539] hover:text-[#7A1E2C] hover:bg-[#A67C52]/10 rounded-lg relative">
+                    <i class="ph ph-bell text-xl"></i>
+                    <span class="absolute top-1 right-1 w-2 h-2 bg-[#B84A4A] rounded-full"></span>
+                </button>
+                
+                <!-- Usuario -->
+                <div class="flex items-center gap-2 pl-3 border-l border-[#A67C52]/30">
+                    <div class="w-8 h-8 bg-[#A67C52]/20 rounded-full flex items-center justify-center">
+                        <i class="ph ph-user text-[#7A1E2C]"></i>
+                    </div>
+                    <div class="hidden sm:block">
+                        <p class="text-sm font-medium text-[#5C3A21]">{{ current_user.full_name if current_user else 'Usuario' }}</p>
+                        <p class="text-xs text-[#846241]">{{ current_user.role if current_user else '' }}</p>
+                    </div>
+                </div>
+                
+                <!-- Logout -->
+                <button onclick="logout()" class="p-2 text-[#735539] hover:text-[#7A1E2C] hover:bg-[#A67C52]/10 rounded-lg" title="Cerrar sesión">
+                    <i class="ph ph-sign-out text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Sidebar (Mobile) -->
+    <aside id="mobile-sidebar" class="fixed inset-0 z-40 hidden">
+        <div class="absolute inset-0 bg-black/50" onclick="toggleMobileSidebar()"></div>
+        <div class="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-xl transform transition-transform duration-300">
+            <div class="p-4 border-b border-primary-100">
+                <div class="flex items-center gap-3">
+                    <img src="/static/images/platonico_logo.jpg" alt="Platónico" class="h-8 rounded">
+                    <span class="font-bold text-primary-700">Platónico</span>
+                </div>
+            </div>
+            <nav class="p-4 space-y-1">
+                <a href="/" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <i class="ph ph-house"></i> Inicio
+                </a>
+                <a href="/caja-ventas" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <i class="ph ph-cash-register"></i> Caja
+                </a>
+                <a href="/waiters" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <i class="ph ph-user"></i> Meseros
+                </a>
+                <a href="/kitchen" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <i class="ph ph-cooking-pot"></i> Cocina
+                </a>
+                <a href="/inventory" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <i class="ph ph-package"></i> Inventario
+                </a>
+            </nav>
+        </div>
+    </aside>
+    
+    <!-- Contenido Principal -->
+    <main class="pt-16 min-h-screen">
+        <div class="p-6">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    
+    <!-- Scripts -->
+    <script>
+        // Función para cerrar sesión
+        function logout() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_info');
+                window.location.href = '/login';
+            }
+        }
+        
+        // Toggle sidebar móvil
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('ZimplePOS initialized');
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
